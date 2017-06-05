@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# The Auto script helps with Packaging and Deploying the account Cloudformation Stacks to make development easy.
+#
+# Packaging allows you to reference other stacks and resources locally, then upload them to S3 and reference them for
+# easy deployment
+
 # Make the commands in this script relative to the script, not relative to where you ran them.
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd $SCRIPT_DIR
@@ -50,7 +55,7 @@ if [ "$COMMAND" = "deploy" ]; then
 elif [ "$COMMAND" = "package" ]; then
 
     # This is the list of accounts to consider when using 'auto.sh package all'
-    ALL_ACCOUNTS="kiind dev sandbox"
+    ALL_ACCOUNTS="dev"
 
     BUILD_ARTIFACT_BUCKET="$(aws s3api list-buckets --query 'Buckets[?starts_with(Name,`cf-template`)].Name' --output text)"
 
@@ -78,4 +83,14 @@ elif [ "$COMMAND" = "package" ]; then
             exit 3
         fi
     done
+else
+    echo "usage:"
+    echo -e "\t./auto.sh package <account> [<account>]"
+    echo -e "\t./auto.sh deploy <account>"
+    echo ""
+    echo "Common Commands"
+    echo -e "\tpackage\t\tPackages the Cloudformation Template associated"
+    echo -e "\t\t\t\twith an account or accounts"
+    echo -e "\tdeploy\t\tPackages and deploys the Cloudformation Template"
+    echo -e "\t\t\t\tassociated with a particular account"
 fi
