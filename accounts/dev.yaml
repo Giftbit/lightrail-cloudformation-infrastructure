@@ -11,10 +11,3 @@ Resources:
         EnvironmentName: Dev
         NatInstanceType: t2.nano
         VPCUniqueNumber: 1
-      Tags:
-        -
-          Key: Product
-          Value: Lightrail
-        -
-          Key: Environment
-          Value: Dev
