@@ -1,0 +1,178 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Dev Master Stack"
+
+Resources:
+  CodebuildImages:
+    Type: "AWS::CloudFormation::Stack"
+    Properties:
+      TemplateURL: ../modules/codebuild_image_repos.yaml
+      Tags:
+        -
+          Key: Account
+          Value: Dev
+  CurrencyCloudfrontPreprod:
+    Type: "AWS::CloudFormation::Stack"
+    Properties:
+      TemplateURL: ../modules/currency-cloudfront.yaml
+      Parameters:
+        StackEnvironment: Preprod
+        AppAliases: "currencypreprod.giftbit.com"
+        ApiAliases: "currencyapi-preprod.giftbit.com"
+        ViewerCertificateArn: "arn:aws:acm:us-east-1:784593521445:certificate/aefc763c-0e71-4c7b-bd95-df96b809e653"
+        WebsiteEndpoint: "currencypreprod.giftbit.com.s3-website-us-west-2.amazonaws.com"
+        ReactEndpoint: ""
+        ServicesEndpoint: "preprodhttpservices.giftbit.com"
+        StatsEndpoint: "0dp3zkwhxe.execute-api.us-west-2.amazonaws.com"
+        BatchEndpoint: "preprodbatchservice.giftbit.com"
+        CardsSearchEndpoint: "9te30f224k.execute-api.us-west-2.amazonaws.com"
+      Tags:
+        -
+          Key: Product
+          Value: Currency
+        -
+          Key: Stack
+          Value: Dev
+        -
+          Key: Service
+          Value: Cloudfront
+  CurrencyCloudfrontTestbed:
+    Type: "AWS::CloudFormation::Stack"
+    Properties:
+      TemplateURL: ../modules/currency-cloudfront.yaml
+      Parameters:
+        StackEnvironment: Testbed
+        AppAliases: "currencytestbed.giftbit.com"
+        ApiAliases: "currencyapi-test.giftbit.com,currencyapi-testbed.giftbit.com"
+        ViewerCertificateArn: "arn:aws:acm:us-east-1:784593521445:certificate/aefc763c-0e71-4c7b-bd95-df96b809e653"
+        WebsiteEndpoint: "currencytestbed.giftbit.com.s3-website-us-west-2.amazonaws.com"
+        ReactEndpoint: ""
+        ServicesEndpoint: "testbedhttpservices.giftbit.com"
+        StatsEndpoint: "wlp8rl85zi.execute-api.us-west-2.amazonaws.com"
+        BatchEndpoint: "testbedbatchservice.giftbit.com"
+        CardsSearchEndpoint: "9cjpp57jh7.execute-api.us-west-2.amazonaws.com"
+      Tags:
+        -
+          Key: Product
+          Value: Currency
+        -
+          Key: Stack
+          Value: Staging
+        -
+          Key: Service
+          Value: Cloudfront
+
+  LightrailWebsitePreprod:
+    Type: "AWS::CloudFormation::Stack"
+    Properties:
+      TemplateURL: ../modules/lightrail-website.yaml
+      Parameters:
+        StackEnvironment: Preprod
+  LightrailCloudfrontPreprod:
+    Type: "AWS::CloudFormation::Stack"
+    Properties:
+      TemplateURL: ../modules/currency-cloudfront.yaml
+      Parameters:
+        StackEnvironment: Preprod
+        AppAliases: "dev.lightrail.com,preprod.lightrail.com"
+        ApiAliases: "devapi.lightrail.com,preprodapi.lightrail.com"
+        ViewerCertificateArn: "arn:aws:acm:us-east-1:784593521445:certificate/bf9ccc6e-834f-4f4e-81a3-8c056e63fdd7"
+        WebsiteEndpoint: !GetAtt LightrailWebsitePreprod.Outputs.WebsiteDomain
+        ReactEndpoint: "preprodreactapp.giftbit.com.s3-website-us-west-2.amazonaws.com"
+        ServicesEndpoint: "preprodhttpservices.giftbit.com"
+        StatsEndpoint: "0dp3zkwhxe.execute-api.us-west-2.amazonaws.com"
+        BatchEndpoint: "preprodbatchservice.giftbit.com"
+        CardsSearchEndpoint: "9te30f224k.execute-api.us-west-2.amazonaws.com"
+      Tags:
+        -
+          Key: Product
+          Value: Lightrail
+        -
+          Key: Stack
+          Value: Dev
+        -
+          Key: Service
+          Value: Cloudfront
+
+  LightrailWebsiteTestbed:
+    Type: "AWS::CloudFormation::Stack"
+    Properties:
+      TemplateURL: ../modules/lightrail-website.yaml
+      Parameters:
+        StackEnvironment: Testbed
+  LightrailCloudfrontTestbed:
+    Type: "AWS::CloudFormation::Stack"
+    Properties:
+      TemplateURL: ../modules/currency-cloudfront.yaml
+      Parameters:
+        StackEnvironment: Testbed
+        AppAliases: "staging.lightrail.com,testbed.lightrail.com"
+        ApiAliases: "stagingapi.lightrail.com,testbedapi.lightrail.com"
+        ViewerCertificateArn: "arn:aws:acm:us-east-1:784593521445:certificate/bf9ccc6e-834f-4f4e-81a3-8c056e63fdd7"
+        WebsiteEndpoint: !GetAtt LightrailWebsiteTestbed.Outputs.WebsiteDomain
+        ReactEndpoint: "testbedreactapp.giftbit.com.s3-website-us-west-2.amazonaws.com"
+        ServicesEndpoint: "testbedhttpservices.giftbit.com"
+        StatsEndpoint: "wlp8rl85zi.execute-api.us-west-2.amazonaws.com"
+        BatchEndpoint: "testbedbatchservice.giftbit.com"
+        CardsSearchEndpoint: "9cjpp57jh7.execute-api.us-west-2.amazonaws.com"
+      Tags:
+        -
+          Key: Product
+          Value: Lightrail
+        -
+          Key: Stack
+          Value: Staging
+        -
+          Key: Service
+          Value: Cloudfront
+
+  RewardsAlerts:
+    Type: "AWS::CloudFormation::Stack"
+    Properties:
+      TemplateURL: ../modules/alert-sns-topics.yaml
+      Parameters:
+        Product: Rewards
+        NonEmergencyPagerdutyURL: https://events.pagerduty.com/integration/1920474627cf4961893455e0aa797c8b/enqueue
+      Tags:
+        -
+          Key: Account
+          Value: Dev
+  LightrailAlerts:
+    Type: "AWS::CloudFormation::Stack"
+    Properties:
+      TemplateURL: ../modules/alert-sns-topics.yaml
+      Parameters:
+        Product: Lightrail
+        NonEmergencyPagerdutyURL: https://events.pagerduty.com/integration/1a909163c3a94fecbce9fd6b79768e97/enqueue
+      Tags:
+        -
+          Key: Account
+          Value: Dev
+
+  RewardsSSM:
+    Type: "AWS::CloudFormation::Stack"
+    Properties:
+      TemplateURL: ../modules/rewards-ssm.yaml
+
+  RewardsVPCPreprod:
+    Type: "AWS::CloudFormation::Stack"
+    Properties:
+      TemplateURL: ../modules/rewards-vpc.yaml
+      Parameters:
+        StackEnvironment: Preprod
+        BastionHostKeyName: preprodBastionHost
+        BastionHostSecurityGroupIds: sg-b0d649d7
+        BastionHostSubnetId: subnet-05957173
+        BastionHostAvailabilityZone: us-west-2b
+        BastionHostIntrusionPrevention: no
+  RewardsVPCTestbed:
+    Type: "AWS::CloudFormation::Stack"
+    Properties:
+      TemplateURL: ../modules/rewards-vpc.yaml
+      Parameters:
+        StackEnvironment: Testbed
+        BastionHostKeyName: TestBedBastionHost
+        BastionHostSecurityGroupIds: sg-96b5e8f1
+        BastionHostSubnetId: subnet-c059a6b6
+        BastionHostAvailabilityZone: us-west-2b
+        BastionHostIntrusionPrevention: no
+

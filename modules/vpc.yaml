@@ -1,0 +1,596 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Lightrail VPC"
+
+Parameters:
+  EnvironmentName:
+    Type: String
+    Description: The Name of the Environment
+    AllowedValues:
+      - Dev
+      - Staging
+      - Production
+  BastionHostAuthorizedUsersGroup:
+    Type: String
+    Description: The Group Name for users authorized to access the Bastion Host for this VPC
+  NatInstanceType:
+    Type: String
+    Description: The type of the nat instance to use
+    Default: t2.nano
+    AllowedValues:
+      - t2.nano
+      - t2.micro
+      - t2.small
+      - t2.medium
+  VPCUniqueNumber:
+    Type: Number
+    Description: The value to prefix the regions subnets with
+    Default: "1"
+    MaxValue: 251
+    MinValue: 1
+
+
+Mappings:
+
+  # aws --region [region-name] ec2 describe-images --owners amazon --filters "Name=root-device-type,Values=ebs" "Name=name,Values=amzn-ami-vpc-nat-hvm-*" "Name=architecture,Values=x86_64" --query "Images[].[ImageId,Name]" --output text
+  RegionNatImageMap:
+    us-west-2:
+      "64": ami-8437a5e4
+    us-east-1:
+      "64": ami-258e1f33
+  # aws --region [region-name] ec2 describe-images --owners amazon --filters "Name=root-device-type,Values=ebs" "Name=name,Values=amzn-ami-hvm-*" "Name=architecture,Values=x86_64" --query "Images[].[ImageId,Name]" --output text
+  RegionBastionHostImageMap:
+    us-west-2:
+      "64": ami-3234a652
+    us-east-1:
+      "64": ami-fd8617eb
+
+Resources:
+  # VPC Resource
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Sub "10.${VPCUniqueNumber}.0.0/16"
+      EnableDnsHostnames: true
+      Tags:
+        -
+          Key: Name
+          Value: !Sub "${EnvironmentName} Lightrail VPC"
+        -
+          Key: Product
+          Value: Lightrail
+        -
+          Key: Environment
+          Value: !Ref EnvironmentName
+
+  # VPC Hosted Zone
+  VPCHostedZone:
+    Type: AWS::Route53::HostedZone
+    Properties:
+      Name: vpc
+      HostedZoneConfig:
+        Comment: !Sub "${EnvironmentName} Lightrail VPC Domain"
+      VPCs:
+        -
+          VPCId: !Ref VPC
+          VPCRegion: !Ref AWS::Region
+      HostedZoneTags:
+        -
+          Key: Name
+          Value: !Sub "${EnvironmentName} Lightrail VPC Hosted Zone"
+        -
+          Key: Product
+          Value: Lightrail
+        -
+          Key: Environment
+          Value: !Ref EnvironmentName
+
+  # Internet Gateway
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        -
+          Key: Name
+          Value: !Sub "${EnvironmentName} Lightrail Internet Gateway"
+        -
+          Key: Product
+          Value: Lightrail
+        -
+          Key: Environment
+          Value: !Ref EnvironmentName
+  InternetGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+
+  # NAT Instance
+  NatInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !FindInMap [ RegionNatImageMap, !Ref "AWS::Region", 64 ]
+      AvailabilityZone: us-west-2b
+      SourceDestCheck: false
+      InstanceType: !Ref NatInstanceType
+      SubnetId: !Ref SubnetPublicB
+      SecurityGroupIds:
+        - !Ref NatSecurityGroup
+      Tags:
+        -
+          Key: Name
+          Value: !Sub "${EnvironmentName} Lightrail NAT"
+        -
+          Key: Product
+          Value: Lightrail
+        -
+          Key: Environment
+          Value: !Ref EnvironmentName
+        -
+          Key: Service
+          Value: NAT
+  NatElasticIP:
+    Type: "AWS::EC2::EIP"
+    Properties:
+      Domain: vpc
+      InstanceId: !Ref NatInstance
+  NatSecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupName: !Sub "Lightrail-${EnvironmentName}-NAT"
+      GroupDescription: !Sub "Lightrail ${EnvironmentName} NAT"
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        -
+          FromPort: 80
+          ToPort: 80
+          IpProtocol: tcp
+          CidrIp: !Sub "10.${VPCUniqueNumber}.21.0/24"
+        -
+          FromPort: 80
+          ToPort: 80
+          IpProtocol: tcp
+          CidrIp: !Sub "10.${VPCUniqueNumber}.22.0/24"
+        -
+          FromPort: 80
+          ToPort: 80
+          IpProtocol: tcp
+          CidrIp: !Sub "10.${VPCUniqueNumber}.23.0/24"
+        -
+          FromPort: 443
+          ToPort: 443
+          IpProtocol: tcp
+          CidrIp: !Sub "10.${VPCUniqueNumber}.21.0/24"
+        -
+          FromPort: 443
+          ToPort: 443
+          IpProtocol: tcp
+          CidrIp: !Sub "10.${VPCUniqueNumber}.22.0/24"
+        -
+          FromPort: 443
+          ToPort: 443
+          IpProtocol: tcp
+          CidrIp: !Sub "10.${VPCUniqueNumber}.23.0/24"
+      SecurityGroupEgress:
+        -
+          FromPort: 80
+          ToPort: 80
+          IpProtocol: tcp
+          CidrIp: 0.0.0.0/0
+        -
+          FromPort: 443
+          ToPort: 443
+          IpProtocol: tcp
+          CidrIp: 0.0.0.0/0
+      Tags:
+        -
+          Key: Name
+          Value: !Sub "${EnvironmentName} Lightrail NAT"
+        -
+          Key: Product
+          Value: Lightrail
+        -
+          Key: Environment
+          Value: !Ref EnvironmentName
+
+  # Bastion Host
+  BastionHostInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !FindInMap [ RegionBastionHostImageMap, !Ref "AWS::Region", 64 ]
+      AvailabilityZone: !GetAtt SubnetPublicB.AvailabilityZone
+      InstanceType: t2.nano
+      SubnetId: !Ref SubnetPublicB
+      SecurityGroupIds:
+        - !Ref BastionHostSecurityGroup
+      IamInstanceProfile: !Ref BastionHostInstanceProfile
+      UserData: !Base64 |
+        #!/bin/bash
+        yum update -y
+
+        # Install the Amazon EC2 Systems Manager
+        #!/bin/bash
+        cd /tmp
+        sudo yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm
+
+        SHASUM="d4fb1c6da99c0b42d3b41329ebc630e19dc75ffbb223b6d7afd1e45a1ec01c28"
+        # Install the SSH IAM Login scripts
+        curl https://raw.githubusercontent.com/Giftbit/iam-ssh/3d665e59fc90ccd5a4e5eba46748ad2a85a135af/install.sh -o install.sh
+        if echo "$SHASUM *install.sh" | shasum -a 256 -c -; then
+          chmod 755 install.sh
+          ./install.sh
+        fi
+      Tags:
+        -
+          Key: Name
+          Value: !Sub "${EnvironmentName} Lightrail Bastion Host"
+        -
+          Key: AuthorizedUsersGroup
+          Value: !Ref BastionHostAuthorizedUsersGroup
+        -
+          Key: Product
+          Value: Lightrail
+        -
+          Key: Environment
+          Value: !Ref EnvironmentName
+        -
+          Key: Service
+          Value: Bastion Host
+  BastionHostRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - sts:AssumeRole
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+      Policies:
+        -
+          PolicyName: ReadGroupsAndSSHPublicKeys
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              -
+                Effect: Allow
+                Action:
+                  - iam:GetGroup
+                  - iam:ListSSHPublicKeys
+                  - iam:GetSSHPublicKey
+                  - ec2:DescribeTags
+                Resource: "*"
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM
+  BastionHostInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: /
+      Roles:
+        - !Ref BastionHostRole
+  BastionHostElasticIP:
+    Type: "AWS::EC2::EIP"
+    Properties:
+      Domain: vpc
+      InstanceId: !Ref BastionHostInstance
+  BastionHostSecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupName: !Sub "Lightrail-${EnvironmentName}-Bastion-Host"
+      GroupDescription: !Sub "Lightrail ${EnvironmentName} Bastion Host for VPC ${VPC}"
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        -
+          FromPort: 22
+          ToPort: 22
+          IpProtocol: tcp
+          CidrIp: 184.69.186.114/32
+      SecurityGroupEgress:
+        -
+          FromPort: 0
+          ToPort: 65535
+          IpProtocol: tcp
+          CidrIp: 0.0.0.0/0
+      Tags:
+        -
+          Key: Name
+          Value: !Sub "${EnvironmentName} Lightrail Bastion Host"
+        -
+          Key: Product
+          Value: Lightrail
+        -
+          Key: Environment
+          Value: !Ref EnvironmentName
+
+  # Application Security Groups
+  AppServerSecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupName: !Sub "Lightrail-${EnvironmentName}-App-Server"
+      GroupDescription: !Sub "Lightrail ${EnvironmentName} App Server for VPC ${VPC}"
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        -
+          FromPort: 22
+          ToPort: 22
+          IpProtocol: tcp
+          SourceSecurityGroupId: !Ref BastionHostSecurityGroup
+      SecurityGroupEgress:
+        -
+          FromPort: 0
+          ToPort: 65535
+          IpProtocol: tcp
+          CidrIp: 0.0.0.0/0
+      Tags:
+        -
+          Key: Name
+          Value: !Sub "${EnvironmentName} Lightrail Application Server Instances"
+        -
+          Key: Product
+          Value: Lightrail
+        -
+          Key: Environment
+          Value: !Ref EnvironmentName
+
+  # RDS Security Groups
+  RDSSecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupName: !Sub "Lightrail-${EnvironmentName}-RDS"
+      GroupDescription: !Sub "Lightrail ${EnvironmentName} RDS for VPC ${VPC}"
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        -
+          FromPort: 3306
+          ToPort: 3306
+          IpProtocol: tcp
+          SourceSecurityGroupId: !Ref BastionHostSecurityGroup
+        -
+          FromPort: 3306
+          ToPort: 3306
+          IpProtocol: tcp
+          SourceSecurityGroupId: !Ref AppServerSecurityGroup
+      Tags:
+        -
+          Key: Name
+          Value: !Sub "${EnvironmentName} Lightrail RDS Instances"
+        -
+          Key: Product
+          Value: Lightrail
+        -
+          Key: Environment
+          Value: !Ref EnvironmentName
+
+  # Public Subnets
+  SubnetPublicA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Sub "10.${VPCUniqueNumber}.11.0/24"
+      AvailabilityZone: !Sub "${AWS::Region}a"
+      MapPublicIpOnLaunch: true
+      Tags:
+        -
+          Key: Name
+          Value: !Sub "${EnvironmentName} Lightrail Public Subnet a. (${AWS::StackName})"
+        -
+          Key: Product
+          Value: Lightrail
+        -
+          Key: Environment
+          Value: !Ref EnvironmentName
+  SubnetPublicB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Sub "10.${VPCUniqueNumber}.12.0/24"
+      AvailabilityZone: !Sub "${AWS::Region}b"
+      MapPublicIpOnLaunch: true
+      Tags:
+        -
+          Key: Name
+          Value: !Sub "${EnvironmentName} Lightrail Public Subnet b. (${AWS::StackName})"
+        -
+          Key: Product
+          Value: Lightrail
+        -
+          Key: Environment
+          Value: !Ref EnvironmentName
+  SubnetPublicC:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Sub "10.${VPCUniqueNumber}.13.0/24"
+      AvailabilityZone: !Sub "${AWS::Region}c"
+      MapPublicIpOnLaunch: true
+      Tags:
+        -
+          Key: Name
+          Value: !Sub "${EnvironmentName} Lightrail Public Subnet c. (${AWS::StackName})"
+        -
+          Key: Product
+          Value: Lightrail
+        -
+          Key: Environment
+          Value: !Ref EnvironmentName
+  PublicSubnetRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        -
+          Key: Name
+          Value: !Sub "${EnvironmentName} Public Subnet Routing for VPC ${VPC}"
+        -
+          Key: Product
+          Value: Lightrail
+        -
+          Key: Environment
+          Value: !Ref EnvironmentName
+  PublicSubnetRouting:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PublicSubnetRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+  PublicSubnetARouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicSubnetRouteTable
+      SubnetId: !Ref SubnetPublicA
+  PublicSubnetBRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicSubnetRouteTable
+      SubnetId: !Ref SubnetPublicB
+  PublicSubnetCRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicSubnetRouteTable
+      SubnetId: !Ref SubnetPublicC
+
+
+  # Private Subnets
+  SubnetPrivateA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Sub "10.${VPCUniqueNumber}.21.0/24"
+      AvailabilityZone: !Sub "${AWS::Region}a"
+      Tags:
+        -
+          Key: Name
+          Value: !Sub "${EnvironmentName} Lightrail Private Subnet a. (${AWS::StackName})"
+        -
+          Key: Product
+          Value: Lightrail
+        -
+          Key: Environment
+          Value: !Ref EnvironmentName
+  SubnetPrivateB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Sub "10.${VPCUniqueNumber}.22.0/24"
+      AvailabilityZone: !Sub "${AWS::Region}b"
+      Tags:
+        -
+          Key: Name
+          Value: !Sub "${EnvironmentName} Lightrail Private Subnet b. (${AWS::StackName})"
+        -
+          Key: Product
+          Value: Lightrail
+        -
+          Key: Environment
+          Value: !Ref EnvironmentName
+  SubnetPrivateC:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Sub "10.${VPCUniqueNumber}.23.0/24"
+      AvailabilityZone: !Sub "${AWS::Region}c"
+      Tags:
+        -
+          Key: Name
+          Value: !Sub "${EnvironmentName} Lightrail Private Subnet c. (${AWS::StackName})"
+        -
+          Key: Product
+          Value: Lightrail
+        -
+          Key: Environment
+          Value: !Ref EnvironmentName
+  PrivateSubnetRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        -
+          Key: Name
+          Value: !Sub "${EnvironmentName} Private Subnet Routing for VPC ${VPC}"
+        -
+          Key: Product
+          Value: Lightrail
+        -
+          Key: Environment
+          Value: !Ref EnvironmentName
+  PrivateSubnetRouting:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivateSubnetRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      InstanceId: !Ref NatInstance
+  PrivateSubnetARouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateSubnetRouteTable
+      SubnetId: !Ref SubnetPrivateA
+  PrivateSubnetBRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateSubnetRouteTable
+      SubnetId: !Ref SubnetPrivateB
+  PrivateSubnetCRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateSubnetRouteTable
+      SubnetId: !Ref SubnetPrivateC
+
+  # RDS Subnets (These are neither publically accessible, nor have outgoing internet access)
+  SubnetRDSA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Sub "10.${VPCUniqueNumber}.31.0/24"
+      AvailabilityZone: !Sub "${AWS::Region}a"
+      Tags:
+        -
+          Key: Name
+          Value: !Sub "${EnvironmentName} Lightrail RDS Subnet a. (${AWS::StackName})"
+        -
+          Key: Product
+          Value: Lightrail
+        -
+          Key: Environment
+          Value: !Ref EnvironmentName
+  SubnetRDSB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Sub "10.${VPCUniqueNumber}.32.0/24"
+      AvailabilityZone: !Sub "${AWS::Region}b"
+      Tags:
+        -
+          Key: Name
+          Value: !Sub "${EnvironmentName} Lightrail RDS Subnet b. (${AWS::StackName})"
+        -
+          Key: Product
+          Value: Lightrail
+        -
+          Key: Environment
+          Value: !Ref EnvironmentName
+  SubnetRDSC:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Sub "10.${VPCUniqueNumber}.33.0/24"
+      AvailabilityZone: !Sub "${AWS::Region}c"
+      Tags:
+        -
+          Key: Name
+          Value: !Sub "${EnvironmentName} Lightrail RDS Subnet c. (${AWS::StackName})"
+        -
+          Key: Product
+          Value: Lightrail
+        -
+          Key: Environment
+          Value: !Ref EnvironmentName
+
+Outputs:
+  VpcId:
+    Description: The ID of the VPC
+    Value: !Ref VPC
+  RDSSubnetIds:
+    Description: The Subnet IDs for RDS
+    Value: !Join [ ',', [ !Ref SubnetRDSA, !Ref SubnetRDSB, !Ref SubnetRDSC ] ]
