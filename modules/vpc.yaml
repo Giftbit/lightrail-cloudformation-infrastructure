@@ -236,12 +236,12 @@ Resources:
       Roles:
         - !Ref BastionHostRole
   BastionHostElasticIP:
-    Type: "AWS::EC2::EIP"
+    Type: AWS::EC2::EIP
     Properties:
       Domain: vpc
       InstanceId: !Ref BastionHostInstance
   BastionHostSecurityGroup:
-    Type: "AWS::EC2::SecurityGroup"
+    Type: AWS::EC2::SecurityGroup
     Properties:
       GroupName: !Sub "Lightrail-${EnvironmentName}-Bastion-Host"
       GroupDescription: !Sub "Lightrail ${EnvironmentName} Bastion Host for VPC ${VPC}"
@@ -263,21 +263,47 @@ Resources:
           Key: Name
           Value: !Sub "${EnvironmentName} Lightrail Bastion Host"
 
-  # Application Security Groups
-  AppServerSecurityGroup:
-    Type: "AWS::EC2::SecurityGroup"
+  # Load Balancer Security Group
+  AlbSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupName: !Sub "Lightrail-${EnvironmentName}-App-Server"
-      GroupDescription: !Sub "Lightrail ${EnvironmentName} App Server for VPC ${VPC}"
+      GroupName: !Sub "Lightrail-${EnvironmentName}-ALB"
+      GroupDescription: !Sub "Lightrail ${EnvironmentName} ALB for VPC ${VPC}"
       VpcId: !Ref VPC
       SecurityGroupIngress:
+        - # Access HTTPS from Internet
+          FromPort: 443
+          ToPort: 443
+          IpProtocol: tcp
+          CidrIp: 0.0.0.0/0
+      Tags:
         -
+          Key: Name
+          Value: !Sub "${EnvironmentName} Lightrail Application Load Balancers"
+  AlbEcsAccess:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties:
+      GroupId: !Ref AlbSecurityGroup
+      FromPort: 32768
+      ToPort: 61000
+      IpProtocol: tcp
+      DestinationSecurityGroupId: !Ref EcsClusterInstanceSecurityGroup
+
+  # Application Security Groups
+  EcsClusterInstanceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub "Lightrail-${EnvironmentName}-ECS"
+      GroupDescription: !Sub "Lightrail ${EnvironmentName} ECS Instance for VPC ${VPC}"
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - # Bastion Host Access
           FromPort: 22
           ToPort: 22
           IpProtocol: tcp
           SourceSecurityGroupId: !Ref BastionHostSecurityGroup
       SecurityGroupEgress:
-        -
+        - # Access to the Internet
           FromPort: 0
           ToPort: 65535
           IpProtocol: tcp
@@ -285,11 +311,20 @@ Resources:
       Tags:
         -
           Key: Name
-          Value: !Sub "${EnvironmentName} Lightrail Application Server Instances"
+          Value: !Sub "${EnvironmentName} Lightrail ECS Cluster Instances"
+  EcsAlbAccessGrant:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref EcsClusterInstanceSecurityGroup
+      FromPort: 32768
+      ToPort: 61000
+      IpProtocol: tcp
+      SourceSecurityGroupId: !Ref AlbSecurityGroup
+
 
   # RDS Security Groups
-  RDSSecurityGroup:
-    Type: "AWS::EC2::SecurityGroup"
+  RdsSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
     Properties:
       GroupName: !Sub "Lightrail-${EnvironmentName}-RDS"
       GroupDescription: !Sub "Lightrail ${EnvironmentName} RDS for VPC ${VPC}"
@@ -304,7 +339,8 @@ Resources:
           FromPort: 3306
           ToPort: 3306
           IpProtocol: tcp
-          SourceSecurityGroupId: !Ref AppServerSecurityGroup
+          SourceSecurityGroupId: !Ref EcsClusterInstanceSecurityGroup
+
       Tags:
         -
           Key: Name
@@ -437,7 +473,7 @@ Resources:
       SubnetId: !Ref SubnetPrivateC
 
   # RDS Subnets (These are neither publically accessible, nor have outgoing internet access)
-  SubnetRDSA:
+  SubnetRdsA:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref VPC
@@ -447,7 +483,7 @@ Resources:
         -
           Key: Name
           Value: !Sub "${EnvironmentName} Lightrail RDS Subnet a. (${AWS::StackName})"
-  SubnetRDSB:
+  SubnetRdsB:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref VPC
@@ -457,7 +493,7 @@ Resources:
         -
           Key: Name
           Value: !Sub "${EnvironmentName} Lightrail RDS Subnet b. (${AWS::StackName})"
-  SubnetRDSC:
+  SubnetRdsC:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref VPC
@@ -469,9 +505,29 @@ Resources:
           Value: !Sub "${EnvironmentName} Lightrail RDS Subnet c. (${AWS::StackName})"
 
 Outputs:
+  # VPC Outputs
   VpcId:
     Description: The ID of the VPC
     Value: !Ref VPC
-  RDSSubnetIds:
+
+  # Security Group Outputs
+  AlbSecurityGroupId:
+    Description: ALB Security Group IDs
+    Value: !Ref AlbSecurityGroup
+  EcsClusterInstanceSecurityGroupId:
+    Description: ID for the ECS Cluster Security Group
+    Value: !Ref EcsClusterInstanceSecurityGroup
+  RdsSecurityGroupId:
+    Description: Id for the RDS Security Group
+    Value: !Ref RdsSecurityGroup
+
+  # Subnet Outputs
+  PublicSubnetIds:
+    Description: The Subnet IDs for Public Subnets
+    Value: !Join [ ',', [ !Ref SubnetPublicA, !Ref SubnetPublicB, !Ref SubnetPublicC ] ]
+  PrivateSubnetIds:
     Description: The Subnet IDs for RDS
-    Value: !Join [ ',', [ !Ref SubnetRDSA, !Ref SubnetRDSB, !Ref SubnetRDSC ] ]
+    Value: !Join [ ',', [ !Ref SubnetPrivateA, !Ref SubnetPrivateB, !Ref SubnetPrivateC ] ]
+  RdsSubnetIds:
+    Description: The Subnet IDs for RDS
+    Value: !Join [ ',', [ !Ref SubnetRdsA, !Ref SubnetRdsB, !Ref SubnetRdsC ] ]
