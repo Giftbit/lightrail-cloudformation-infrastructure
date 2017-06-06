@@ -1,0 +1,116 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Lightrail RDS"
+
+Parameters:
+  EnvironmentName:
+    Type: String
+    Description: The Name of the Environment
+    AllowedValues:
+      - Dev
+      - Staging
+      - Production
+  RdsInstanceClass:
+    Type: String
+    Description: The Instance Type to use for the RDS Instance
+    Default: "db.m3.medium"
+    AllowedValues:
+      - db.m3.medium
+      - db.m4.large
+  RdsInstanceAllocation:
+    Type: Number
+    Description: The amount of storage to allocate.
+    Default: 100
+    MinValue: 100
+  RdsMultiAZ:
+    Type: String
+    Description: Should the instance be MultiAZ
+    AllowedValues:
+      - true
+      - false
+  RdsSnapshotId:
+    Type: String
+    Description: The RDS Snapshot to create the database from (optional)
+    Default: ""
+  VpcRDSSubnetIds:
+    Type: String
+    Description: The RDS Subnets from the VPC
+  VpcHostedZoneId:
+    Type: String
+    Description: The ID of the Route53 Hosted Zone
+  VpcSecurityGroupIds:
+    Type: String
+    Description: The comma separated list of Security Group Ids
+
+Conditions:
+  ShouldCreateDatabaseFromSnapshot: !Not [!Equals [!Ref RdsSnapshotId, ""]]
+  ShouldCreateEmptyDatabase: !Equals [!Ref RdsSnapshotId, ""]
+
+Resources:
+  # SSM Bucket
+  EncryptionKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: !Sub "Lightrail ${EnvironmentName} RDS Encryption Key"
+      KeyPolicy:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: "Allow"
+            Principal:
+              AWS:
+                !Sub "arn:aws:iam::${AWS::AccountId}:root"
+            Action:
+              - "kms:*"
+            Resource: "*"
+  EncryptionKeyAlias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: !Sub "alias/Lightrail-${EnvironmentName}-RDS"
+      TargetKeyId: !Ref EncryptionKey
+  SubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: !Sub "Lightrail ${EnvironmentName} Subnet Group"
+      SubnetIds: !Split [",", !Ref VpcRDSSubnetIds]
+      Tags:
+        -
+          Key: Service
+          Value: RDS
+  RdsInstance:
+    Type: "AWS::RDS::DBInstance"
+    Properties:
+      DBInstanceIdentifier: !Sub "Lightrail-${EnvironmentName}"
+      DBSnapshotIdentifier: !If [ShouldCreateDatabaseFromSnapshot, !Ref RdsSnapshotId, !Ref "AWS::NoValue"]
+      MasterUsername: !If [ShouldCreateEmptyDatabase, lightrail, !Ref "AWS::NoValue"]
+      MasterUserPassword: !If [ShouldCreateEmptyDatabase, lightrail-20170606, !Ref "AWS::NoValue"]
+      DBInstanceClass: !Ref RdsInstanceClass
+      AllocatedStorage: !Ref RdsInstanceAllocation
+      StorageType: gp2
+      MultiAZ: !Ref RdsMultiAZ
+      DBSubnetGroupName: !Ref SubnetGroup
+      VPCSecurityGroups: !Split [",", !Ref VpcSecurityGroupIds]
+      KmsKeyId: !Ref EncryptionKey
+      StorageEncrypted: true
+      BackupRetentionPeriod: 7
+      PreferredBackupWindow: 09:17-09:47
+      PreferredMaintenanceWindow: sun:06:57-sun:07:57
+      Engine: mysql
+      EngineVersion: 5.6.27
+      CopyTagsToSnapshot: true
+      OptionGroupName: default:mysql-5-6
+      DBParameterGroupName: default.mysql5.6
+      Tags:
+        -
+          Key: Name
+          Value: !Sub "Lightrail ${EnvironmentName} RDS"
+  VpcRdsZoneRecord:
+    Type: "AWS::Route53::RecordSet"
+    Properties:
+      HostedZoneId: !Ref VpcHostedZoneId
+      Name: lightrail-mysql.vpc.
+      Type: CNAME
+      TTL: 300
+      ResourceRecords:
+        - !GetAtt RdsInstance.Endpoint.Address
+
+
