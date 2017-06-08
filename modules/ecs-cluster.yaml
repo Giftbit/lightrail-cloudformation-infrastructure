@@ -42,11 +42,13 @@ Parameters:
     Description: The ID of the security group to apply to the cluster instances
   ClusterScaleUpRecurrence:
     Type: String
-    Description: The Cron Recurrence schedule for scaling up the ECS Cluster
+    Description: >
+      The Cron Recurrence schedule for scaling up the ECS Cluster (Blank will not schedule recurrent scale ups)
     Default: ""
   ClusterScaleDownRecurrence:
     Type: String
-    Description: The Cron Recurrence schedule for scaling down the ECS Cluster
+    Description: >
+      The Cron Recurrence schedule for scaling down the ECS Cluster (Blank will not schedule recurrent scale downs)
     Default: ""
   VpcId:
     Type: String
