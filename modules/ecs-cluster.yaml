@@ -71,7 +71,9 @@ Conditions:
   ShouldScheduleClusterScaleDown: !Not [!Equals [!Ref ClusterScaleDownRecurrence, ""]]
 
 Mappings:
-  # aws --region [region-name] ec2 describe-images --owners amazon --filters "Name=root-device-type,Values=ebs" "Name=name,Values=amzn-ami-2016.09.*-amazon-ecs-optimized" "Name=virtualization-type,Values=hvm" "Name=architecture,Values=x86_64" --query "Images[].[ImageId,Name]" --output text
+  # aws --region [region-name] ec2 describe-images --owners amazon --filters "Name=root-device-type,Values=ebs" \
+  #   "Name=name,Values=amzn-ami-2016.09.*-amazon-ecs-optimized" "Name=virtualization-type,Values=hvm" \
+  #   "Name=architecture,Values=x86_64" --query "Images[].[ImageId,Name]" --output text
   RegionECSImageMap:
     us-west-2:
       "64": ami-62d35c02
@@ -139,7 +141,7 @@ Resources:
   ClusterLaunchConfiguration:
     Type: AWS::AutoScaling::LaunchConfiguration
     Properties:
-      ImageId: !FindInMap [ RegionECSImageMap, !Ref "AWS::Region", 64 ]
+      ImageId: !FindInMap [RegionECSImageMap, !Ref "AWS::Region", "64"]
       InstanceType: !Ref ClusterInstanceType
       AssociatePublicIpAddress: false
       IamInstanceProfile: !Ref ClusterInstanceProfile
@@ -160,7 +162,8 @@ Resources:
 
         # Install the Amazon EC2 Systems Manager
         cd /tmp
-        sudo yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm
+        sudo yum install -y \
+          https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm
   ClusterRole:
     Type: AWS::IAM::Role
     Properties:

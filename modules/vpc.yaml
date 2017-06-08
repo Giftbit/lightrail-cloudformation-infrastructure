@@ -31,13 +31,17 @@ Parameters:
 
 Mappings:
 
-  # aws --region [region-name] ec2 describe-images --owners amazon --filters "Name=root-device-type,Values=ebs" "Name=name,Values=amzn-ami-vpc-nat-hvm-*" "Name=architecture,Values=x86_64" --query "Images[].[ImageId,Name]" --output text
+  # aws --region [region-name] ec2 describe-images --owners amazon --filters "Name=root-device-type,Values=ebs" \
+  #   "Name=name,Values=amzn-ami-vpc-nat-hvm-*" "Name=architecture,Values=x86_64" --query "Images[].[ImageId,Name]" \
+  #   --output text
   RegionNatImageMap:
     us-west-2:
       "64": ami-8437a5e4
     us-east-1:
       "64": ami-258e1f33
-  # aws --region [region-name] ec2 describe-images --owners amazon --filters "Name=root-device-type,Values=ebs" "Name=name,Values=amzn-ami-hvm-*" "Name=architecture,Values=x86_64" --query "Images[].[ImageId,Name]" --output text
+  # aws --region [region-name] ec2 describe-images --owners amazon --filters "Name=root-device-type,Values=ebs" \
+  #   "Name=name,Values=amzn-ami-hvm-*" "Name=architecture,Values=x86_64" --query "Images[].[ImageId,Name]" \
+  #  --output text
   RegionBastionHostImageMap:
     us-west-2:
       "64": ami-3234a652
@@ -91,7 +95,7 @@ Resources:
   NatInstance:
     Type: AWS::EC2::Instance
     Properties:
-      ImageId: !FindInMap [ RegionNatImageMap, !Ref "AWS::Region", 64 ]
+      ImageId: !FindInMap [RegionNatImageMap, !Ref "AWS::Region", "64"]
       AvailabilityZone: us-west-2b
       SourceDestCheck: false
       InstanceType: !Ref NatInstanceType
@@ -167,10 +171,10 @@ Resources:
   BastionHostInstance:
     Type: AWS::EC2::Instance
     Properties:
-      ImageId: !FindInMap [ RegionBastionHostImageMap, !Ref "AWS::Region", 64 ]
-      AvailabilityZone: !GetAtt SubnetPublicB.AvailabilityZone
+      ImageId: !FindInMap [RegionBastionHostImageMap, !Ref "AWS::Region", "64"]
+      AvailabilityZone: !GetAtt SubnetPublicA.AvailabilityZone
       InstanceType: t2.nano
-      SubnetId: !Ref SubnetPublicB
+      SubnetId: !Ref SubnetPublicA
       SecurityGroupIds:
         - !Ref BastionHostSecurityGroup
       IamInstanceProfile: !Ref BastionHostInstanceProfile
@@ -181,11 +185,13 @@ Resources:
         # Install the Amazon EC2 Systems Manager
         #!/bin/bash
         cd /tmp
-        sudo yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm
+        sudo yum install -y \
+          https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm
 
         SHASUM="d4fb1c6da99c0b42d3b41329ebc630e19dc75ffbb223b6d7afd1e45a1ec01c28"
         # Install the SSH IAM Login scripts
-        curl https://raw.githubusercontent.com/Giftbit/iam-ssh/3d665e59fc90ccd5a4e5eba46748ad2a85a135af/install.sh -o install.sh
+        curl https://raw.githubusercontent.com/Giftbit/iam-ssh/3d665e59fc90ccd5a4e5eba46748ad2a85a135af/install.sh \
+          -o install.sh
         if echo "$SHASUM *install.sh" | shasum -a 256 -c -; then
           chmod 755 install.sh
           ./install.sh
@@ -271,7 +277,7 @@ Resources:
       GroupDescription: !Sub "Lightrail ${EnvironmentName} ALB for VPC ${VPC}"
       VpcId: !Ref VPC
       SecurityGroupIngress:
-        - # Access HTTPS from Internet
+        -  # Access HTTPS from Internet
           FromPort: 443
           ToPort: 443
           IpProtocol: tcp
@@ -297,13 +303,13 @@ Resources:
       GroupDescription: !Sub "Lightrail ${EnvironmentName} ECS Instance for VPC ${VPC}"
       VpcId: !Ref VPC
       SecurityGroupIngress:
-        - # Bastion Host Access
+        -  # Bastion Host Access
           FromPort: 22
           ToPort: 22
           IpProtocol: tcp
           SourceSecurityGroupId: !Ref BastionHostSecurityGroup
       SecurityGroupEgress:
-        - # Access to the Internet
+        -  # Access to the Internet
           FromPort: 0
           ToPort: 65535
           IpProtocol: tcp
@@ -527,10 +533,10 @@ Outputs:
   # Subnet Outputs
   PublicSubnetIds:
     Description: The Subnet IDs for Public Subnets
-    Value: !Join [ ',', [ !Ref SubnetPublicA, !Ref SubnetPublicB, !Ref SubnetPublicC ] ]
+    Value: !Join [',', [!Ref SubnetPublicA, !Ref SubnetPublicB, !Ref SubnetPublicC]]
   PrivateSubnetIds:
     Description: The Subnet IDs for RDS
-    Value: !Join [ ',', [ !Ref SubnetPrivateA, !Ref SubnetPrivateB, !Ref SubnetPrivateC ] ]
+    Value: !Join [',', [!Ref SubnetPrivateA, !Ref SubnetPrivateB, !Ref SubnetPrivateC]]
   RdsSubnetIds:
     Description: The Subnet IDs for RDS
-    Value: !Join [ ',', [ !Ref SubnetRdsA, !Ref SubnetRdsB, !Ref SubnetRdsC ] ]
+    Value: !Join [',', [!Ref SubnetRdsA, !Ref SubnetRdsB, !Ref SubnetRdsC]]
