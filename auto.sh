@@ -19,7 +19,29 @@ fi
 
 COMMAND="$1"
 
-if [ "$COMMAND" = "deploy" ]; then
+if [ "$COMMAND" = "test" ]; then
+    TEMPLATE_FILE_NAMES=$(grep -rl --include=*.yaml --exclude=./build/* AWSTemplateFormatVersion .)
+    yamllint $(echo $TEMPLATE_FILE_NAMES)
+
+    if [ $? -ne 0 ]; then
+        echo "Project failed linting. See output above"
+        exit 1
+    fi
+
+    for filename in $TEMPLATE_FILE_NAMES; do
+        aws cloudformation validate-template --template-body file://$filename > /dev/null 2>&1
+
+        if [ $? -ne 0 ]; then
+            echo "$filename failed CloudFormation Template Validation."
+            echo "The error was:"
+            aws cloudformation validate-template --template-body file://$filename
+            exit 2
+        fi
+    done
+
+    echo "All Templates passed Linting and CloudFormation Template Validation"
+
+elif [ "$COMMAND" = "deploy" ]; then
     ACCOUNT="$2"
 
     if [ "$#" -lt 2 ]; then
