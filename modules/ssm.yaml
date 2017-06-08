@@ -11,7 +11,7 @@ Parameters:
     Type: String
     Default: arn:aws:kms:us-west-2:131941013619:key/88612fbb-89ac-494b-8126-6446bc5d0038
     Description: Enter the KMS Key Arn you should like to use for encrypting your instance logs
-    AllowedPattern: arn:aws:kms:[a-z0-9\-]+:\d{12}:key/[a-z0-9-]+
+    AllowedPattern: arn:aws:kms:[a-z0-9-]+:\d{12}:key/[a-z0-9-]+
 
 Resources:
   # SSM Bucket
