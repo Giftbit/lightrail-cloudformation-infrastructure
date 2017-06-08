@@ -15,13 +15,13 @@ Parameters:
   ClusterMinInstances:
     Type: Number
     Description: The lowest number of instances that should be in the ECS cluster
-    Default: "1"
+    Default: 1
     MaxValue: 10
     MinValue: 1
   ClusterMaxInstances:
     Type: Number
     Description: The highest number of instances that should be in the ECS cluster
-    Default: "3"
+    Default: 3
     MaxValue: 10
     MinValue: 1
   ClusterInstanceType:
@@ -60,7 +60,7 @@ Parameters:
     Type: String
     Default: giftbit-instance-logs
     Description: Enter the S3 bucket you would like the instance logs to go
-    AllowedPattern: [a-z0-9.-]+
+    AllowedPattern: "[a-z0-9.-]+"
   InstanceLogsKmsEncryptionKeyArn:
     Type: String
     Default: arn:aws:kms:us-west-2:131941013619:key/88612fbb-89ac-494b-8126-6446bc5d0038
@@ -143,7 +143,7 @@ Resources:
   ClusterLaunchConfiguration:
     Type: AWS::AutoScaling::LaunchConfiguration
     Properties:
-      ImageId: !FindInMap [ RegionECSImageMap, !Ref AWS::Region, 64 ]
+      ImageId: !FindInMap [ RegionECSImageMap, !Ref "AWS::Region", 64 ]
       InstanceType: !Ref ClusterInstanceType
       AssociatePublicIpAddress: false
       IamInstanceProfile: !Ref ClusterInstanceProfile

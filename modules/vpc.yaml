@@ -24,7 +24,7 @@ Parameters:
   VPCUniqueNumber:
     Type: Number
     Description: The value to prefix the regions subnets with
-    Default: "1"
+    Default: 1
     MaxValue: 251
     MinValue: 1
 
@@ -91,7 +91,7 @@ Resources:
   NatInstance:
     Type: AWS::EC2::Instance
     Properties:
-      ImageId: !FindInMap [ RegionNatImageMap, !Ref AWS::Region, 64 ]
+      ImageId: !FindInMap [ RegionNatImageMap, !Ref "AWS::Region", 64 ]
       AvailabilityZone: us-west-2b
       SourceDestCheck: false
       InstanceType: !Ref NatInstanceType
@@ -167,7 +167,7 @@ Resources:
   BastionHostInstance:
     Type: AWS::EC2::Instance
     Properties:
-      ImageId: !FindInMap [ RegionBastionHostImageMap, !Ref AWS::Region, 64 ]
+      ImageId: !FindInMap [ RegionBastionHostImageMap, !Ref "AWS::Region", 64 ]
       AvailabilityZone: !GetAtt SubnetPublicB.AvailabilityZone
       InstanceType: t2.nano
       SubnetId: !Ref SubnetPublicB
