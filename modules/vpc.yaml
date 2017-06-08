@@ -91,7 +91,7 @@ Resources:
   NatInstance:
     Type: AWS::EC2::Instance
     Properties:
-      ImageId: !FindInMap [ RegionNatImageMap, !Ref "AWS::Region", 64 ]
+      ImageId: !FindInMap [ RegionNatImageMap, !Ref AWS::Region, 64 ]
       AvailabilityZone: us-west-2b
       SourceDestCheck: false
       InstanceType: !Ref NatInstanceType
@@ -106,12 +106,12 @@ Resources:
           Key: Service
           Value: NAT
   NatElasticIP:
-    Type: "AWS::EC2::EIP"
+    Type: AWS::EC2::EIP
     Properties:
       Domain: vpc
       InstanceId: !Ref NatInstance
   NatSecurityGroup:
-    Type: "AWS::EC2::SecurityGroup"
+    Type: AWS::EC2::SecurityGroup
     Properties:
       GroupName: !Sub "Lightrail-${EnvironmentName}-NAT"
       GroupDescription: !Sub "Lightrail ${EnvironmentName} NAT"
@@ -167,7 +167,7 @@ Resources:
   BastionHostInstance:
     Type: AWS::EC2::Instance
     Properties:
-      ImageId: !FindInMap [ RegionBastionHostImageMap, !Ref "AWS::Region", 64 ]
+      ImageId: !FindInMap [ RegionBastionHostImageMap, !Ref AWS::Region, 64 ]
       AvailabilityZone: !GetAtt SubnetPublicB.AvailabilityZone
       InstanceType: t2.nano
       SubnetId: !Ref SubnetPublicB
