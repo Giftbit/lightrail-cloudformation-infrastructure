@@ -1,15 +1,17 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: "Lightrail Basic SSM Setup"
+Description: Lightrail Basic SSM Setup
 
 Parameters:
   InstanceLogBucketName:
     Type: String
-    Default: "giftbit-instance-logs"
-    Description: "Enter the S3 bucket you would like the instance logs to go"
+    Default: giftbit-instance-logs
+    Description: Enter the S3 bucket you would like the instance logs to go
+    AllowedPattern: [a-z0-9.-]+
   InstanceLogEncryptionKeyArn:
     Type: String
-    Default: "arn:aws:kms:us-west-2:131941013619:key/88612fbb-89ac-494b-8126-6446bc5d0038"
-    Description: "Enter the KMS Key Arn you should like to use for encrypting your instance logs"
+    Default: arn:aws:kms:us-west-2:131941013619:key/88612fbb-89ac-494b-8126-6446bc5d0038
+    Description: Enter the KMS Key Arn you should like to use for encrypting your instance logs
+    AllowedPattern: arn:aws:kms:[a-z0-9\-]+:\d{12}:key/[a-z0-9-]+
 
 Resources:
   # SSM Bucket
@@ -85,12 +87,12 @@ Resources:
 
   # Instance Log Centralization
   SynchronizeLogsDocument:
-    Type: "AWS::SSM::Document"
+    Type: AWS::SSM::Document
     Properties:
       DocumentType: Command
       Content:
         schemaVersion: "1.2"
-        description: "Synchronizes the instance logs with the central logging location."
+        description: Synchronizes the instance logs with the central logging location.
         runtimeConfig:
           aws:runShellScript:
             properties:
@@ -102,7 +104,7 @@ Resources:
                   !Sub "sudo aws s3 sync --acl bucket-owner-full-control --sse aws:kms --sse-kms-key-id ${InstanceLogEncryptionKeyArn} /var/log s3://${InstanceLogBucketName}/$role_id:$instance_id"
               timeout: 300
   SynchronizeLogsAssociation:
-    Type: "AWS::SSM::Association"
+    Type: AWS::SSM::Association
     Properties:
       Name:
         !Ref SynchronizeLogsDocument
