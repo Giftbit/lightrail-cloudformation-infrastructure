@@ -1,0 +1,13 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Dev Master Stack"
+
+Resources:
+  LightrailVPC:
+    Type: "AWS::CloudFormation::Stack"
+    Properties:
+      TemplateURL: ../modules/vpc.yaml
+      Parameters:
+        BastionHostAuthorizedUsersGroup: Developers
+        EnvironmentName: Dev
+        NatInstanceType: t2.nano
+        VPCUniqueNumber: 1
