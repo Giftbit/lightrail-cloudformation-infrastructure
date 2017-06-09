@@ -1,0 +1,125 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Lightrail Services"
+
+Parameters:
+  EnvironmentName:
+    Type: String
+    Description: The Name of the Environment
+    AllowedValues:
+      - Dev
+      - Staging
+      - Production
+  UserIdsToGrantReadAccess:
+    Type: String
+    Description: Comma separated list of AWS UserIDs to grant Read Access
+    Default: ""
+
+Conditions:
+  ShouldAllowInfrastructureAdminToPutConfiguration: !Equals [!Ref EnvironmentName, "Dev"]
+  ShouldConfigureReadAccess: !Not [!Equals [!Ref UserIdsToGrantReadAccess, ""]]
+
+Resources:
+  EncryptionKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: !Sub "Lightrail ${EnvironmentName} Configuration Encryption Key"
+      KeyPolicy:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: "Allow"
+            Principal:
+              AWS:
+                !Sub "arn:aws:iam::${AWS::AccountId}:root"
+            Action:
+              - "kms:*"
+            Resource: "*"
+  Bucket:
+    Type: AWS::S3::Bucket
+  BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref Bucket
+      PolicyDocument:
+        Statement:
+          -  # For Security and consistency, don't allow putting any object not using the encryption key
+            Effect: Deny
+            Action:
+              - s3:PutObject
+            Resource:
+              - !Sub "arn:aws:s3:::${Bucket}/*"
+            Principal: "*"
+            Condition:
+              StringNotEquals:
+                "s3:x-amz-server-side-encryption-aws-kms-key-id": !GetAtt EncryptionKey.Arn
+          - !If  # In Dev, InfrastructureAdmin can set values and update policies (to test them out before codepipeline)
+            - ShouldAllowInfrastructureAdminToPutConfiguration
+            -
+              Effect: "Deny"
+              NotAction:
+                - s3:ListBucket
+                - s3:PutObject
+                - s3:PutObjectAcl
+                - s3:PutObjectVersionAcl
+                - s3:GetBucketLocation
+                - s3:GetBucketVersioning
+                - s3:PutBucketPolicy
+              Resource:
+                - !Sub "arn:aws:s3:::${Bucket}"
+                - !Sub "arn:aws:s3:::${Bucket}/*"
+              Principal: "*"
+              Condition:
+                StringLike:
+                  aws:userid: AROAINEQ7YDEFE7R3L24E:*
+            - !Ref AWS::NoValue
+          - !If  # Restrict Reading Roles to specifically Reading actions
+            - ShouldConfigureReadAccess
+            -
+              Effect: "Deny"
+              NotAction:
+                - s3:ListBucket
+                - s3:GetObject
+                - s3:GetObjectAcl
+                - s3:GetObjectVersionAcl
+                - s3:GetBucketLocation
+              Resource:
+                - !Sub "arn:aws:s3:::${Bucket}"
+                - !Sub "arn:aws:s3:::${Bucket}/*"
+              Principal: "*"
+              Condition:
+                StringLike:
+                  aws:userid: !Split [",", !Ref UserIdsToGrantReadAccess]
+            - !Ref AWS::NoValue
+          -  # Deny all other accesses
+            Effect: Deny
+            NotAction:
+              - s3:GetBucketLocation
+              - s3:GetBucketTagging
+            Resource:
+              - !Sub "arn:aws:s3:::${Bucket}"
+              - !Sub "arn:aws:s3:::${Bucket}/*"
+            Principal: "*"
+            Condition:
+              StringNotLike:
+                aws:userid: !Split  # This plus the Join below facilitate conditional list composition
+                  - ","
+                  - !Join
+                    - ","
+                    -
+                      - !Ref AWS::AccountId
+                      - !If  # In Dev, Don't block the Infrastructure Admin Role
+                        - ShouldAllowInfrastructureAdminToPutConfiguration
+                        - AROAINEQ7YDEFE7R3L24E:*
+                        - !Ref AWS::NoValue
+                      - !If  # Don't block the Roles we specifically granted with the Restricted Reading roles above
+                        - ShouldAllowInfrastructureAdminToPutConfiguration
+                        - !Ref UserIdsToGrantReadAccess  # This elements is comma separated, so joining it just works
+                        - !Ref AWS::NoValue
+
+Outputs:
+  BucketName:
+    Description: The name of the Secure Configuration Bucket
+    Value: !Ref Bucket
+  EncryptionKeyArn:
+    Description: The ARN of the Secure Configuration KMS Key
+    Value: !GetAtt EncryptionKey.Arn

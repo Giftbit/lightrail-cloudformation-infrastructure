@@ -42,6 +42,12 @@ Resources:
         VpcRDSSubnetIds: !GetAtt LightrailVPC.Outputs.RdsSubnetIds
         VpcHostedZoneId: !GetAtt LightrailVPC.Outputs.VpcHostedZoneId
         VpcSecurityGroupIds: !GetAtt LightrailVPC.Outputs.RdsSecurityGroupId
+  LightrailSecureConfig:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: ../modules/secure-config.yaml
+      Parameters:
+        EnvironmentName: Dev
 
   SSM:
     Type: AWS::CloudFormation::Stack

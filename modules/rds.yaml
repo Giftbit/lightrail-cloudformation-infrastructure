@@ -112,5 +112,3 @@ Resources:
       TTL: 300
       ResourceRecords:
         - !GetAtt RdsInstance.Endpoint.Address
-
-
