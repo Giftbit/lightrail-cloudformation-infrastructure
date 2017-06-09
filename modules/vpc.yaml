@@ -95,7 +95,7 @@ Resources:
   NatInstance:
     Type: AWS::EC2::Instance
     Properties:
-      ImageId: !FindInMap [RegionNatImageMap, !Ref "AWS::Region", "64"]
+      ImageId: !FindInMap [RegionNatImageMap, !Ref "AWS::Region", 64]
       AvailabilityZone: us-west-2b
       SourceDestCheck: false
       InstanceType: !Ref NatInstanceType
@@ -171,7 +171,7 @@ Resources:
   BastionHostInstance:
     Type: AWS::EC2::Instance
     Properties:
-      ImageId: !FindInMap [RegionBastionHostImageMap, !Ref "AWS::Region", "64"]
+      ImageId: !FindInMap [RegionBastionHostImageMap, !Ref "AWS::Region", 64]
       AvailabilityZone: !GetAtt SubnetPublicA.AvailabilityZone
       InstanceType: t2.nano
       SubnetId: !Ref SubnetPublicA

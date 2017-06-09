@@ -141,7 +141,7 @@ Resources:
   ClusterLaunchConfiguration:
     Type: AWS::AutoScaling::LaunchConfiguration
     Properties:
-      ImageId: !FindInMap [RegionECSImageMap, !Ref "AWS::Region", "64"]
+      ImageId: !FindInMap [RegionECSImageMap, !Ref "AWS::Region", 64]
       InstanceType: !Ref ClusterInstanceType
       AssociatePublicIpAddress: false
       IamInstanceProfile: !Ref ClusterInstanceProfile
