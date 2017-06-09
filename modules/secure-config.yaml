@@ -34,8 +34,15 @@ Resources:
             Action:
               - "kms:*"
             Resource: "*"
+  EncryptionKeyAlias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: !Sub "alias/Lightrail-${EnvironmentName}-SecureConfig"
+      TargetKeyId: !Ref EncryptionKey
   Bucket:
     Type: AWS::S3::Bucket
+    Properties:
+      AccessControl: private
   BucketPolicy:
     Type: AWS::S3::BucketPolicy
     Properties:
