@@ -1,0 +1,143 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Lightrail Services"
+
+Parameters:
+  EnvironmentName:
+    Type: String
+    Description: The Name of the Environment
+    AllowedValues:
+      - Dev
+      - Staging
+      - Production
+
+Resources:
+  KinesisStream:
+    Type: AWS::Kinesis::Stream
+    Properties:
+      ShardCount: 1
+
+      Tags:
+        - Service: EventStream
+
+  DataBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      AccessControl: private
+      Tags:
+        -
+          Key: Service
+          Value: EventStream
+  DataBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref DataBucket
+      PolicyDocument:
+        Statement:
+          -  # Since these objects are the last chance restore, make sure this never gets deleted
+            Effect: Deny
+            Action:
+              - s3:DeleteBucket
+              - s3:DeleteObject
+              - s3:DeleteObjectVersion
+            Resource:
+              - !Sub "arn:aws:s3:::${DataBucket}"
+              - !Sub "arn:aws:s3:::${DataBucket}/*"
+            Principal: "*"
+
+  FirehoseEncryptionKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: !Sub "Lightrail ${EnvironmentName} Data Lake Storage Key"
+      KeyPolicy:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: "Allow"
+            Principal:
+              AWS:
+                !Sub "arn:aws:iam::${AWS::AccountId}:root"
+            Action:
+              - "kms:*"
+            Resource: "*"
+  FirehoseEncryptionKeyAlias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: !Sub "alias/Lightrail-${EnvironmentName}-DataLake"
+      TargetKeyId: !Ref FirehoseEncryptionKey
+  FirehoseRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - sts:AssumeRole
+            Principal:
+              Service:
+                - firehose.amazonaws.com
+      Policies:
+        -
+          PolicyName: EncryptionAndBucketAccess
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              -
+                # Granting Access to Decrypt seems weird, but Firehose says it needs it
+                # http://docs.aws.amazon.com/firehose/latest/dev/controlling-access.html#using-iam-s3
+                Effect: Allow
+                Action:
+                  - kms:Decrypt
+                  - kms:GenerateDataKey
+                Resource:
+                  - !GetAtt FirehoseEncryptionKey.Arn
+                Condition:
+                  StringEquals:
+                    kms:ViaService: !Sub "s3.${AWS::Region}.amazonaws.com"
+                  StringLike:
+                    kms:EncryptionContext:aws:s3:arn: !Sub "arn:aws:s3:::${DataBucketPolicy}/*"
+              -
+                Effect: Allow
+                Action:
+                  - s3:AbortMultipartUpload
+                  - s3:GetBucketLocation
+                  - s3:GetObject
+                  - s3:ListObject
+                  - s3:ListBucketMultipartUploads
+                  - s3:PutObject
+                Resource:
+                  - !Sub "arn:aws:s3:::${DataBucketPolicy}"
+                  - !Sub "arn:aws:s3:::${DataBucketPolicy}/*"
+  FirehoseStream:
+    Type: AWS::KinesisFirehose::DeliveryStream
+    Properties:
+      S3DestinationConfiguration:
+        RoleARN: !GetAtt FirehoseRole.Arn
+        BucketARN: !Sub "arn:aws:s3:::${DataBucketPolicy}"
+        CompressionFormat: GZIP
+        EncryptionConfiguration:
+          KMSEncryptionConfig:
+            AWSKMSKeyARN: !GetAtt FirehoseEncryptionKey.Arn
+        BufferingHints:
+          IntervalInSeconds: 300
+          SizeInMBs: 5
+  FirehoseRoleLogPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: WriteLogs
+      Roles:
+        - !Ref FirehoseRole
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - logs:CreateLogGroup
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+            Resource:
+              - !Sub >
+                arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:
+                /aws/kinesisfirehose/${FirehoseStream}:log-stream:*
