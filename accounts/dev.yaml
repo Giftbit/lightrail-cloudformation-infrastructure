@@ -2,8 +2,9 @@ AWSTemplateFormatVersion: "2010-09-09"
 Description: "Dev Master Stack"
 
 Resources:
+
   LightrailVPC:
-    Type: "AWS::CloudFormation::Stack"
+    Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: ../modules/vpc.yaml
       Parameters:
@@ -11,3 +12,25 @@ Resources:
         EnvironmentName: Dev
         NatInstanceType: t2.nano
         VPCUniqueNumber: 1
+  LightrailECSCluster:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: ../modules/ecs-cluster.yaml
+      Parameters:
+        EnvironmentName: Dev
+        ClusterName: lightrail-dev
+        ClusterMinInstances: 1
+        ClusterMaxInstances: 3
+        ClusterInstanceType: t2.nano
+        ClusterSSHKeyName: LightrailDevECS
+        ClusterSecurityGroupIDs: !GetAtt LightrailVPC.Outputs.EcsClusterInstanceSecurityGroupId
+        ClusterScaleUpRecurrence: "0 15 * * MON-FRI"
+        ClusterScaleDownRecurrence: "0 3 * * TUE-SAT"
+        VpcId: !GetAtt LightrailVPC.Outputs.VpcId
+        VpcPublicSubnetIds: !GetAtt LightrailVPC.Outputs.PrivateSubnetIds
+        Ec2SsmPolicyArn: !GetAtt SSM.Outputs.EC2PolicyArn
+
+  SSM:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: ../modules/ssm.yaml

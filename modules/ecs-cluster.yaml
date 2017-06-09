@@ -1,0 +1,253 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Lightrail ECS Cluster"
+
+Parameters:
+  EnvironmentName:
+    Type: String
+    Description: The Name of the Environment
+    AllowedValues:
+      - Dev
+      - Staging
+      - Production
+  ClusterName:
+    Type: String
+    Description: The Name of the ECS Cluster
+  ClusterMinInstances:
+    Type: Number
+    Description: The lowest number of instances that should be in the ECS cluster
+    Default: 1
+    MaxValue: 10
+    MinValue: 1
+  ClusterMaxInstances:
+    Type: Number
+    Description: The highest number of instances that should be in the ECS cluster
+    Default: 3
+    MaxValue: 10
+    MinValue: 1
+  ClusterInstanceType:
+    Type: String
+    Description: The type of the nat instance to use
+    Default: t2.nano
+    AllowedValues:
+      - t2.nano
+      - t2.micro
+      - t2.small
+      - t2.medium
+      - t2.large
+  ClusterSSHKeyName:
+    Type: String
+    Description: The name of the EC2 SSH Key to use for the cluster instances
+  ClusterSecurityGroupIDs:
+    Type: String
+    Description: The ID of the security group to apply to the cluster instances
+  ClusterScaleUpRecurrence:
+    Type: String
+    Description: >
+      The Cron Recurrence schedule for scaling up the ECS Cluster (Blank will not schedule recurrent scale ups)
+    Default: ""
+  ClusterScaleDownRecurrence:
+    Type: String
+    Description: >
+      The Cron Recurrence schedule for scaling down the ECS Cluster (Blank will not schedule recurrent scale downs)
+    Default: ""
+  VpcId:
+    Type: String
+    Description: The ID of the VPC to add the cluster
+  VpcPublicSubnetIds:
+    Type: String
+    Description: The Public Subnets from the VPC
+  InstanceLogsBucketName:
+    Type: String
+    Default: giftbit-instance-logs
+    Description: Enter the S3 bucket you would like the instance logs to go
+    AllowedPattern: "[a-z0-9.-]+"
+  InstanceLogsKmsEncryptionKeyArn:
+    Type: String
+    Default: arn:aws:kms:us-west-2:131941013619:key/88612fbb-89ac-494b-8126-6446bc5d0038
+    Description: The Arn of the KMS Key to use when encrypting instance logs
+    AllowedPattern: arn:aws:kms:[a-z0-9-]+:\d{12}:key/[a-z0-9-]+
+  Ec2SsmPolicyArn:
+    Type: String
+    Description: The ARN of the Managed Policy to use for granting SSM Access for EC2 instances
+
+Conditions:
+  ShouldScheduleClusterScaleUp: !Not [!Equals [!Ref ClusterScaleUpRecurrence, ""]]
+  ShouldScheduleClusterScaleDown: !Not [!Equals [!Ref ClusterScaleDownRecurrence, ""]]
+
+Mappings:
+  # aws --region [region-name] ec2 describe-images --owners amazon --filters "Name=root-device-type,Values=ebs" "Name=name,Values=amzn-ami-2016.09.*-amazon-ecs-optimized" "Name=virtualization-type,Values=hvm" "Name=architecture,Values=x86_64" --query "Images[].[ImageId,Name]" --output text
+  RegionECSImageMap:
+    us-west-2:
+      "64": ami-62d35c02
+
+Resources:
+  # ECS Cluster
+  Cluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: !Sub "Lightrail-${EnvironmentName}"
+
+  # ECS Cluster Instances
+  ClusterAutoScalingGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      MinSize: !Ref ClusterMinInstances
+      MaxSize: !Ref ClusterMaxInstances
+      LaunchConfigurationName: !Ref ClusterLaunchConfiguration
+      HealthCheckGracePeriod: 300
+      HealthCheckType: EC2
+      VPCZoneIdentifier: !Split [",", !Ref VpcPublicSubnetIds]
+      Tags:
+        -
+          Key: Name
+          Value: !Sub "${EnvironmentName} Lightrail ECS Cluster"
+          PropagateAtLaunch: true
+        -
+          Key: Service
+          Value: ECS
+          PropagateAtLaunch: true
+        -
+          Key: DataDogEnabled
+          Value: true
+          PropagateAtLaunch: true
+        -
+          Key: CentralizeLogs
+          Value: true
+          PropagateAtLaunch: true
+        -
+          Key: NormalMinSize
+          Value: !Ref ClusterMinInstances
+          PropagateAtLaunch: false
+        -
+          Key: NormalMaxSize
+          Value: !Ref ClusterMaxInstances
+          PropagateAtLaunch: false
+  ClusterScaleUpSchedule:
+    Type: AWS::AutoScaling::ScheduledAction
+    Condition: ShouldScheduleClusterScaleUp
+    Properties:
+      AutoScalingGroupName: !Ref ClusterAutoScalingGroup
+      DesiredCapacity: !Ref ClusterMinInstances
+      MaxSize: !Ref ClusterMaxInstances
+      MinSize: !Ref ClusterMinInstances
+      Recurrence: !Ref ClusterScaleUpRecurrence
+  ClusterScaleDownSchedule:
+    Type: AWS::AutoScaling::ScheduledAction
+    Condition: ShouldScheduleClusterScaleDown
+    Properties:
+      AutoScalingGroupName: !Ref ClusterAutoScalingGroup
+      DesiredCapacity: 0
+      MaxSize: 0
+      MinSize: 0
+      Recurrence: !Ref ClusterScaleDownRecurrence
+  ClusterLaunchConfiguration:
+    Type: AWS::AutoScaling::LaunchConfiguration
+    Properties:
+      ImageId: !FindInMap [ RegionECSImageMap, !Ref "AWS::Region", 64 ]
+      InstanceType: !Ref ClusterInstanceType
+      AssociatePublicIpAddress: false
+      IamInstanceProfile: !Ref ClusterInstanceProfile
+      KeyName: !Ref ClusterSSHKeyName
+      SecurityGroups: !Split [",", !Ref ClusterSecurityGroupIDs]
+      UserData: !Base64 |
+        #!/bin/bash
+
+        # Update the packages on the machine (to prevent vulnerabilities)
+        yum update -y
+
+        # Block containers from accessing instance metadata
+        # iptables --insert FORWARD 1 --in-interface docker+ --destination 169.254.169.254/32 --jump DROP
+
+        # Configure the cluster we want to register into
+        echo ECS_CLUSTER=${aws_ecs_cluster.currency.name} >> /etc/ecs/ecs.config
+        echo ECS_RESERVED_MEMORY=${var.reserved_memory_amount} >> /etc/ecs/ecs.config
+
+        # Install the Amazon EC2 Systems Manager
+        cd /tmp
+        sudo yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm
+  ClusterRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - sts:AssumeRole
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+      Policies:
+        -
+          PolicyName: BasicECSAccess
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              -
+                Effect: Allow
+                Action:
+                  - ecs:DiscoverPollEndpoint
+                  - ecs:Poll
+                  - ecs:StartTelemetrySession
+                  - ecr:GetAuthorizationToken
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                  - ecs:DeregisterContainerInstance
+                  - ecs:RegisterContainerInstance
+                  - ecs:Submit*
+                Resource: "*"
+        -
+          PolicyName: ECRAccess
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              -
+                Effect: Allow
+                Action:
+                  - es:DescribeElasticSearchdomain
+                  - es:DescribeElasticSearchdomains
+                  - es:ListDomainNames
+                  - es:ListTags
+                Resource: "*"
+      ManagedPolicyArns:
+        - !Ref Ec2SsmPolicyArn
+  ClusterLogCentralizationAccess:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: LogCentralizationAccess
+      Roles:
+        - !Ref ClusterRole
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - iam:GetRole
+            Resource: !GetAtt ClusterRole.Arn
+          -
+            Effect: Allow
+            Action:
+              - s3:PutObject
+              - s3:PutObjectAcl
+              - s3:ListBucket
+            Resource:
+              - !Sub "arn:aws:s3:::${InstanceLogsBucketName}"
+              - !Sub "arn:aws:s3:::${InstanceLogsBucketName}/${!aws:userid}/*"
+          -
+            Effect: Allow
+            Action:
+              - kms:Encrypt
+              - kms:GenerateDataKey
+            Resource: !Ref InstanceLogsKmsEncryptionKeyArn
+            Condition:
+              StringLike:
+                kms:EncryptionContext:aws:s3:arn: !Sub "arn:aws:s3:::${InstanceLogsBucketName}/*"
+                kms:ViaService: !Sub "s3.${AWS::Region}.amazonaws.com"
+  ClusterInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: /
+      Roles:
+        - !Ref ClusterRole
