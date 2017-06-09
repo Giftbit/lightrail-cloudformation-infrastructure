@@ -509,6 +509,9 @@ Outputs:
   VpcId:
     Description: The ID of the VPC
     Value: !Ref VPC
+  VpcHostedZoneId:
+    Description: The Hosted Zone
+    Value: !Ref VPCHostedZone
 
   # Security Group Outputs
   AlbSecurityGroupId:

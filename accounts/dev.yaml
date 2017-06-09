@@ -29,6 +29,19 @@ Resources:
         VpcId: !GetAtt LightrailVPC.Outputs.VpcId
         VpcPublicSubnetIds: !GetAtt LightrailVPC.Outputs.PrivateSubnetIds
         Ec2SsmPolicyArn: !GetAtt SSM.Outputs.EC2PolicyArn
+  LightrailRDS:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: ../modules/rds.yaml
+      Parameters:
+        EnvironmentName: Dev
+        RdsInstanceClass: db.m3.medium
+        RdsInstanceAllocation: 100
+        RdsMultiAZ: true
+        RdsSnapshotId: ""
+        VpcRDSSubnetIds: !GetAtt LightrailVPC.Outputs.RdsSubnetIds
+        VpcHostedZoneId: !GetAtt LightrailVPC.Outputs.VpcHostedZoneId
+        VpcSecurityGroupIds: !GetAtt LightrailVPC.Outputs.RdsSecurityGroupId
 
   SSM:
     Type: AWS::CloudFormation::Stack
