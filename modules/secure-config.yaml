@@ -37,7 +37,7 @@ Resources:
   EncryptionKeyAlias:
     Type: AWS::KMS::Alias
     Properties:
-      AliasName: !Sub "alias/Lightrail-${EnvironmentName}-SecureConfig"
+      AliasName: !Sub "alias/${AWS::StackName}-SecureConfig"
       TargetKeyId: !Ref EncryptionKey
   Bucket:
     Type: AWS::S3::Bucket

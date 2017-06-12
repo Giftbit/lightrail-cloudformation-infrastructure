@@ -65,7 +65,7 @@ Resources:
   EncryptionKeyAlias:
     Type: AWS::KMS::Alias
     Properties:
-      AliasName: !Sub "alias/Lightrail-${EnvironmentName}-RDS"
+      AliasName: !Sub "alias/${AWS::StackName}-RDS"
       TargetKeyId: !Ref EncryptionKey
   SubnetGroup:
     Type: AWS::RDS::DBSubnetGroup
