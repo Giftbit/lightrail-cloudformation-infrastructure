@@ -17,12 +17,14 @@ Resources:
       ShardCount: 1
 
       Tags:
-        - Service: EventStream
+        -
+          Key: Service
+          Value: EventStream
 
   DataBucket:
     Type: AWS::S3::Bucket
     Properties:
-      AccessControl: private
+      AccessControl: Private
       Tags:
         -
           Key: Service
@@ -62,7 +64,7 @@ Resources:
   FirehoseEncryptionKeyAlias:
     Type: AWS::KMS::Alias
     Properties:
-      AliasName: !Sub "alias/Lightrail-${EnvironmentName}-DataLake"
+      AliasName: !Sub "alias/${AWS::StackName}-DataLake"
       TargetKeyId: !Ref FirehoseEncryptionKey
   FirehoseRole:
     Type: AWS::IAM::Role
@@ -96,7 +98,7 @@ Resources:
                   StringEquals:
                     kms:ViaService: !Sub "s3.${AWS::Region}.amazonaws.com"
                   StringLike:
-                    kms:EncryptionContext:aws:s3:arn: !Sub "arn:aws:s3:::${DataBucketPolicy}/*"
+                    kms:EncryptionContext:aws:s3:arn: !Sub "arn:aws:s3:::${DataBucket}/*"
               -
                 Effect: Allow
                 Action:
@@ -107,18 +109,19 @@ Resources:
                   - s3:ListBucketMultipartUploads
                   - s3:PutObject
                 Resource:
-                  - !Sub "arn:aws:s3:::${DataBucketPolicy}"
-                  - !Sub "arn:aws:s3:::${DataBucketPolicy}/*"
+                  - !Sub "arn:aws:s3:::${DataBucket}"
+                  - !Sub "arn:aws:s3:::${DataBucket}/*"
   FirehoseStream:
     Type: AWS::KinesisFirehose::DeliveryStream
     Properties:
       S3DestinationConfiguration:
         RoleARN: !GetAtt FirehoseRole.Arn
-        BucketARN: !Sub "arn:aws:s3:::${DataBucketPolicy}"
+        BucketARN: !Sub "arn:aws:s3:::${DataBucket}"
         CompressionFormat: GZIP
         EncryptionConfiguration:
           KMSEncryptionConfig:
             AWSKMSKeyARN: !GetAtt FirehoseEncryptionKey.Arn
+        Prefix: ""
         BufferingHints:
           IntervalInSeconds: 300
           SizeInMBs: 5
@@ -141,3 +144,17 @@ Resources:
               - !Sub >
                 arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:
                 /aws/kinesisfirehose/${FirehoseStream}:log-stream:*
+
+Outputs:
+  KinesisStreamName:
+    Description: The Name of the Kinesis Stream
+    Value: !Ref KinesisStream
+  KinesisStreamArn:
+    Description: The ARN of the Kinesis Stream
+    Value: !GetAtt KinesisStream.Arn
+  DataBucketName:
+    Description: The Name of the Data Bucket
+    Value: !Ref DataBucket
+  EncryptionKeyArn:
+    Description: The ARN of the Secure Configuration KMS Key
+    Value: !GetAtt FirehoseEncryptionKey.Arn
