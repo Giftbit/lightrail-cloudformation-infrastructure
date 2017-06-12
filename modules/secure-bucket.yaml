@@ -13,16 +13,21 @@ Parameters:
     Type: String
     Description: Comma separated list of AWS UserIDs to grant Read Access
     Default: ""
+  UserIdsToGrantWriteAccess:
+    Type: String
+    Description: Comma separated list of AWS UserIDs to grant Write Access
+    Default: ""
 
 Conditions:
   ShouldAllowInfrastructureAdminToPutConfiguration: !Equals [!Ref EnvironmentName, "Dev"]
   ShouldConfigureReadAccess: !Not [!Equals [!Ref UserIdsToGrantReadAccess, ""]]
+  ShouldConfigureWriteAccess: !Not [!Equals [!Ref UserIdsToGrantWriteAccess, ""]]
 
 Resources:
   EncryptionKey:
     Type: AWS::KMS::Key
     Properties:
-      Description: !Sub "Lightrail ${EnvironmentName} Configuration Encryption Key"
+      Description: !Sub "${AWS::StackName} Encryption Key"
       KeyPolicy:
         Version: "2012-10-17"
         Statement:
@@ -34,6 +39,11 @@ Resources:
             Action:
               - "kms:*"
             Resource: "*"
+  EncryptionKeyAlias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: !Sub "alias/${AWS::StackName}-Key"
+      TargetKeyId: !Ref EncryptionKey
   Bucket:
     Type: AWS::S3::Bucket
   BucketPolicy:
@@ -64,6 +74,8 @@ Resources:
                 - s3:GetBucketLocation
                 - s3:GetBucketVersioning
                 - s3:PutBucketPolicy
+                - s3:GetBucketPolicy
+                - s3:DeleteBucketPolicy
               Resource:
                 - !Sub "arn:aws:s3:::${Bucket}"
                 - !Sub "arn:aws:s3:::${Bucket}/*"
@@ -90,6 +102,25 @@ Resources:
                 StringLike:
                   aws:userid: !Split [",", !Ref UserIdsToGrantReadAccess]
             - !Ref AWS::NoValue
+          - !If  # Restrict Writing Roles to specifically Writing actions
+            - ShouldConfigureWriteAccess
+            -
+              Effect: "Deny"
+              NotAction:
+                - s3:ListBucket
+                - s3:PutObject
+                - s3:PutObjectAcl
+                - s3:PutObjectVersionAcl
+                - s3:GetBucketLocation
+                - s3:GetBucketVersioning
+              Resource:
+                - !Sub "arn:aws:s3:::${Bucket}"
+                - !Sub "arn:aws:s3:::${Bucket}/*"
+              Principal: "*"
+              Condition:
+                StringLike:
+                  aws:userid: !Split [",", !Ref UserIdsToGrantWriteAccess]
+            - !Ref AWS::NoValue
           -  # Deny all other accesses
             Effect: Deny
             NotAction:
@@ -112,14 +143,18 @@ Resources:
                         - AROAINEQ7YDEFE7R3L24E:*
                         - !Ref AWS::NoValue
                       - !If  # Don't block the Roles we specifically granted with the Restricted Reading roles above
-                        - ShouldAllowInfrastructureAdminToPutConfiguration
+                        - ShouldConfigureReadAccess
                         - !Ref UserIdsToGrantReadAccess  # This elements is comma separated, so joining it just works
+                        - !Ref AWS::NoValue
+                      - !If  # Don't block the Roles we specifically granted with the Restricted Writing roles above
+                        - ShouldConfigureWriteAccess
+                        - !Ref UserIdsToGrantWriteAccess  # This elements is comma separated, so joining it just works
                         - !Ref AWS::NoValue
 
 Outputs:
   BucketName:
-    Description: The name of the Secure Configuration Bucket
+    Description: The name of the Secure Bucket
     Value: !Ref Bucket
   EncryptionKeyArn:
-    Description: The ARN of the Secure Configuration KMS Key
+    Description: The ARN of the Secure Bucket KMS Key
     Value: !GetAtt EncryptionKey.Arn
