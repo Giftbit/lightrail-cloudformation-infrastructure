@@ -141,9 +141,8 @@ Resources:
               - logs:CreateLogStream
               - logs:PutLogEvents
             Resource:
-              - !Sub >
-                arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:
-                /aws/kinesisfirehose/${FirehoseStream}:log-stream:*
+              # yamllint disable-line rule:line-length
+              - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/kinesisfirehose/${FirehoseStream}:log-stream:*"
 
 Outputs:
   KinesisStreamName:
