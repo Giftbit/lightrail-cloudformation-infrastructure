@@ -52,6 +52,8 @@ Resources:
       TargetKeyId: !Ref EncryptionKey
   Bucket:
     Type: AWS::S3::Bucket
+    Properties:
+      AccessControl: Private
   BucketPolicy:
     Type: AWS::S3::BucketPolicy
     Properties:
