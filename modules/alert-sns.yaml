@@ -1,0 +1,26 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Lightrail Alarm SNS Channels"
+
+Resources:
+  EmergencyTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      Subscription:
+        -
+          Protocol: https
+          Endpoint: https://events.pagerduty.com/integration/20ef24f7ad74423392e31417365251fb/enqueue
+  NonEmergencyTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      Subscription:
+        -
+          Protocol: https
+          Endpoint: https://events.pagerduty.com/integration/1a909163c3a94fecbce9fd6b79768e97/enqueue
+
+Outputs:
+  EmergencySNSArn:
+    Description: The ARN for the Emergency SNS Topic
+    Value: !Ref EmergencyTopic
+  NonEmergencySNSArn:
+    Description: The ARN for the Emergency SNS Topic
+    Value: !Ref NonEmergencyTopic

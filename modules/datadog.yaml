@@ -1,0 +1,48 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Lightrail DataDog"
+
+Parameters:
+  EnvironmentName:
+    Type: String
+    Description: The Name of the Environment
+    AllowedValues:
+      - Dev
+      - Staging
+      - Production
+  UserIdsToGrantECRFullAccess:
+    Type: String
+    Description: >
+      Comma separated list of AWS UserIDs to grant Read Access
+      (See http://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_variables.html#policy-vars-infotouse)
+    Default: ""
+    AllowedPattern: (\d{12}:root,)+\d{12}|
+
+Conditions:
+  ShouldCreateECRRepository: !Equals [!Ref EnvironmentName, Prod]
+  ShouldConfigureECRAccess: !Not [!Equals [!Ref UserIdsToGrantECRFullAccess, ""]]
+
+Resources:
+  # DataDog ECR Repository
+  EcrRepo:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryPolicyText: !If
+        - ShouldConfigureECRAccess
+        -
+          Version: 2012-10-17
+          Statement:
+            Effect: Allow
+            Principal:
+              AWS: !Split [",", UserIdsToGrantECRFullAccess]
+            Action:
+              - ecr:GetDownloadUrlForLayer
+              - ecr:BatchGetImage
+              - ecr:BatchCheckLayerAvailability
+              - ecr:PutImage
+              - ecr:InitiateLayerUpload
+              - ecr:UploadLayerPart
+              - ecr:CompleteLayerUpload
+              - ecr:DescribeRepositories
+              - ecr:GetRepositoryPolicy
+              - ecr:ListImages
+        - !Ref AWS::NoValue

@@ -3,6 +3,10 @@ Description: "Dev Master Stack"
 
 Resources:
 
+  LightrailAlertChannels:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: ../modules/alert-sns.yaml
   LightrailVPC:
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -62,6 +66,19 @@ Resources:
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: ../modules/event-stream.yaml
+      Parameters:
+        EnvironmentName: Dev
+  LightrailLogstash:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: ../modules/logstash.yaml
+      Parameters:
+        EnvironmentName: Dev
+        NonEmergencyAlertsSnsArn: !GetAtt LightrailAlertChannels.Outputs.NonEmergencySNSArn
+  LightrailDatadog:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: ../modules/datadog.yaml
       Parameters:
         EnvironmentName: Dev
 
