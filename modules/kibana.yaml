@@ -1,0 +1,73 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Lightrail Logstash Kibana
+
+Parameters:
+  EnvironmentName:
+    Type: String
+    Description: The Name of the Environment
+    AllowedValues:
+      # The Dev Account should use the Staging logging
+      - Staging
+      - Production
+  UserIdsToGrantFullAccess:
+    Type: String
+    Description: >
+      Comma separated list of AWS UserIDs to grant Full Access
+      (See http://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_variables.html#policy-vars-infotouse)
+    Default: ""
+    AllowedPattern: (([A-Z0-9]+(:\*)?|\d{12}),)*([A-Z0-9]+(:\*)?|\d{12})|
+
+Conditions:
+  ShouldConfigureFullAccess: !Not [!Equals [!Ref UserIdsToGrantFullAccess, ""]]
+Mappings:
+  EnvironmentName:
+    Staging:
+      lower: staging
+    Production:
+      lower: production
+
+Resources:
+  ElasticsearchDomain:
+    Type: AWS::Elasticsearch::Domain
+    Properties:
+      # DomainName must be less than 28 Characters and match [a-z][a-z0-9\-]+
+      DomainName: "lightrail"
+      ElasticsearchClusterConfig:
+        InstanceCount: 1
+        InstanceType: m3.medium.elasticsearch
+      EBSOptions:
+        EBSEnabled: true
+        VolumeSize: 100
+        VolumeType: gp2
+      AccessPolicies:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Principal:
+              AWS: "*"
+            Action: es:*
+            Resource: !Sub "arn:aws:es:${AWS::Region}:${AWS::AccountId}:domain/lightrail/*"
+            Condition:
+              IpAddress:
+                aws:SourceIp:
+                  - "184.69.186.114"
+          - !If
+            - ShouldConfigureFullAccess
+            -
+              Effect: Allow
+              Action:
+                - es:*
+              Principals:
+                AWS: !Split [",", !Ref UserIdsToGrantFullAccess]
+              Resource:
+                - !Sub "arn:aws:es:${AWS::Region}:${AWS::AccountId}:domain/lightrail/*"
+            - !Ref AWS::NoValue
+
+Outputs:
+  KibanaDomain:
+    Description: The Domain Endpoint for the Kibana Domain
+    Value: !GetAtt ElasticsearchDomain.DomainEndpoint
+  KibanaArn:
+    Description: The Domain ARN for the Kibana Domain
+    Value: !GetAtt ElasticsearchDomain.DomainArn
