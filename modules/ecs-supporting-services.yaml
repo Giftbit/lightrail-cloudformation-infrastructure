@@ -1,0 +1,64 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Lightrail ECS Supporting Services"
+
+Parameters:
+  UserIdsToGrantECRFullAccess:
+    Type: String
+    Description: >
+      Comma separated list of AWS UserIDs to grant Read Access
+      (See http://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_variables.html#policy-vars-infotouse)
+    Default: ""
+    AllowedPattern: (\d{12}:root,)+\d{12}
+
+ShouldConfigureECRAccess: !Not [!Equals []]
+
+Resources:
+  # Logstash ECR Repository
+  LogstashECR:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryPolicyText:
+        Version: 2012-10-17
+        Statement:
+          - !If
+            - ShouldConfigureECRAccess
+            -
+              Effect: Allow
+              Principal:
+                AWS: !Split [",", UserIdsToGrantECRFullAccess]
+              Action:
+                  - ecr:GetDownloadUrlForLayer
+                  - ecr:BatchGetImage
+                  - ecr:BatchCheckLayerAvailability
+                  - ecr:PutImage
+                  - ecr:InitiateLayerUpload
+                  - ecr:UploadLayerPart
+                  - ecr:CompleteLayerUpload
+                  - ecr:DescribeRepositories
+                  - ecr:GetRepositoryPolicy
+                  - ecr:ListImages
+
+  # DataDog ECR Repository
+  DataDogECR:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryPolicyText:
+        Version: 2012-10-17
+        Statement:
+          - !If
+            - ShouldConfigureECRAccess
+            -
+              Effect: Allow
+              Principal:
+                AWS: !Split [",", UserIdsToGrantECRFullAccess]
+              Action:
+                  - ecr:GetDownloadUrlForLayer
+                  - ecr:BatchGetImage
+                  - ecr:BatchCheckLayerAvailability
+                  - ecr:PutImage
+                  - ecr:InitiateLayerUpload
+                  - ecr:UploadLayerPart
+                  - ecr:CompleteLayerUpload
+                  - ecr:DescribeRepositories
+                  - ecr:GetRepositoryPolicy
+                  - ecr:ListImages
