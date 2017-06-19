@@ -9,17 +9,15 @@ Parameters:
       - Dev
       - Staging
       - Production
-  UserIdsToGrantECRFullAccess:
+  AccountsToGrantECRFullAccess:
     Type: String
-    Description: >
-      Comma separated list of AWS UserIDs to grant Read Access
-      (See http://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_variables.html#policy-vars-infotouse)
+    Description: Comma separated list of AWS Account IDs to grant Read Access
     Default: ""
-    AllowedPattern: (\d{12}:root,)+\d{12}|
+    AllowedPattern: (\d{12}(,\d{12})*)?
 
 Conditions:
   ShouldCreateECRRepository: !Equals [!Ref EnvironmentName, Prod]
-  ShouldConfigureECRAccess: !Not [!Equals [!Ref UserIdsToGrantECRFullAccess, ""]]
+  ShouldConfigureECRAccess: !Not [!Equals [!Ref AccountsToGrantECRFullAccess, ""]]
 
 Resources:
   # DataDog ECR Repository
@@ -31,18 +29,20 @@ Resources:
         -
           Version: 2012-10-17
           Statement:
-            Effect: Allow
-            Principal:
-              AWS: !Split [",", UserIdsToGrantECRFullAccess]
-            Action:
-              - ecr:GetDownloadUrlForLayer
-              - ecr:BatchGetImage
-              - ecr:BatchCheckLayerAvailability
-              - ecr:PutImage
-              - ecr:InitiateLayerUpload
-              - ecr:UploadLayerPart
-              - ecr:CompleteLayerUpload
-              - ecr:DescribeRepositories
-              - ecr:GetRepositoryPolicy
-              - ecr:ListImages
+            -
+              Sid: RepositoryAccess
+              Effect: Allow
+              Principal:
+                AWS: !Split [",", !Ref AccountsToGrantECRFullAccess]
+              Action:
+                - ecr:GetDownloadUrlForLayer
+                - ecr:BatchGetImage
+                - ecr:BatchCheckLayerAvailability
+                - ecr:PutImage
+                - ecr:InitiateLayerUpload
+                - ecr:UploadLayerPart
+                - ecr:CompleteLayerUpload
+                - ecr:DescribeRepositories
+                - ecr:GetRepositoryPolicy
+                - ecr:ListImages
         - !Ref AWS::NoValue
