@@ -16,13 +16,14 @@ Parameters:
     AllowedPattern: (\d{12}(,\d{12})*)?
 
 Conditions:
-  ShouldCreateECRRepository: !Equals [!Ref EnvironmentName, Prod]
+  ShouldCreateECRRepository: !Equals [!Ref EnvironmentName, Production]
   ShouldConfigureECRAccess: !Not [!Equals [!Ref AccountsToGrantECRFullAccess, ""]]
 
 Resources:
   # DataDog ECR Repository
   EcrRepo:
     Type: AWS::ECR::Repository
+    Condition: ShouldCreateECRRepository
     Properties:
       RepositoryPolicyText: !If
         - ShouldConfigureECRAccess

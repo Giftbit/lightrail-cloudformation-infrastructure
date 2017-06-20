@@ -25,7 +25,7 @@ Parameters:
     AllowedPattern: arn:aws:sns:[a-z0-9-]+:\d{12}:[a-zA-Z0-9_-]+
 
 Conditions:
-  ShouldCreateECRRepository: !Equals [!Ref EnvironmentName, Prod]
+  ShouldCreateECRRepository: !Equals [!Ref EnvironmentName, Production]
   ShouldConfigureECRAccess: !Not [!Equals [!Ref AccountsToGrantECRFullAccess, ""]]
   ShouldConfigureKibanaFullAccess: !Not [!Equals [!Ref AccountsToGrantKibanaFullAccess, ""]]
   ShouldCreateKibanaInstance: !Not [!Equals [!Ref EnvironmentName, Dev]]
