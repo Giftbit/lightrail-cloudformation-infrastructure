@@ -28,17 +28,17 @@ Parameters:
   SesDomainArns:
     Type: String
     Description: Comma Separated list of SES Domain Arns for sending Emails
-    AllowedPattern: >
-      arn:aws:ses:[a-z0-9-]:\d{12}:identity/[a-z0-9._-]+(,arn:aws:ses:[a-z0-9-]:\d{12}:identity/[a-z0-9._-]+)*
+    AllowedPattern:
+      "arn:aws:ses:[a-z0-9-]+:\\d{12}:identity\\/[a-z0-9._-]+(,arn:aws:ses:[a-z0-9-]+:\\d{12}:identity\\/[a-z0-9._-]+)*"
   KinesisStreamArn:
     Type: String
     Description: The ARN of the Event Kinesis Stream
-    AllowedPattern: arn:aws:kinesis:[a-z0-9-]:\d{12}:stream/[A-Za-z0-9._-]+
+    AllowedPattern: arn:aws:kinesis:[a-z0-9-]+:\d{12}:stream/[A-Za-z0-9._-]+
   RemoteECRRepositoryArn:
     Type: String
     Description: (Optional) The ECR Repo to get Batch Docker images from
     Default: ""
-    AllowedPattern: (arn:aws:ecr:[a-z0-9-]:\d{12}:repository/[a-z0-9/_-]+)?
+    AllowedPattern: (arn:aws:ecr:[a-z0-9-]+:\d{12}:repository/[a-z0-9/_-]+)?
   AccountsToGrantECRFullAccess:
     Type: String
     Description: Comma separated list of AWS Account IDs to grant ECR Full Access
@@ -60,23 +60,23 @@ Resources:
         - ShouldConfigureECRAccess
         -
           Version: 2012-10-17
-            Statement:
-              -
-                Sid: RepositoryAccess
-                Effect: Allow
-                Principal:
-                  AWS: !Split [",", !Ref AccountsToGrantECRFullAccess]
-                Action:
-                  - ecr:GetDownloadUrlForLayer
-                  - ecr:BatchGetImage
-                  - ecr:BatchCheckLayerAvailability
-                  - ecr:PutImage
-                  - ecr:InitiateLayerUpload
-                  - ecr:UploadLayerPart
-                  - ecr:CompleteLayerUpload
-                  - ecr:DescribeRepositories
-                  - ecr:GetRepositoryPolicy
-                  - ecr:ListImages
+          Statement:
+            -
+              Sid: RepositoryAccess
+              Effect: Allow
+              Principal:
+                AWS: !Split [",", !Ref AccountsToGrantECRFullAccess]
+              Action:
+                - ecr:GetDownloadUrlForLayer
+                - ecr:BatchGetImage
+                - ecr:BatchCheckLayerAvailability
+                - ecr:PutImage
+                - ecr:InitiateLayerUpload
+                - ecr:UploadLayerPart
+                - ecr:CompleteLayerUpload
+                - ecr:DescribeRepositories
+                - ecr:GetRepositoryPolicy
+                - ecr:ListImages
         - !Ref AWS::NoValue
   Role:
     Type: AWS::IAM::Role

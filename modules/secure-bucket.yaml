@@ -15,7 +15,7 @@ Parameters:
       Comma separated list of AWS UserIDs to grant Read Access
       (See http://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_variables.html#policy-vars-infotouse)
     Default: ""
-    AllowedPattern:  (([A-Z0-9]+(:\*)?|\d{12})(,([A-Z0-9]+(:\*)?|\d{12}))*)?
+    AllowedPattern: (([A-Z0-9]+(:\*)?|\d{12})(,([A-Z0-9]+(:\*)?|\d{12}))*)?
   UserIdsToGrantWriteAccess:
     Type: String
     Description: >
