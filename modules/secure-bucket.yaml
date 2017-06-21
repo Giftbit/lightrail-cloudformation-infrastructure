@@ -163,6 +163,9 @@ Outputs:
   BucketName:
     Description: The name of the Secure Bucket
     Value: !Ref Bucket
+  BucketArn:
+    Description: The Arn of the Secure Bucket
+    Value: !Sub "arn:aws:s3:::${Bucket}"
   EncryptionKeyArn:
     Description: The ARN of the Secure Bucket KMS Key
     Value: !GetAtt EncryptionKey.Arn
