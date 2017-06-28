@@ -1,0 +1,77 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Lightrail React"
+
+Parameters:
+  EnvironmentName:
+    Type: String
+    Description: The Name of the Environment
+    AllowedValues:
+      - Dev
+      - Staging
+      - Production
+  AccountsToGrantBuildArtifactFullAccess:
+    Type: String
+    Description: Comma separated list of AWS Account IDs to grant Build Artifact Access
+    Default: ""
+    AllowedPattern: (\d{12}(,\d{12})*)?
+
+Conditions:
+  ShouldConfigureBuildArtifactAccess: !Not [!Equals [!Ref AccountsToGrantBuildArtifactFullAccess, ""]]
+  ShouldGenerateBuildArtifactBucket: !Equal [!Ref AccountsToGrantBuildArtificatFullAccess, Production]
+
+Resources:
+  ReactBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      AccessControl: PublicRead
+  ReactBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref ReactBucket
+      PolicyDocument:
+        Statement:
+          -  # Allow Public Reading of all resources
+            Effect: Allow
+            Action:
+              - s3:Get*
+            Resource:
+              - !Sub "arn:aws:s3:::${ReactBucket}/*"
+            Principal: "*"
+  BuildArtifactBucket:
+    Type: AWS::S3::Bucket
+    Condition: ShouldGenerateBuildArtifactBucket
+    Properties:
+      AccessControl: Private
+  BuildArtifactBucketPolicy:
+    Type: AWS::S3::Bucket
+    Condition: ShouldGenerateBuildArtifactBucket
+    Properties:
+      Bucket: !Ref BuildArtifactBucket
+      PolicyDocument: !If
+        - ShouldConfigureBuildArtifactAccess
+        -
+          Statement:
+            -
+              Effect: Allow
+              Action:
+                - s3:ListBucket
+                - s3:GetObject*
+                - s3:GetBucketLocation
+                - s3:PutObject*
+              Principals:
+                AWS: !Split [",", !Ref AccountsToGrantBuildArtifactFullAccess]
+              Resource:
+                - !Sub "arn:aws:s3::${BuildArtifactBucket}"
+                - !Sub "arn:aws:s3::${BuildArtifactBucket}/*"
+        - !Ref AWS::NoValue
+
+Outputs:
+  ReactBucketName:
+    Description: The name of the React Bucket
+    Value: !Ref ReactBucket
+  ReactDomainName:
+    Description: The Domain name to use for serving the React resources
+    Value: !GetAtt ReactBucket.DomainName
+  ActifactBucketName:
+    Description: The name of the Build Artifact Bucket
+    Value: !Ref BuildArtifactBucket
