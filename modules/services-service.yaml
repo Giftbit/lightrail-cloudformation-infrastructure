@@ -1,0 +1,247 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Lightrail Services"
+
+Parameters:
+  EnvironmentName:
+    Type: String
+    Description: The Name of the Environment
+    AllowedValues:
+      - Dev
+      - Staging
+      - Production
+  ConfigurationBucketArn:
+    Type: String
+    Description: The ARN of the Configuration Bucket
+    AllowedPattern: arn:aws:s3:::[A-Za-z0-9._-]+
+  ConfigurationBucketKeyArn:
+    Type: String
+    Description: The ARN of the Configuration Bucket Encryption Key
+    AllowedPattern: arn:aws:kms:[a-z0-9-]+:\d{12}:key/[a-z0-9-]+
+  SecureDownloadBucketArn:
+    Type: String
+    Description: The ARN of the Secure Download Bucket
+    AllowedPattern: arn:aws:s3:::[A-Za-z0-9._-]+
+  SecureDownloadBucketKeyArn:
+    Type: String
+    Description: The ARN of the Secure Download Bucket Encryption Key
+    AllowedPattern: arn:aws:kms:[a-z0-9-]+:\d{12}:key/[a-z0-9-]+
+  SesDomainArns:
+    Type: String
+    Description: Comma Separated list of SES Domain Arns for sending Emails
+    AllowedPattern:
+      "arn:aws:ses:[a-z0-9-]+:\\d{12}:identity\\/[a-z0-9._-]+(,arn:aws:ses:[a-z0-9-]+:\\d{12}:identity\\/[a-z0-9._-]+)*"
+  KinesisStreamArn:
+    Type: String
+    Description: The ARN of the Event Kinesis Stream
+    AllowedPattern: arn:aws:kinesis:[a-z0-9-]+:\d{12}:stream/[A-Za-z0-9._-]+
+  RemoteECRRepositoryArn:
+    Type: String
+    Description: (Optional) The ECR Repo to get Batch Docker images from
+    Default: ""
+    AllowedPattern: (arn:aws:ecr:[a-z0-9-]+:\d{12}:repository/[a-z0-9/_-]+)?
+  AccountsToGrantECRFullAccess:
+    Type: String
+    Description: Comma separated list of AWS Account IDs to grant ECR Full Access
+    Default: ""
+    AllowedPattern: (\d{12}(,\d{12})*)?
+  RdsInstanceClass:
+    Type: String
+    Description: The Instance Type to use for the RDS Instance
+    Default: "db.t2.medium"
+    AllowedValues:
+      - db.t2.small
+      - db.t2.medium
+      - db.t2.large
+      - db.m3.medium
+      - db.m4.large
+      - db.m4.xlarge
+  RdsInstanceAllocation:
+    Type: Number
+    Description: The amount of storage to allocate.
+    Default: 100
+    MinValue: 100
+  RdsMultiAZ:
+    Type: String
+    Description: Should the instance be MultiAZ
+    AllowedValues:
+      - true
+      - false
+  RdsSnapshotId:
+    Type: String
+    Description: The RDS Snapshot to create the database from (optional)
+    Default: ""
+  VpcRdsSubnetIds:
+    Type: String
+    Description: The RDS Subnets from the VPC
+  VpcHostedZoneId:
+    Type: String
+    Description: The ID of the Route53 Hosted Zone
+  VpcRdsSecurityGroupIds:
+    Type: String
+    Description: The comma separated list of Security Group Ids
+
+Conditions:
+  ShouldCreateECRRepository: !Equals [!Ref EnvironmentName, Production]
+  ShouldConfigureECRAccess: !Not [!Equals [!Ref AccountsToGrantECRFullAccess, ""]]
+  ShouldUseRemoteECRRepo: !Not [!Equals [!Ref RemoteECRRepositoryArn, ""]]
+  ShouldConfigureRoleECRAccess: !Or [{Condition: ShouldCreateECRRepository}, {Condition: ShouldUseRemoteECRRepo}]
+  ShouldCreateDatabaseFromSnapshot: !Not [!Equals [!Ref RdsSnapshotId, ""]]
+  ShouldCreateEmptyDatabase: !Equals [!Ref RdsSnapshotId, ""]
+
+Resources:
+  EcrRepo:
+    Type: AWS::ECR::Repository
+    Condition: ShouldCreateECRRepository
+    Properties:
+      RepositoryPolicyText: !If
+        - ShouldConfigureECRAccess
+        -
+          Version: 2012-10-17
+          Statement:
+            -
+              Sid: RepositoryAccess
+              Effect: Allow
+              Principal:
+                AWS: !Split [",", !Ref AccountsToGrantECRFullAccess]
+              Action:
+                - ecr:GetDownloadUrlForLayer
+                - ecr:BatchGetImage
+                - ecr:BatchCheckLayerAvailability
+                - ecr:PutImage
+                - ecr:InitiateLayerUpload
+                - ecr:UploadLayerPart
+                - ecr:CompleteLayerUpload
+                - ecr:DescribeRepositories
+                - ecr:GetRepositoryPolicy
+                - ecr:ListImages
+        - !Ref AWS::NoValue
+  Role:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - sts:AssumeRole
+            Principal:
+              Service:
+                - ecs-tasks.amazonaws.com
+      Policies:
+        -
+          PolicyName: BatchAccess
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              -  # Configuration Access
+                Effect: Allow
+                Action:
+                  - s3:ListBucket
+                  - s3:GetObject
+                  - s3:GetObjectAcl
+                  - s3:GetObjectVersionAcl
+                  - s3:GetBucketLocation
+                Resource:
+                  - !Ref ConfigurationBucketArn
+                  - !Sub "${ConfigurationBucketArn}/*"
+              -  # Configuration Key Access
+                Effect: Allow
+                Action:
+                  - kms:DescribeKey
+                  - kms:Decrypt
+                Resource:
+                  - !Ref ConfigurationBucketKeyArn
+              -  # SES Access
+                Effect: Allow
+                Action:
+                  - ses:SendEmail
+                  - ses:SendRawEmail
+                Resource: !Split [",", !Ref SesDomainArns]
+              -  # Kinesis Stream Producer Access
+                Effect: Allow
+                Action:
+                  - kinesis:DescribeStream
+                  - kinesis:PutRecord*
+                Resource:
+                  - !Ref KinesisStreamArn
+              -  # Secure Download Bucket Access
+                Effect: Allow
+                Action:
+                  - s3:GetBucketLocation
+                  - s3:GetObject*
+                Resource:
+                  - !Ref SecureDownloadBucketArn
+                  - !Sub "${SecureDownloadBucketArn}/*"
+              -  # Secure Download Encryption Key Access
+                Effect: Allow
+                Action:
+                  - kms:Decrypt
+                  - kms:DescribeKey
+                Resource:
+                  - !Ref SecureDownloadBucketKeyArn
+  # Services RDS Instance
+  RdsInstance:
+    Type: "AWS::RDS::DBInstance"
+    Properties:
+      DBSnapshotIdentifier: !If [ShouldCreateDatabaseFromSnapshot, !Ref RdsSnapshotId, !Ref "AWS::NoValue"]
+      MasterUsername: !If [ShouldCreateEmptyDatabase, lightrail, !Ref "AWS::NoValue"]
+      MasterUserPassword: !If [ShouldCreateEmptyDatabase, lightrail-20170606, !Ref "AWS::NoValue"]
+      DBInstanceClass: !Ref RdsInstanceClass
+      AllocatedStorage: !Ref RdsInstanceAllocation
+      StorageType: gp2
+      MultiAZ: !Ref RdsMultiAZ
+      DBSubnetGroupName: !Ref RdsSubnetGroup
+      VPCSecurityGroups: !Split [",", !Ref VpcRdsSecurityGroupIds]
+      KmsKeyId: !Ref RdsEncryptionKey
+      StorageEncrypted: true
+      BackupRetentionPeriod: 7
+      PreferredBackupWindow: 09:17-09:47
+      PreferredMaintenanceWindow: sun:06:57-sun:07:57
+      Engine: mysql
+      EngineVersion: 5.6.27
+      CopyTagsToSnapshot: true
+      OptionGroupName: default:mysql-5-6
+      DBParameterGroupName: default.mysql5.6
+      Tags:
+        -
+          Key: Name
+          Value: !Sub "Lightrail ${EnvironmentName} Services RDS"
+  RdsEncryptionKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: !Sub "Lightrail ${EnvironmentName} RDS Encryption Key"
+      KeyPolicy:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: "Allow"
+            Principal:
+              AWS:
+                !Sub "arn:aws:iam::${AWS::AccountId}:root"
+            Action:
+              - "kms:*"
+            Resource: "*"
+  RdsEncryptionKeyAlias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: !Sub "alias/${AWS::StackName}-RDS"
+      TargetKeyId: !Ref RdsEncryptionKey
+  RdsSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: !Sub "Lightrail ${EnvironmentName} Subnet Group"
+      SubnetIds: !Split [",", !Ref VpcRdsSubnetIds]
+      Tags:
+        -
+          Key: Service
+          Value: RDS
+  RdsVpcZoneRecord:
+    Type: "AWS::Route53::RecordSet"
+    Properties:
+      HostedZoneId: !Ref VpcHostedZoneId
+      Name: lightrail-mysql.vpc.
+      Type: CNAME
+      TTL: 300
+      ResourceRecords:
+        - !GetAtt RdsInstance.Endpoint.Address

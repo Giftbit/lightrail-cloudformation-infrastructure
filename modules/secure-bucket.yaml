@@ -15,7 +15,7 @@ Parameters:
       Comma separated list of AWS UserIDs to grant Read Access
       (See http://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_variables.html#policy-vars-infotouse)
     Default: ""
-    AllowedPattern:  (([A-Z0-9]+(:\*)?|\d{12})(,([A-Z0-9]+(:\*)?|\d{12}))*)?
+    AllowedPattern: (([A-Z0-9]+(:\*)?|\d{12})(,([A-Z0-9]+(:\*)?|\d{12}))*)?
   UserIdsToGrantWriteAccess:
     Type: String
     Description: >
@@ -163,6 +163,9 @@ Outputs:
   BucketName:
     Description: The name of the Secure Bucket
     Value: !Ref Bucket
+  BucketArn:
+    Description: The Arn of the Secure Bucket
+    Value: !Sub "arn:aws:s3:::${Bucket}"
   EncryptionKeyArn:
     Description: The ARN of the Secure Bucket KMS Key
     Value: !GetAtt EncryptionKey.Arn
