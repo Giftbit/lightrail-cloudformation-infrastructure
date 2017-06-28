@@ -5,7 +5,10 @@ Resources:
   Bucket:
     Type: AWS::S3::Bucket
     Properties:
-      AccessControl: PublicRead
+      AccessControl: Private
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: error.html
   BucketPolicy:
     Type: AWS::S3::BucketPolicy
     Properties:
@@ -22,8 +25,8 @@ Resources:
 
 Outputs:
   BucketName:
-    Description: The name of the React Bucket
+    Description: The name of the Website Bucket
     Value: !Ref Bucket
   DomainName:
-    Description: The Domain name to use for serving the React resources
-    Value: !GetAtt Bucket.DomainName
+    Description: The Domain name to use for serving the website
+    Value: !Sub "${Bucket}.s3-website-${AWS::Region}.amazonaws.com"

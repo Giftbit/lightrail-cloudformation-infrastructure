@@ -23,7 +23,10 @@ Resources:
   ReactBucket:
     Type: AWS::S3::Bucket
     Properties:
-      AccessControl: PublicRead
+      AccessControl: Private
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: error.html
   ReactBucketPolicy:
     Type: AWS::S3::BucketPolicy
     Properties:
@@ -71,7 +74,7 @@ Outputs:
     Value: !Ref ReactBucket
   ReactDomainName:
     Description: The Domain name to use for serving the React resources
-    Value: !GetAtt ReactBucket.DomainName
+    Value: !Sub "${Bucket}.s3-website-${AWS::Region}.amazonaws.com"
   ActifactBucketName:
     Description: The name of the Build Artifact Bucket
     Value: !Ref BuildArtifactBucket
