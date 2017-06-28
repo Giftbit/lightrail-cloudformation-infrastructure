@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: "Lightrail Batch"
+Description: "Lightrail Services"
 
 Parameters:
   EnvironmentName:
@@ -44,12 +44,49 @@ Parameters:
     Description: Comma separated list of AWS Account IDs to grant ECR Full Access
     Default: ""
     AllowedPattern: (\d{12}(,\d{12})*)?
+  RdsInstanceClass:
+    Type: String
+    Description: The Instance Type to use for the RDS Instance
+    Default: "db.t2.medium"
+    AllowedValues:
+      - db.t2.small
+      - db.t2.medium
+      - db.t2.large
+      - db.m3.medium
+      - db.m4.large
+      - db.m4.xlarge
+  RdsInstanceAllocation:
+    Type: Number
+    Description: The amount of storage to allocate.
+    Default: 100
+    MinValue: 100
+  RdsMultiAZ:
+    Type: String
+    Description: Should the instance be MultiAZ
+    AllowedValues:
+      - true
+      - false
+  RdsSnapshotId:
+    Type: String
+    Description: The RDS Snapshot to create the database from (optional)
+    Default: ""
+  VpcRdsSubnetIds:
+    Type: String
+    Description: The RDS Subnets from the VPC
+  VpcHostedZoneId:
+    Type: String
+    Description: The ID of the Route53 Hosted Zone
+  VpcRdsSecurityGroupIds:
+    Type: String
+    Description: The comma separated list of Security Group Ids
 
 Conditions:
   ShouldCreateECRRepository: !Equals [!Ref EnvironmentName, Production]
   ShouldConfigureECRAccess: !Not [!Equals [!Ref AccountsToGrantECRFullAccess, ""]]
   ShouldUseRemoteECRRepo: !Not [!Equals [!Ref RemoteECRRepositoryArn, ""]]
   ShouldConfigureRoleECRAccess: !Or [{Condition: ShouldCreateECRRepository}, {Condition: ShouldUseRemoteECRRepo}]
+  ShouldCreateDatabaseFromSnapshot: !Not [!Equals [!Ref RdsSnapshotId, ""]]
+  ShouldCreateEmptyDatabase: !Equals [!Ref RdsSnapshotId, ""]
 
 Resources:
   EcrRepo:
@@ -131,7 +168,6 @@ Resources:
               -  # Secure Download Bucket Access
                 Effect: Allow
                 Action:
-                  - s3:PutObject*
                   - s3:GetBucketLocation
                   - s3:GetObject*
                 Resource:
@@ -141,42 +177,71 @@ Resources:
                 Effect: Allow
                 Action:
                   - kms:Decrypt
-                  - kms:Encrypt
                   - kms:DescribeKey
-                  - kms:GenerateDataKey
                 Resource:
                   - !Ref SecureDownloadBucketKeyArn
-              -  # Batch Task Table access
-                Effect: Allow
-                Action:
-                  - dynamodb:DescribeTable
-                  - dynamodb:GetItem
-                  - dynamodb:PutItem
-                  - dynamodb:UpdateItem
-                Resource:
-                  - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${BatchTaskTable}"
-              -  # Queue Access
-                Effect: Allow
-                Action:
-                  - sqs:ChangeMessageVisibility
-                  - sqs:DeleteMessage
-                  - sqs:ReceiveMessage
-                  - sqs:SendMessage
-                Resource:
-                  - !GetAtt Queue.Arn
-  BatchTaskTable:
-    Type: AWS::DynamoDB::Table
+  # Services RDS Instance
+  RdsInstance:
+    Type: "AWS::RDS::DBInstance"
     Properties:
-      ProvisionedThroughput:
-        ReadCapacityUnits: 2
-        WriteCapacityUnits: 2
-      KeySchema:
+      DBSnapshotIdentifier: !If [ShouldCreateDatabaseFromSnapshot, !Ref RdsSnapshotId, !Ref "AWS::NoValue"]
+      MasterUsername: !If [ShouldCreateEmptyDatabase, lightrail, !Ref "AWS::NoValue"]
+      MasterUserPassword: !If [ShouldCreateEmptyDatabase, lightrail-20170606, !Ref "AWS::NoValue"]
+      DBInstanceClass: !Ref RdsInstanceClass
+      AllocatedStorage: !Ref RdsInstanceAllocation
+      StorageType: gp2
+      MultiAZ: !Ref RdsMultiAZ
+      DBSubnetGroupName: !Ref RdsSubnetGroup
+      VPCSecurityGroups: !Split [",", !Ref VpcRdsSecurityGroupIds]
+      KmsKeyId: !Ref RdsEncryptionKey
+      StorageEncrypted: true
+      BackupRetentionPeriod: 7
+      PreferredBackupWindow: 09:17-09:47
+      PreferredMaintenanceWindow: sun:06:57-sun:07:57
+      Engine: mysql
+      EngineVersion: 5.6.27
+      CopyTagsToSnapshot: true
+      OptionGroupName: default:mysql-5-6
+      DBParameterGroupName: default.mysql5.6
+      Tags:
         -
-          AttributeName: taskId
-          KeyType: HASH
-      AttributeDefinitions:
+          Key: Name
+          Value: !Sub "Lightrail ${EnvironmentName} Services RDS"
+  RdsEncryptionKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: !Sub "Lightrail ${EnvironmentName} RDS Encryption Key"
+      KeyPolicy:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: "Allow"
+            Principal:
+              AWS:
+                !Sub "arn:aws:iam::${AWS::AccountId}:root"
+            Action:
+              - "kms:*"
+            Resource: "*"
+  RdsEncryptionKeyAlias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: !Sub "alias/${AWS::StackName}-RDS"
+      TargetKeyId: !Ref RdsEncryptionKey
+  RdsSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: !Sub "Lightrail ${EnvironmentName} Subnet Group"
+      SubnetIds: !Split [",", !Ref VpcRdsSubnetIds]
+      Tags:
         -
-          AttributeName: taskId
-          AttributeType: S
-  Queue:
-    Type: AWS::SQS::Queue
+          Key: Service
+          Value: RDS
+  RdsVpcZoneRecord:
+    Type: "AWS::Route53::RecordSet"
+    Properties:
+      HostedZoneId: !Ref VpcHostedZoneId
+      Name: lightrail-mysql.vpc.
+      Type: CNAME
+      TTL: 300
+      ResourceRecords:
+        - !GetAtt RdsInstance.Endpoint.Address

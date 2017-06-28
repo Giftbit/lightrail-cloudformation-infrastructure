@@ -39,23 +39,6 @@ Resources:
         VpcId: !GetAtt LightrailVPC.Outputs.VpcId
         VpcPublicSubnetIds: !GetAtt LightrailVPC.Outputs.PrivateSubnetIds
         Ec2SsmPolicyArn: !GetAtt SSM.Outputs.EC2PolicyArn
-  LightrailRDS:
-    Type: AWS::CloudFormation::Stack
-    Properties:
-      TemplateURL: ../modules/rds.yaml
-      Parameters:
-        EnvironmentName: Dev
-        RdsInstanceClass: db.m3.medium
-        RdsInstanceAllocation: 100
-        RdsMultiAZ: true
-        RdsSnapshotId: ""
-        VpcRDSSubnetIds: !GetAtt LightrailVPC.Outputs.RdsSubnetIds
-        VpcHostedZoneId: !GetAtt LightrailVPC.Outputs.VpcHostedZoneId
-        VpcSecurityGroupIds: !GetAtt LightrailVPC.Outputs.RdsSecurityGroupId
-      Tags:
-        -
-          Key: Service
-          Value: Services
   LightrailSecureConfig:
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -87,6 +70,30 @@ Resources:
       TemplateURL: ../modules/datadog.yaml
       Parameters:
         EnvironmentName: Dev
+  LightrailServices:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: ../modules/services-service.yaml
+      Parameters:
+        EnvironmentName: Dev
+        ConfigurationBucketArn: !GetAtt LightrailSecureConfig.Outputs.BucketArn
+        ConfigurationBucketKeyArn: !GetAtt LightrailSecureConfig.Outputs.EncryptionKeyArn
+        SecureDownloadBucketArn: !GetAtt LightrailSecureDownload.Outputs.BucketArn
+        SecureDownloadBucketKeyArn: !GetAtt LightrailSecureDownload.Outputs.EncryptionKeyArn
+        SesDomainArns: !Ref SesDomainArns
+        KinesisStreamArn: !GetAtt LightrailEventStream.Outputs.KinesisStreamArn
+        RemoteECRRepositoryArn: ""
+        RdsInstanceClass: db.t2.small
+        RdsInstanceAllocation: 100
+        RdsMultiAZ: true
+        RdsSnapshotId: ""
+        VpcRdsSubnetIds: !GetAtt LightrailVPC.Outputs.RdsSubnetIds
+        VpcHostedZoneId: !GetAtt LightrailVPC.Outputs.VpcHostedZoneId
+        VpcRdsSecurityGroupIds: !GetAtt LightrailVPC.Outputs.RdsSecurityGroupId
+      Tags:
+        -
+          Key: Service
+          Value: Services
   LightrailBatch:
     Type: AWS::CloudFormation::Stack
     Properties:
