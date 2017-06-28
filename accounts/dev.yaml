@@ -1,8 +1,14 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: "Dev Master Stack"
 
-Resources:
+Parameters:
+  SesDomainArns:
+    Type: String
+    Description: Comma Separated list of SES Domain Arns for sending Emails
+    AllowedPattern:
+      "arn:aws:ses:[a-z0-9-]+:\\d{12}:identity\\/[a-z0-9._-]+(,arn:aws:ses:[a-z0-9-]+:\\d{12}:identity\\/[a-z0-9._-]+)*"
 
+Resources:
   LightrailAlertChannels:
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -81,6 +87,19 @@ Resources:
       TemplateURL: ../modules/datadog.yaml
       Parameters:
         EnvironmentName: Dev
+  LightrailBatch:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: ../modules/batch-service.yaml
+      Parameters:
+        EnvironmentName: Dev
+        ConfigurationBucketArn: !GetAtt LightrailSecureConfig.Outputs.BucketArn
+        ConfigurationBucketKeyArn: !GetAtt LightrailSecureConfig.Outputs.EncryptionKeyArn
+        SecureDownloadBucketArn: !GetAtt LightrailSecureDownload.Outputs.BucketArn
+        SecureDownloadBucketKeyArn: !GetAtt LightrailSecureDownload.Outputs.EncryptionKeyArn
+        SesDomainArns: !Ref SesDomainArns
+        KinesisStreamArn: !GetAtt LightrailEventStream.Outputs.KinesisStreamArn
+        RemoteECRRepositoryArn: ""
 
   SSM:
     Type: AWS::CloudFormation::Stack

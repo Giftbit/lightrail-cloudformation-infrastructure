@@ -1,0 +1,205 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Lightrail Batch"
+
+Parameters:
+  EnvironmentName:
+    Type: String
+    Description: The Name of the Environment
+    AllowedValues:
+      - Dev
+      - Staging
+      - Production
+  ConfigurationBucketArn:
+    Type: String
+    Description: The ARN of the Configuration Bucket
+    AllowedPattern: arn:aws:s3:::[A-Za-z0-9._-]+
+  ConfigurationBucketKeyArn:
+    Type: String
+    Description: The ARN of the Configuration Bucket Encryption Key
+    AllowedPattern: arn:aws:kms:[a-z0-9-]+:\d{12}:key/[a-z0-9-]+
+  SecureDownloadBucketArn:
+    Type: String
+    Description: The ARN of the Secure Download Bucket
+    AllowedPattern: arn:aws:s3:::[A-Za-z0-9._-]+
+  SecureDownloadBucketKeyArn:
+    Type: String
+    Description: The ARN of the Secure Download Bucket Encryption Key
+    AllowedPattern: arn:aws:kms:[a-z0-9-]+:\d{12}:key/[a-z0-9-]+
+  SesDomainArns:
+    Type: String
+    Description: Comma Separated list of SES Domain Arns for sending Emails
+    AllowedPattern:
+      "arn:aws:ses:[a-z0-9-]+:\\d{12}:identity\\/[a-z0-9._-]+(,arn:aws:ses:[a-z0-9-]+:\\d{12}:identity\\/[a-z0-9._-]+)*"
+  KinesisStreamArn:
+    Type: String
+    Description: The ARN of the Event Kinesis Stream
+    AllowedPattern: arn:aws:kinesis:[a-z0-9-]+:\d{12}:stream/[A-Za-z0-9._-]+
+  RemoteECRRepositoryArn:
+    Type: String
+    Description: (Optional) The ECR Repo to get Batch Docker images from
+    Default: ""
+    AllowedPattern: (arn:aws:ecr:[a-z0-9-]+:\d{12}:repository/[a-z0-9/_-]+)?
+  AccountsToGrantECRFullAccess:
+    Type: String
+    Description: Comma separated list of AWS Account IDs to grant ECR Full Access
+    Default: ""
+    AllowedPattern: (\d{12}(,\d{12})*)?
+
+Conditions:
+  ShouldCreateECRRepository: !Equals [!Ref EnvironmentName, Production]
+  ShouldConfigureECRAccess: !Not [!Equals [!Ref AccountsToGrantECRFullAccess, ""]]
+  ShouldUseRemoteECRRepo: !Not [!Equals [!Ref RemoteECRRepositoryArn, ""]]
+  ShouldConfigureRoleECRAccess: !Or [{Condition: ShouldCreateECRRepository}, {Condition: ShouldUseRemoteECRRepo}]
+
+Resources:
+  EcrRepo:
+    Type: AWS::ECR::Repository
+    Condition: ShouldCreateECRRepository
+    Properties:
+      RepositoryPolicyText: !If
+        - ShouldConfigureECRAccess
+        -
+          Version: 2012-10-17
+          Statement:
+            -
+              Sid: RepositoryAccess
+              Effect: Allow
+              Principal:
+                AWS: !Split [",", !Ref AccountsToGrantECRFullAccess]
+              Action:
+                - ecr:GetDownloadUrlForLayer
+                - ecr:BatchGetImage
+                - ecr:BatchCheckLayerAvailability
+                - ecr:PutImage
+                - ecr:InitiateLayerUpload
+                - ecr:UploadLayerPart
+                - ecr:CompleteLayerUpload
+                - ecr:DescribeRepositories
+                - ecr:GetRepositoryPolicy
+                - ecr:ListImages
+        - !Ref AWS::NoValue
+  Role:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - sts:AssumeRole
+            Principal:
+              Service:
+                - ecs-tasks.amazonaws.com
+      Policies:
+        -
+          PolicyName: BatchAccess
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              -  # Configuration Access
+                Effect: Allow
+                Action:
+                  - s3:ListBucket
+                  - s3:GetObject
+                  - s3:GetObjectAcl
+                  - s3:GetObjectVersionAcl
+                  - s3:GetBucketLocation
+                Resource:
+                  - !Ref ConfigurationBucketArn
+                  - !Sub "${ConfigurationBucketArn}/*"
+              -  # Configuration Key Access
+                Effect: Allow
+                Action:
+                  - kms:DescribeKey
+                  - kms:Decrypt
+                Resource:
+                  - !Ref ConfigurationBucketKeyArn
+              -  # SES Access
+                Effect: Allow
+                Action:
+                  - ses:SendEmail
+                  - ses:SendRawEmail
+                Resource: !Split [",", !Ref SesDomainArns]
+              -  # Kinesis Stream Producer Access
+                Effect: Allow
+                Action:
+                  - kinesis:DescribeStream
+                  - kinesis:PutRecord*
+                Resource:
+                  - !Ref KinesisStreamArn
+              -  # ECR Auth Token Access
+                Effect: Allow
+                Action:
+                  - ecr:GetAuthorizationToken
+                Resource: "*"
+              - !If  # ECR Repo Access
+                - ShouldConfigureRoleECRAccess
+                -
+                  Effect: Allow
+                  Action:
+                    - ecr:GetAuthorizationToken
+                    - ecr:BatchCheckLayerAvailability
+                    - ecr:GetDownloadUrlForLayer
+                    - ecr:GetRepositoryPolicy
+                    - ecr:DescribeRepositories
+                    - ecr:ListImages
+                    - ecr:BatchGetImage
+                  Resource:
+                    - !If
+                      - ShouldUseRemoteECRRepo
+                      - !Ref RemoteECRRepositoryArn
+                      - !Sub "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/${EcrRepo}"
+                - !Ref AWS::NoValue
+              -  # Secure Download Bucket Access
+                Effect: Allow
+                Action:
+                  - s3:PutObject*
+                  - s3:GetBucketLocation
+                  - s3:GetObject*
+                Resource:
+                  - !Ref SecureDownloadBucketArn
+                  - !Sub "${SecureDownloadBucketArn}/*"
+              -  # Secure Download Encryption Key Access
+                Effect: Allow
+                Action:
+                  - kms:Decrypt
+                  - kms:Encrypt
+                  - kms:DescribeKey
+                  - kms:GenerateDataKey
+                Resource:
+                  - !Ref SecureDownloadBucketKeyArn
+              -  # Batch Task Table access
+                Effect: Allow
+                Action:
+                  - dynamodb:DescribeTable
+                  - dynamodb:GetItem
+                  - dynamodb:PutItem
+                  - dynamodb:UpdateItem
+                Resource:
+                  - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${BatchTaskTable}"
+              -  # Queue Access
+                Effect: Allow
+                Action:
+                  - sqs:ChangeMessageVisibility
+                  - sqs:DeleteMessage
+                  - sqs:ReceiveMessage
+                  - sqs:SendMessage
+                Resource:
+                  - !GetAtt Queue.Arn
+  BatchTaskTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      ProvisionedThroughput:
+        ReadCapacityUnits: 2
+        WriteCapacityUnits: 2
+      KeySchema:
+        -
+          AttributeName: taskId
+          KeyType: HASH
+      AttributeDefinitions:
+        -
+          AttributeName: taskId
+          AttributeType: S
+  Queue:
+    Type: AWS::SQS::Queue
