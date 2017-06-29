@@ -1,0 +1,128 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "CloudFormation Account Role"
+
+Parameters:
+  ProjectName:
+    Type: String
+    Description: Enter the name of the project. This is used to ensure the roles are unique, but have expected names
+    Default: "LightrailInfrastructureCI"
+  StackName:
+    Type: String
+    Description: Enter the name of the stack we will be granting access execute against
+  CodePipelineAccountId:
+    Type: String
+    Description: Enter the AWS Account ID associated with the Code Pipeline
+    AllowedPattern: \d+
+  DeploymentArtifactBucket:
+    Type: String
+    Description: Enter the name of the deployment artifact bucket
+    Default: ""
+  DeploymentArtifactKey:
+    Type: String
+    Description: Enter the ARN of the deployment artifact key
+    Default: ""
+    AllowedPattern: (arn:aws:kms:[a-z0-9-]+:\d+:key\/[a-z0-9-]+)?
+
+Conditions:
+  CodePipelineAccountIdSet: !Not [!Equals [!Ref CodePipelineAccountId, ""]]
+  DeploymentArtifactBucketSet: !Not [!Equals [!Ref DeploymentArtifactBucket, ""]]
+  DeploymentArtifactKeySet: !Not [!Equals [!Ref DeploymentArtifactKey, ""]]
+
+Resources:
+
+  CloudFormationServiceRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      RoleName: !Sub "${ProjectName}-CloudFormationServiceRole"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Action:
+              - "sts:AssumeRole"
+            Principal:
+              Service:
+                - cloudformation.amazonaws.com
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/IAMFullAccess"
+        - "arn:aws:iam::aws:policy/PowerUserAccess"
+      Policies:
+        -
+          PolicyName: CloudFormationCIServiceRoleRestrictions
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              -
+                Effect: "Deny"
+                Action:
+                  - "iam:*User*"
+                  - "cloudtrail:*"
+                Resource: "*"
+
+  CloudFormationExecutorRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      RoleName: !Sub "${ProjectName}-CloudFormationExecutorRole"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - !If
+            - CodePipelineAccountIdSet
+            -
+              Effect: "Allow"
+              Action:
+                - "sts:AssumeRole"
+              Principal:
+                AWS:
+                  - !Sub "arn:aws:iam::${CodePipelineAccountId}:role/${ProjectName}-CodePipelineServiceRole"
+            - !Ref AWS::NoValue
+      Policies:
+        -
+          PolicyName: CloudFormationExecutionAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              -
+                Effect: "Allow"
+                Action:
+                  - "iam:PassRole"
+                Resource:
+                  - !GetAtt CloudFormationServiceRole.Arn
+              -
+                Effect: "Allow"
+                Action:
+                  - "cloudformation:CreateStack"
+                  - "cloudformation:DescribeStacks"
+                  - "cloudformation:DeleteStack"
+                  - "cloudformation:UpdateStack"
+                  - "cloudformation:CreateChangeSet"
+                  - "cloudformation:ExecuteChangeSet"
+                  - "cloudformation:DeleteChangeSet"
+                  - "cloudformation:DescribeChangeSet"
+                  - "cloudformation:ValidateTemplate"
+                Resource: !Sub "arn:aws:cloudformation:us-west-2:${AWS::AccountId}:stack/${StackName}/*"
+              - !If
+                - DeploymentArtifactBucketSet
+                -
+                  Effect: "Allow"
+                  Action:
+                    - "s3:GetBucketLocation"
+                    - "s3:GetObject*"
+                    - "s3:ListBucket*"
+                    - "s3:PutObject"
+                  Resource:
+                    - !Sub "arn:aws:s3:::${DeploymentArtifactBucket}"
+                    - !Sub "arn:aws:s3:::${DeploymentArtifactBucket}/*"
+                - !Ref AWS::NoValue
+              - !If
+                - DeploymentArtifactKeySet
+                -
+                  Effect: "Allow"
+                  Action:
+                    - "kms:DescribeKey"
+                    - "kms:GenerateDataKey*"
+                    - "kms:Encrypt"
+                    - "kms:ReEncrypt*"
+                    - "kms:Decrypt"
+                  Resource: !Ref DeploymentArtifactKey
+                - !Ref AWS::NoValue

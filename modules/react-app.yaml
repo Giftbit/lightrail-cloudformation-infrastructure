@@ -17,7 +17,7 @@ Parameters:
 
 Conditions:
   ShouldConfigureBuildArtifactAccess: !Not [!Equals [!Ref AccountsToGrantBuildArtifactFullAccess, ""]]
-  ShouldGenerateBuildArtifactBucket: !Equal [!Ref AccountsToGrantBuildArtificatFullAccess, Production]
+  ShouldGenerateBuildArtifactBucket: !Equals [!Ref EnvironmentName, Production]
 
 Resources:
   ReactBucket:
@@ -74,7 +74,8 @@ Outputs:
     Value: !Ref ReactBucket
   ReactDomainName:
     Description: The Domain name to use for serving the React resources
-    Value: !Sub "${Bucket}.s3-website-${AWS::Region}.amazonaws.com"
+    Value: !Sub "${ReactBucket}.s3-website-${AWS::Region}.amazonaws.com"
   ActifactBucketName:
     Description: The name of the Build Artifact Bucket
+    Condition: ShouldGenerateBuildArtifactBucket
     Value: !Ref BuildArtifactBucket

@@ -2,32 +2,77 @@ AWSTemplateFormatVersion: "2010-09-09"
 Description: "Dev Master Stack"
 
 Parameters:
+  EnvironmentName:
+    Type: String
+    AllowedValues:
+      - Dev  # This gives convenience for when we want to move large blocks of configuration between the accounts
   SesDomainArns:
     Type: String
     Description: Comma Separated list of SES Domain Arns for sending Emails
     AllowedPattern:
-      "arn:aws:ses:[a-z0-9-]+:\\d{12}:identity\\/[a-z0-9._-]+(,arn:aws:ses:[a-z0-9-]+:\\d{12}:identity\\/[a-z0-9._-]+)*"
+      "(arn:aws:ses:[a-z0-9-]+:\\d{12}:identity\\/[a-z0-9._-]+(,arn:aws:ses:[a-z0-9-]+:\\d{12}:identity\\/[a-z0-9._-]+)*)?"
+
+Conditions:
+  RegionIsUSWest2: !Equals [!Ref "AWS::Region", us-west-2]
+  RegionIsUSEast1: !Equals [!Ref "AWS::Region", us-east-1]
 
 Resources:
+  Groups:
+    Type: AWS::CloudFormation::Stack
+    Condition: RegionIsUSWest2  # Users and groups are global, so we only want it in the primary region
+    Properties:
+      TemplateURL: ../modules/groups.yaml
+      Parameters:
+        EnvironmentName: !Ref EnvironmentName
   LightrailAlertChannels:
     Type: AWS::CloudFormation::Stack
+    Condition: RegionIsUSWest2
     Properties:
       TemplateURL: ../modules/alert-sns.yaml
+  LightrailCertificates:
+    Type: AWS::CloudFormation::Stack
+    Condition: RegionIsUSEast1
+    Properties:
+      TemplateURL: ../modules/certificates.yaml
+      Parameters:
+        EnvironmentName: !Ref EnvironmentName
+  LightrailWebsite:
+    Type: AWS::CloudFormation::Stack
+    Condition: RegionIsUSWest2
+    Properties:
+      TemplateURL: ../modules/website.yaml
+      Parameters:
+        EnvironmentName: !Ref EnvironmentName
+        GroupsToGrantWebsiteReadWrite: !Join
+          - ","
+          -
+            - !GetAtt Groups.Outputs.MarkettingGroup
+            - !GetAtt Groups.Outputs.DevelopersGroup
+
+  LightrailReact:
+    Type: AWS::CloudFormation::Stack
+    Condition: RegionIsUSWest2
+    Properties:
+      TemplateURL: ../modules/react-app.yaml
+      Parameters:
+        EnvironmentName: !Ref EnvironmentName
   LightrailVPC:
     Type: AWS::CloudFormation::Stack
+    Condition: RegionIsUSWest2
     Properties:
       TemplateURL: ../modules/vpc.yaml
       Parameters:
         BastionHostAuthorizedUsersGroup: Developers
-        EnvironmentName: Dev
+        EnvironmentName: !Ref EnvironmentName
         NatInstanceType: t2.nano
         VPCUniqueNumber: 1
   LightrailECSCluster:
     Type: AWS::CloudFormation::Stack
+    Condition: RegionIsUSWest2
     Properties:
       TemplateURL: ../modules/ecs-cluster.yaml
       Parameters:
-        EnvironmentName: Dev
+        EnvironmentName: !Ref EnvironmentName
         ClusterName: lightrail-dev
         ClusterMinInstances: 1
         ClusterMaxInstances: 3
@@ -41,41 +86,47 @@ Resources:
         Ec2SsmPolicyArn: !GetAtt SSM.Outputs.EC2PolicyArn
   LightrailSecureConfig:
     Type: AWS::CloudFormation::Stack
+    Condition: RegionIsUSWest2
     Properties:
       TemplateURL: ../modules/secure-bucket.yaml
       Parameters:
-        EnvironmentName: Dev
+        EnvironmentName: !Ref EnvironmentName
   LightrailSecureDownload:
     Type: AWS::CloudFormation::Stack
+    Condition: RegionIsUSWest2
     Properties:
       TemplateURL: ../modules/secure-bucket.yaml
       Parameters:
-        EnvironmentName: Dev
+        EnvironmentName: !Ref EnvironmentName
   LightrailEventStream:
     Type: AWS::CloudFormation::Stack
+    Condition: RegionIsUSWest2
     Properties:
       TemplateURL: ../modules/event-stream.yaml
       Parameters:
-        EnvironmentName: Dev
+        EnvironmentName: !Ref EnvironmentName
   LightrailLogstash:
     Type: AWS::CloudFormation::Stack
+    Condition: RegionIsUSWest2
     Properties:
       TemplateURL: ../modules/logstash.yaml
       Parameters:
-        EnvironmentName: Dev
+        EnvironmentName: !Ref EnvironmentName
         NonEmergencyAlertsSnsArn: !GetAtt LightrailAlertChannels.Outputs.NonEmergencySNSArn
   LightrailDatadog:
     Type: AWS::CloudFormation::Stack
+    Condition: RegionIsUSWest2
     Properties:
       TemplateURL: ../modules/datadog.yaml
       Parameters:
-        EnvironmentName: Dev
+        EnvironmentName: !Ref EnvironmentName
   LightrailServices:
     Type: AWS::CloudFormation::Stack
+    Condition: RegionIsUSWest2
     Properties:
       TemplateURL: ../modules/services-service.yaml
       Parameters:
-        EnvironmentName: Dev
+        EnvironmentName: !Ref EnvironmentName
         ConfigurationBucketArn: !GetAtt LightrailSecureConfig.Outputs.BucketArn
         ConfigurationBucketKeyArn: !GetAtt LightrailSecureConfig.Outputs.EncryptionKeyArn
         SecureDownloadBucketArn: !GetAtt LightrailSecureDownload.Outputs.BucketArn
@@ -96,10 +147,11 @@ Resources:
           Value: Services
   LightrailBatch:
     Type: AWS::CloudFormation::Stack
+    Condition: RegionIsUSWest2
     Properties:
       TemplateURL: ../modules/batch-service.yaml
       Parameters:
-        EnvironmentName: Dev
+        EnvironmentName: !Ref EnvironmentName
         ConfigurationBucketArn: !GetAtt LightrailSecureConfig.Outputs.BucketArn
         ConfigurationBucketKeyArn: !GetAtt LightrailSecureConfig.Outputs.EncryptionKeyArn
         SecureDownloadBucketArn: !GetAtt LightrailSecureDownload.Outputs.BucketArn
@@ -110,5 +162,17 @@ Resources:
 
   SSM:
     Type: AWS::CloudFormation::Stack
+    Condition: RegionIsUSWest2
     Properties:
       TemplateURL: ../modules/ssm.yaml
+
+Outputs:
+  WebsiteBucket:
+    Description: The Website bucket for the Lightrail website
+    Value: !GetAtt LightrailWebsite.Outputs.Bucket
+  ReactBucketName:
+    Description: The React bucket for the Lightrail React App
+    Value: !GetAtt LightrailReact.Outputs.ReactBucketName
+  ReactArtifactBucketName:
+    Description: The Bucket to put the React Build Artifacts
+    Value: !GetAtt LightrailReact.Outputs.ActifactBucketName
