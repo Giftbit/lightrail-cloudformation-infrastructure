@@ -12,6 +12,9 @@ fi
 BUILD_ARTIFACT_BUCKET="$(aws s3api list-buckets --query 'Buckets[?starts_with(Name,`cf-template`)].Name' --output text)"
 
 uuid=$(uuidgen)
+while [ -n "$(aws s3 ls s3://$BUILD_ARTIFACT_BUCKET/$uuid.yaml)" ]; do
+    uuid=$(uuidgen)
+done
 
 temp_file=$(mktemp)
 aws cloudformation package --template-file ci.yaml --s3-bucket $BUILD_ARTIFACT_BUCKET --output-template-file $temp_file
