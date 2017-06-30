@@ -17,7 +17,7 @@ Parameters:
     Type: String
     Description: Enter the name of the deployment artifact bucket
     Default: ""
-  DeploymentArtifactKey:
+  DeploymentArtifactKeyArn:
     Type: String
     Description: Enter the ARN of the deployment artifact key
     Default: ""
@@ -26,7 +26,7 @@ Parameters:
 Conditions:
   CodePipelineAccountIdSet: !Not [!Equals [!Ref CodePipelineAccountId, ""]]
   DeploymentArtifactBucketSet: !Not [!Equals [!Ref DeploymentArtifactBucket, ""]]
-  DeploymentArtifactKeySet: !Not [!Equals [!Ref DeploymentArtifactKey, ""]]
+  DeploymentArtifactKeySet: !Not [!Equals [!Ref DeploymentArtifactKeyArn, ""]]
 
 Resources:
 
@@ -124,5 +124,9 @@ Resources:
                     - "kms:Encrypt"
                     - "kms:ReEncrypt*"
                     - "kms:Decrypt"
-                  Resource: !Ref DeploymentArtifactKey
+                  Resource: !Ref DeploymentArtifactKeyArn
                 - !Ref AWS::NoValue
+
+Outputs:
+  AccountId:
+    Value: !Ref "AWS::AccountId"

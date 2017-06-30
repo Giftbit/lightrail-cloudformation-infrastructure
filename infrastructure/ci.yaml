@@ -110,10 +110,10 @@ Resources:
           -
             Effect: "Allow"
             Action:
-              - "s3:GetObject*"
-              - "s3:ListBucket*"
-              - "s3:GetBucketLocation"
-              - "s3:PutObject*"
+              - s3:GetObject*
+              - s3:ListBucket*
+              - s3:GetBucketLocation
+              - s3:PutObject*
             Resource:
               - !Sub "arn:aws:s3:::${DeploymentArtifactBucket}"
               - !Sub "arn:aws:s3:::${DeploymentArtifactBucket}/*"
@@ -139,19 +139,19 @@ Resources:
         Version: "2012-10-17"
         Statement:
           -
-            Effect: "Allow"
+            Effect: Allow
             Principal:
               AWS:
                 !Sub "arn:aws:iam::${AWS::AccountId}:root"
             Action:
-              - "kms:*"
+              - kms:*
             Resource: "*"
           - !If
             - AnAccountIsEnabled
             -
-              Effect: "Allow"
+              Effect: Allow
               Action:
-                - "kms:decrypt"
+                - kms:decrypt
               Resource: "*"
               Principal:
                 AWS:  # For cross account access, we have to explicitly allow either the role
@@ -165,19 +165,19 @@ Resources:
                     - !Ref "AWS::NoValue"
                   - !If
                     - StagingAccountIsEnabled
-                    - "arn:aws:iam::${StagingAccountId}:role/${ProjectName}-CloudFormationServiceRole"
+                    - !Sub "arn:aws:iam::${StagingAccountId}:role/${ProjectName}-CloudFormationServiceRole"
                     - !Ref "AWS::NoValue"
                   - !If
                     - StagingAccountIsEnabled
-                    - "arn:aws:iam::${StagingAccountId}:role/${ProjectName}-CloudFormationExecutorRole"
+                    - !Sub "arn:aws:iam::${StagingAccountId}:role/${ProjectName}-CloudFormationExecutorRole"
                     - !Ref "AWS::NoValue"
                   - !If
                     - ProductionAccountIsEnabled
-                    - "arn:aws:iam::${ProductionAccountId}:role/${ProjectName}-CloudFormationServiceRole"
+                    - !Sub "arn:aws:iam::${ProductionAccountId}:role/${ProjectName}-CloudFormationServiceRole"
                     - !Ref "AWS::NoValue"
                   - !If
                     - ProductionAccountIsEnabled
-                    - "arn:aws:iam::${ProductionAccountId}:role/${ProjectName}-CloudFormationExecutorRole"
+                    - !Sub "arn:aws:iam::${ProductionAccountId}:role/${ProjectName}-CloudFormationExecutorRole"
                     - !Ref "AWS::NoValue"
               Condition:
                 StringLike:
@@ -196,9 +196,20 @@ Resources:
 
   CodePipeline:
     Type: AWS::CodePipeline::Pipeline
-    DependsOn: CloudFormationRole
+    DependsOn:
+      - CloudFormationRole
+      # This resource fails if it attempts to assumes one of the cross account roles before the CodePipelineServiceRole
+      # permission to assume the role has propagated to the SecurityTokenService.
+      - CodepipelineServiceRolePolicyDelay
     Properties:
       RoleArn: !GetAtt CodePipelineServiceRole.Arn
+      ArtifactStore:
+        Type: S3
+        Location: !Ref DeploymentArtifactBucket
+        EncryptionKey:
+          Id: !GetAtt DeploymentArtifactKey.Arn
+          Type: KMS
+      Name: !Ref "AWS::StackName"
       Stages:
         - Name: Source
           Actions:
@@ -234,7 +245,7 @@ Resources:
         - !If
           - DevAccountIsEnabled
           -
-            Name: Sandbox
+            Name: Dev
             Actions:
               - Name: CreateChangeSet
                 ActionTypeId:
@@ -289,7 +300,7 @@ Resources:
         - !If
           - StagingAccountIsEnabled
           -
-            Name: Dev
+            Name: Staging
             Actions:
               - Name: CreateChangeSet
                 ActionTypeId:
@@ -344,7 +355,7 @@ Resources:
         - !If
           - ProductionAccountIsEnabled
           -
-            Name: Prod
+            Name: Production
             Actions:
               - Name: CreateChangeSet
                 ActionTypeId:
@@ -396,13 +407,6 @@ Resources:
                   FunctionName: !Ref CodePipelineStageRevisionUpdater
                 RunOrder: 4
           - !Ref AWS::NoValue
-      ArtifactStore:
-        Type: S3
-        Location: !Ref DeploymentArtifactBucket
-        EncryptionKey:
-          Id: !GetAtt DeploymentArtifactKey.Arn
-          Type: KMS
-      Name: CloudformationCI
   CodePipelineServiceRole:
     Type: AWS::IAM::Role
     Properties:
@@ -416,83 +420,132 @@ Resources:
             Principal:
               Service:
                 - codepipeline.amazonaws.com
-      Policies:
-        -
-          PolicyName: CodePipelineServiceRole
-          PolicyDocument:
-            Version: 2012-10-17
-            Statement:
-              -
-                Effect: Allow
-                Action:
-                  - logs:CreateLogGroup
-                  - logs:CreateLogStream
-                  - logs:PutLogEvents
-                Resource: "arn:aws:logs:*:*:*"
-              -
-                Effect: Allow
-                Action:
-                  - s3:GetObject
-                  - s3:GetObjectVersion
-                  - s3:PutObject
-                Resource: !Sub "arn:aws:s3:::${DeploymentArtifactBucket}/*"
-              -
-                Effect: "Allow"
-                Action:
-                  - "kms:DescribeKey"
-                  - "kms:GenerateDataKey*"
-                  - "kms:Encrypt"
-                  - "kms:ReEncrypt*"
-                  - "kms:Decrypt"
-                Resource: !GetAtt DeploymentArtifactKey.Arn
-              -
-                Effect: Allow
-                Action:
-                  - codebuild:BatchGetBuilds
-                  - codebuild:StartBuild
-                  - codebuild:StopBuild
-                Resource: !GetAtt CodeBuildProject.Arn
-              - !If
-                - AnAccountIsEnabled
-                -
-                  Effect: Allow
-                  Action:
-                    - sts:AssumeRole
-                  Resource:
-                    - !If
-                      - DevAccountIsEnabled
-                      - "arn:aws:iam::${DevAccountId}:role/${ProjectName}-CloudFormationExecutorRole"
-                      - !Ref "AWS::NoValue"
-                    - !If
-                      - StagingAccountIsEnabled
-                      - "arn:aws:iam::${StagingAccountId}:role/${ProjectName}-CloudFormationExecutorRole"
-                      - !Ref "AWS::NoValue"
-                    - !If
-                      - ProductionAccountIsEnabled
-                      - !Sub "arn:aws:iam::${ProductionAccountId}:role/${ProjectName}-CloudFormationExecutorRole"
-                      - !Ref "AWS::NoValue"
-                - !Ref AWS::NoValue
-              -
-                Effect: Allow
-                Action:
-                  - sns:publish
-                Resource:
-                  - !Ref CodePipelineApprovalSNSTopic
-              -
-                Effect: Allow
-                Action:
-                  - lambda:ListFunctions
-                Resource: "*"
-              -
-                Effect: Allow
-                Action: lambda:InvokeFunction
-                Resource:
-                  - !GetAtt CodePipelineStageRevisionUpdater.Arn
+  CodePipelineServiceRolePolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: CodePipelineServiceRoleAccess
+      Roles:
+        - !Ref CodePipelineServiceRole
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - logs:CreateLogGroup
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+            Resource: "arn:aws:logs:*:*:*"
+          -
+            Effect: Allow
+            Action:
+              - s3:GetObject
+              - s3:GetObjectVersion
+              - s3:PutObject
+            Resource: !Sub "arn:aws:s3:::${DeploymentArtifactBucket}/*"
+          -
+            Effect: "Allow"
+            Action:
+              - kms:DescribeKey
+              - kms:GenerateDataKey*
+              - kms:Encrypt
+              - kms:ReEncrypt*
+              - kms:Decrypt
+            Resource: !GetAtt DeploymentArtifactKey.Arn
+          -
+            Effect: Allow
+            Action:
+              - codebuild:BatchGetBuilds
+              - codebuild:StartBuild
+              - codebuild:StopBuild
+            Resource: !GetAtt CodeBuildProject.Arn
+          - !If
+            - AnAccountIsEnabled
+            -
+              Effect: Allow
+              Action:
+                - sts:AssumeRole
+              Resource:
+                - !If
+                  - DevAccountIsEnabled
+                  - !Sub "arn:aws:iam::${DevAccountId}:role/${ProjectName}-CloudFormationExecutorRole"
+                  - !Ref "AWS::NoValue"
+                - !If
+                  - StagingAccountIsEnabled
+                  - !Sub "arn:aws:iam::${StagingAccountId}:role/${ProjectName}-CloudFormationExecutorRole"
+                  - !Ref "AWS::NoValue"
+                - !If
+                  - ProductionAccountIsEnabled
+                  - !Sub "arn:aws:iam::${ProductionAccountId}:role/${ProjectName}-CloudFormationExecutorRole"
+                  - !Ref "AWS::NoValue"
+            - !Ref AWS::NoValue
+          -
+            Effect: Allow
+            Action:
+              - sns:publish
+            Resource:
+              - !Ref CodePipelineApprovalSNSTopic
+          -
+            Effect: Allow
+            Action:
+              - lambda:ListFunctions
+            Resource: "*"
+          -
+            Effect: Allow
+            Action: lambda:InvokeFunction
+            Resource:
+              - !GetAtt CodePipelineStageRevisionUpdater.Arn
+  CodepipelineServiceRolePolicyDelay:
+    # We went with an arbitrary delay on this because this change should happen so rarely, assuming the role, which
+    # was the only other solution we could think of has serious security implications.
+    Type: Custom::Delay
+    Properties:
+      ServiceToken: !GetAtt CloudformationDelayFunction.Arn
+      WaitTime: 15
+      DelayConditions:
+        - !Ref CodePipelineServiceRole  # The Role changes
+        - !Ref CodePipelineServiceRolePolicy  # Policy Name changes
+        - !If  # Dev Account becomes enabled, or it's Cloudformation Role Changes
+          - DevAccountIsEnabled
+          - !Sub "arn:aws:iam::${DevAccountId}:role/${ProjectName}-CloudFormationExecutorRole"
+          - !Ref "AWS::NoValue"
+        - !If  # Staging Account becomes enabled, or it's Cloudformation Role Changes
+          - StagingAccountIsEnabled
+          - !Sub "arn:aws:iam::${StagingAccountId}:role/${ProjectName}-CloudFormationExecutorRole"
+          - !Ref "AWS::NoValue"
+        - !If  # Production Account becomes enabled, or it's Cloudformation Role Changes
+          - ProductionAccountIsEnabled
+          - !Sub "arn:aws:iam::${ProductionAccountId}:role/${ProjectName}-CloudFormationExecutorRole"
+          - !Ref "AWS::NoValue"
+  CloudformationDelayFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Description: Backs a CloudFormation Delay Custom Resource
+      Role:
+        !GetAtt CloudformationDelayFunctionRole.Arn
+      Handler: index.handler
+      Runtime: nodejs6.10
+      Timeout: 30  # Twice our expected delay.
+      Code: ../res/delay.zip
+  CloudformationDelayFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - sts:AssumeRole
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
 
   CodeBuildProject:
     Type: AWS::CodeBuild::Project
     Properties:
-      Name: CloudFormationCI
+      Name: !Ref ProjectName
       ServiceRole: !GetAtt CodeBuildServiceRole.Arn
       Artifacts:
         Type: CODEPIPELINE
@@ -549,11 +602,11 @@ Resources:
               -
                 Effect: "Allow"
                 Action:
-                  - "kms:DescribeKey"
-                  - "kms:GenerateDataKey*"
-                  - "kms:Encrypt"
-                  - "kms:ReEncrypt*"
-                  - "kms:Decrypt"
+                  - kms:DescribeKey
+                  - kms:GenerateDataKey*
+                  - kms:Encrypt
+                  - kms:ReEncrypt*
+                  - kms:Decrypt
                 Resource: !GetAtt DeploymentArtifactKey.Arn
 
   CloudFormationRole:
@@ -566,7 +619,7 @@ Resources:
         ProjectName: !Ref ProjectName
         StackName: !Ref CurrentAccountStackName
         DeploymentArtifactBucket: !Ref DeploymentArtifactBucket
-        DeploymentArtifactKey: !GetAtt DeploymentArtifactKey.Arn
+        DeploymentArtifactKeyArn: !GetAtt DeploymentArtifactKey.Arn
         CodePipelineAccountId: !Ref AWS::AccountId
 
   CodePipelineApprovalDiffNotifier:
@@ -719,3 +772,16 @@ Resources:
       Endpoint:
         !GetAtt CodePipelineApprovalDiffNotifier.Arn
       Protocol: lambda
+
+
+
+
+Outputs:
+  ProjectName:
+    Value: !Ref ProjectName
+  CodePipelineAccountId:
+    Value: !Ref "AWS::AccountId"
+  DeploymentArtifactBucket:
+    Value: !Ref DeploymentArtifactBucket
+  DeploymentArtifactKey:
+    Value: !GetAtt DeploymentArtifactKey.Arn

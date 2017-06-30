@@ -165,6 +165,11 @@ Resources:
     Condition: RegionIsUSWest2
     Properties:
       TemplateURL: ../modules/ssm.yaml
+  ActivityAwareIDS:
+    Type: AWS::CloudFormation::Stack
+    Condition: RegionIsUSWest2
+    Properties:
+      TemplateURL:
 
 Outputs:
   WebsiteBucket:
