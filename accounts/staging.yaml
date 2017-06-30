@@ -1,0 +1,26 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Staging Master Stack"
+
+Parameters:
+  EnvironmentName:
+    Type: String
+    AllowedValues:
+      - Staging  # This gives convenience for when we want to move large blocks of configuration between the accounts
+  SesDomainArns:
+    Type: String
+    Description: Comma Separated list of SES Domain Arns for sending Emails
+    AllowedPattern:
+      "(arn:aws:ses:[a-z0-9-]+:\\d{12}:identity\\/[a-z0-9._-]+(,arn:aws:ses:[a-z0-9-]+:\\d{12}:identity\\/[a-z0-9._-]+)*)?"
+
+Conditions:
+  RegionIsUSWest2: !Equals [!Ref "AWS::Region", us-west-2]
+  RegionIsUSEast1: !Equals [!Ref "AWS::Region", us-east-1]
+
+Resources:
+  Groups:
+    Type: AWS::CloudFormation::Stack
+    Condition: RegionIsUSWest2  # Users and groups are global, so we only want it in the primary region
+    Properties:
+      TemplateURL: ../modules/groups.yaml
+      Parameters:
+        EnvironmentName: !Ref EnvironmentName

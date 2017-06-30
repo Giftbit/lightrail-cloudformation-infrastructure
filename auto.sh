@@ -77,7 +77,7 @@ elif [ "$COMMAND" = "deploy" ]; then
 elif [ "$COMMAND" = "package" ]; then
 
     # This is the list of accounts to consider when using 'auto.sh package all'
-    ALL_ACCOUNTS="dev"
+    ALL_ACCOUNTS="dev staging production"
 
     if [ -z "$BUILD_ARTIFACT_BUCKET" ]; then
         echo "The BUILD_ARTIFACT_BUCKET was not set."
