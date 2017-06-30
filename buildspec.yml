@@ -3,7 +3,7 @@ phases:
   install:
     commands:
       - echo Build enviromment `uname -a` aws/`aws --version 2>&1` git/`git --version`
-      - pip install --upgrade awscli
+      - pip install --upgrade awscli yamllint
       - echo aws/`aws --version 2>&1`
   pre_build:
     commands:
