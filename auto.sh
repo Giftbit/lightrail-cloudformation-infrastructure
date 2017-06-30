@@ -79,7 +79,17 @@ elif [ "$COMMAND" = "package" ]; then
     # This is the list of accounts to consider when using 'auto.sh package all'
     ALL_ACCOUNTS="dev"
 
-    BUILD_ARTIFACT_BUCKET="$(aws s3api list-buckets --query 'Buckets[?starts_with(Name,`cf-template`)].Name' --output text)"
+    if [ -z "$BUILD_ARTIFACT_BUCKET" ]; then
+        echo "The BUILD_ARTIFACT_BUCKET was not set."
+        echo "Set it with 'export BUILD_ARTIFACT_BUCKET=\"<bucket_name>\"'"
+        echo ""
+        echo "Attempting to find a 'cf-template' bucket..."
+        BUILD_ARTIFACT_BUCKET="$(aws s3api list-buckets --query 'Buckets[?starts_with(Name,`cf-template`)].Name' --output text)"
+        if [ $? -ne 0 ]; then
+            echo "Unable to find 'cf-template' bucket. Failing."
+            exit 1
+        fi
+    fi
 
     ACCOUNTS="${@:2}"
     if [ "$ACCOUNTS" = "all" ]; then
