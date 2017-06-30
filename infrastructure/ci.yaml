@@ -40,7 +40,7 @@ Parameters:
   GithubRepoName:
     Type: String
     Description: The Name of the Repo Name to use for this pipeline
-    Default: giftbit-cloudformation-infrastructure
+    Default: lightrail-cloudformation-infrastructure
   GithubRepoBranch:
     Type: String
     Description: The Name of the Repo branch to use for this pipeline
