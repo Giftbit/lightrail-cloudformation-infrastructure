@@ -30,6 +30,7 @@ Parameters:
     Description: Comma Separated list of SES Domain Arns for sending Emails
     AllowedPattern:
       "arn:aws:ses:[a-z0-9-]+:\\d{12}:identity\\/[a-z0-9._-]+(,arn:aws:ses:[a-z0-9-]+:\\d{12}:identity\\/[a-z0-9._-]+)*"
+    Default: ""
   KinesisStreamArn:
     Type: String
     Description: The ARN of the Event Kinesis Stream
@@ -81,6 +82,7 @@ Parameters:
     Description: The comma separated list of Security Group Ids
 
 Conditions:
+  ShouldConfigureSes: !Not [!Equals [!Ref SesDomainArns, ""]]
   ShouldCreateECRRepository: !Equals [!Ref EnvironmentName, Production]
   ShouldConfigureECRAccess: !Not [!Equals [!Ref AccountsToGrantECRFullAccess, ""]]
   ShouldUseRemoteECRRepo: !Not [!Equals [!Ref RemoteECRRepositoryArn, ""]]
@@ -152,12 +154,15 @@ Resources:
                   - kms:Decrypt
                 Resource:
                   - !Ref ConfigurationBucketKeyArn
-              -  # SES Access
-                Effect: Allow
-                Action:
-                  - ses:SendEmail
-                  - ses:SendRawEmail
-                Resource: !Split [",", !Ref SesDomainArns]
+              -  !If # SES Access
+                - ShouldConfigureSes
+                -
+                  Effect: Allow
+                  Action:
+                    - ses:SendEmail
+                    - ses:SendRawEmail
+                  Resource: !Split [",", !Ref SesDomainArns]
+                - !Ref "AWS::NoValue"
               -  # Kinesis Stream Producer Access
                 Effect: Allow
                 Action:
