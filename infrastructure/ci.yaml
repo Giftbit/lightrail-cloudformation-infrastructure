@@ -223,8 +223,8 @@ Resources:
                 - Name: SourceCodeOutputArtifact
               Configuration:
                 Owner: !Ref GithubRepoOwner
-                Repo: "giftbit-cloudformation-infrastructure"
-                Branch: "master"
+                Repo: !Ref GithubRepoName
+                Branch: !Ref GithubRepoBranch
                 OAuthToken: !Ref GitHubOAuthToken
               RunOrder: 1
         - Name: Build
