@@ -773,9 +773,6 @@ Resources:
         !GetAtt CodePipelineApprovalDiffNotifier.Arn
       Protocol: lambda
 
-
-
-
 Outputs:
   ProjectName:
     Value: !Ref ProjectName
