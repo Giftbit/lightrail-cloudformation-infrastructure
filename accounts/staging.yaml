@@ -6,6 +6,7 @@ Parameters:
     Type: String
     AllowedValues:
       - Staging  # This gives convenience for when we want to move large blocks of configuration between the accounts
+    Default: Staging
   SesDomainArns:
     Type: String
     Description: Comma Separated list of SES Domain Arns for sending Emails
