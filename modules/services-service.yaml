@@ -29,7 +29,7 @@ Parameters:
     Type: String
     Description: Comma Separated list of SES Domain Arns for sending Emails
     AllowedPattern:
-      "arn:aws:ses:[a-z0-9-]+:\\d{12}:identity\\/[a-z0-9._-]+(,arn:aws:ses:[a-z0-9-]+:\\d{12}:identity\\/[a-z0-9._-]+)*"
+      "(arn:aws:ses:[a-z0-9-]+:\\d{12}:identity\\/[a-z0-9._-]+(,arn:aws:ses:[a-z0-9-]+:\\d{12}:identity\\/[a-z0-9._-]+)*)?"
     Default: ""
   KinesisStreamArn:
     Type: String
@@ -154,7 +154,7 @@ Resources:
                   - kms:Decrypt
                 Resource:
                   - !Ref ConfigurationBucketKeyArn
-              -  !If # SES Access
+              - !If  # SES Access
                 - ShouldConfigureSes
                 -
                   Effect: Allow
