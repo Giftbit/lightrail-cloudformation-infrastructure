@@ -59,7 +59,7 @@ elif [ "$COMMAND" = "deploy" ]; then
         exit 2
     fi
 
-    aws cloudformation package --template-file $SCRIPT_DIR/accounts/$ACCOUNT.yaml --s3-bucket $BUILD_ARTIFACT_BUCKET --output-template-file /tmp/$ACCOUNT.yaml
+    aws cloudformation package --template-file $SCRIPT_DIR/lightrail-stack.yaml --s3-bucket $BUILD_ARTIFACT_BUCKET --output-template-file /tmp/$ACCOUNT.yaml
     if [ $? -ne 0 ]; then
         exit 3
     fi
@@ -76,9 +76,6 @@ elif [ "$COMMAND" = "deploy" ]; then
     fi
 elif [ "$COMMAND" = "package" ]; then
 
-    # This is the list of accounts to consider when using 'auto.sh package all'
-    ALL_ACCOUNTS="dev staging production"
-
     if [ -z "$BUILD_ARTIFACT_BUCKET" ]; then
         echo "The BUILD_ARTIFACT_BUCKET was not set."
         echo "Set it with 'export BUILD_ARTIFACT_BUCKET=\"<bucket_name>\"'"
@@ -91,38 +88,22 @@ elif [ "$COMMAND" = "package" ]; then
         fi
     fi
 
-    ACCOUNTS="${@:2}"
-    if [ "$ACCOUNTS" = "all" ]; then
-        ACCOUNTS="$ALL_ACCOUNTS"
-    fi
-
-    if [ -z "$ACCOUNTS" ]; then
-        echo "Accounts were not specified properly"
-        echo "Eg: auto.sh package <account_1> [account_2] [account_3]"
-        echo ""
-        echo "You can package all of the accounts with"
-        echo "auto.sh package all"
-        exit 2
-    fi
-
     rm -r $SCRIPT_DIR/build/*
     [ -d "$SCRIPT_DIR/build" ] || mkdir $SCRIPT_DIR/build
 
-    for account in $ACCOUNTS; do
-        aws cloudformation package --template-file $SCRIPT_DIR/accounts/$account.yaml --s3-bucket $BUILD_ARTIFACT_BUCKET --output-template-file $SCRIPT_DIR/build/$account.yaml
-        if [ $? -ne 0 ]; then
-            echo "Failed in packaging $account.yaml"
-            exit 3
-        fi
-    done
+    aws cloudformation package --template-file $SCRIPT_DIR/lightrail-stack.yaml --s3-bucket $BUILD_ARTIFACT_BUCKET --output-template-file $SCRIPT_DIR/build/lightrail-stack.yaml
+    if [ $? -ne 0 ]; then
+        echo "Failed in packaging lightrail-stack.yaml"
+        exit 3
+    fi
 else
     echo "usage:"
-    echo -e "\t./auto.sh package <account> [<account>]"
+    echo -e "\t./auto.sh package"
     echo -e "\t./auto.sh deploy <account>"
     echo ""
     echo "Common Commands"
-    echo -e "\tpackage\t\tPackages the Cloudformation Template associated"
-    echo -e "\t\t\t\twith an account or accounts"
+    echo -e "\tpackage\t\tPackages the Cloudformation Template for the"
+    echo -e "\t\t\t\tLightrail stack"
     echo -e "\tdeploy\t\tPackages and deploys the Cloudformation Template"
     echo -e "\t\t\t\tassociated with a particular account"
 fi
