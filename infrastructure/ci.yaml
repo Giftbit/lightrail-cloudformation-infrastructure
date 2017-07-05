@@ -261,8 +261,7 @@ Resources:
                   ChangeSetName: "dev"
                   Capabilities: CAPABILITY_NAMED_IAM
                   StackName: "dev"
-                  ParameterOverrides:
-                    EnvironmentName: Dev
+                  ParameterOverrides: "{\"EnvironmentName\":\"Dev\"}"
                   TemplatePath: BuildOutputArtifact::lightrail-stack.yaml
                   RoleArn: !Sub "arn:aws:iam::${DevAccountId}:role/${ProjectName}-CloudFormationServiceRole"
                 RoleArn: !Sub "arn:aws:iam::${DevAccountId}:role/${ProjectName}-CloudFormationExecutorRole"
@@ -317,8 +316,7 @@ Resources:
                   ChangeSetName: "staging"
                   Capabilities: CAPABILITY_NAMED_IAM
                   StackName: "staging"
-                  ParameterOverrides:
-                    EnvironmentName: Staging
+                  ParameterOverrides: "{\"EnvironmentName\":\"Staging\"}"
                   TemplatePath: BuildOutputArtifact::lightrail-stack.yaml
                   RoleArn: !Sub "arn:aws:iam::${StagingAccountId}:role/${ProjectName}-CloudFormationServiceRole"
                 RoleArn: !Sub "arn:aws:iam::${StagingAccountId}:role/${ProjectName}-CloudFormationExecutorRole"
@@ -373,8 +371,7 @@ Resources:
                   ChangeSetName: "production"
                   Capabilities: CAPABILITY_NAMED_IAM
                   StackName: "production"
-                  ParameterOverrides:
-                    EnvironmentName: Production
+                  ParameterOverrides: "{\"EnvironmentName\":\"Production\"}"
                   TemplatePath: BuildOutputArtifact::lightrail-stack.yaml
                   RoleArn: !Sub "arn:aws:iam::${ProductionAccountId}:role/${ProjectName}-CloudFormationServiceRole"
                 RoleArn: !Sub "arn:aws:iam::${ProductionAccountId}:role/${ProjectName}-CloudFormationExecutorRole"
