@@ -261,8 +261,9 @@ Resources:
                   ChangeSetName: "dev"
                   Capabilities: CAPABILITY_NAMED_IAM
                   StackName: "dev"
-                  ParameterOverrides: "{}"
-                  TemplatePath: BuildOutputArtifact::dev.yaml
+                  ParameterOverrides:
+                    EnvironmentName: Dev
+                  TemplatePath: BuildOutputArtifact::lightrail-stack.yaml
                   RoleArn: !Sub "arn:aws:iam::${DevAccountId}:role/${ProjectName}-CloudFormationServiceRole"
                 RoleArn: !Sub "arn:aws:iam::${DevAccountId}:role/${ProjectName}-CloudFormationExecutorRole"
                 RunOrder: 1
@@ -316,8 +317,9 @@ Resources:
                   ChangeSetName: "staging"
                   Capabilities: CAPABILITY_NAMED_IAM
                   StackName: "staging"
-                  ParameterOverrides: "{}"
-                  TemplatePath: BuildOutputArtifact::staging.yaml
+                  ParameterOverrides:
+                    EnvironmentName: Staging
+                  TemplatePath: BuildOutputArtifact::lightrail-stack.yaml
                   RoleArn: !Sub "arn:aws:iam::${StagingAccountId}:role/${ProjectName}-CloudFormationServiceRole"
                 RoleArn: !Sub "arn:aws:iam::${StagingAccountId}:role/${ProjectName}-CloudFormationExecutorRole"
                 RunOrder: 1
@@ -371,8 +373,9 @@ Resources:
                   ChangeSetName: "production"
                   Capabilities: CAPABILITY_NAMED_IAM
                   StackName: "production"
-                  ParameterOverrides: !Sub "{}"
-                  TemplatePath: BuildOutputArtifact::production.yaml
+                  ParameterOverrides:
+                    EnvironmentName: Production
+                  TemplatePath: BuildOutputArtifact::lightrail-stack.yaml
                   RoleArn: !Sub "arn:aws:iam::${ProductionAccountId}:role/${ProjectName}-CloudFormationServiceRole"
                 RoleArn: !Sub "arn:aws:iam::${ProductionAccountId}:role/${ProjectName}-CloudFormationExecutorRole"
                 RunOrder: 1

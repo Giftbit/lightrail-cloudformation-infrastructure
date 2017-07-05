@@ -5,7 +5,9 @@ Parameters:
   EnvironmentName:
     Type: String
     AllowedValues:
-      - Dev  # This gives convenience for when we want to move large blocks of configuration between the accounts
+      - Production
+      - Staging
+      - Dev
     Default: Dev
   SesDomainArns:
     Type: String
@@ -17,6 +19,8 @@ Parameters:
 Conditions:
   RegionIsUSWest2: !Equals [!Ref "AWS::Region", us-west-2]
   RegionIsUSEast1: !Equals [!Ref "AWS::Region", us-east-1]
+  AccountIsDev: !Equals [!Ref EnvironmentName, "Dev"]
+  AccountIsDevAndRegionIsUSWest2: !And [{Condition: AccountIsDev}, {Condition: RegionIsUSWest2}]
   SesConfigured: !Not [!Equals [!Ref SesDomainArns, ""]]
 
 Resources:
@@ -29,7 +33,7 @@ Resources:
         EnvironmentName: !Ref EnvironmentName
   LightrailAlertChannels:
     Type: AWS::CloudFormation::Stack
-    Condition: RegionIsUSWest2
+    Condition: AccountIsDevAndRegionIsUSWest2
     Properties:
       TemplateURL: ../modules/alert-sns.yaml
   LightrailCertificates:
@@ -61,7 +65,7 @@ Resources:
         EnvironmentName: !Ref EnvironmentName
   LightrailVPC:
     Type: AWS::CloudFormation::Stack
-    Condition: RegionIsUSWest2
+    Condition: AccountIsDevAndRegionIsUSWest2
     Properties:
       TemplateURL: ../modules/vpc.yaml
       Parameters:
@@ -71,7 +75,7 @@ Resources:
         VPCUniqueNumber: 1
   LightrailECSCluster:
     Type: AWS::CloudFormation::Stack
-    Condition: RegionIsUSWest2
+    Condition: AccountIsDevAndRegionIsUSWest2
     Properties:
       TemplateURL: ../modules/ecs-cluster.yaml
       Parameters:
@@ -89,28 +93,28 @@ Resources:
         Ec2SsmPolicyArn: !GetAtt SSM.Outputs.EC2PolicyArn
   LightrailSecureConfig:
     Type: AWS::CloudFormation::Stack
-    Condition: RegionIsUSWest2
+    Condition: AccountIsDevAndRegionIsUSWest2
     Properties:
       TemplateURL: ../modules/secure-bucket.yaml
       Parameters:
         EnvironmentName: !Ref EnvironmentName
   LightrailSecureDownload:
     Type: AWS::CloudFormation::Stack
-    Condition: RegionIsUSWest2
+    Condition: AccountIsDevAndRegionIsUSWest2
     Properties:
       TemplateURL: ../modules/secure-bucket.yaml
       Parameters:
         EnvironmentName: !Ref EnvironmentName
   LightrailEventStream:
     Type: AWS::CloudFormation::Stack
-    Condition: RegionIsUSWest2
+    Condition: AccountIsDevAndRegionIsUSWest2
     Properties:
       TemplateURL: ../modules/event-stream.yaml
       Parameters:
         EnvironmentName: !Ref EnvironmentName
   LightrailLogstash:
     Type: AWS::CloudFormation::Stack
-    Condition: RegionIsUSWest2
+    Condition: AccountIsDevAndRegionIsUSWest2
     Properties:
       TemplateURL: ../modules/logstash.yaml
       Parameters:
@@ -118,14 +122,14 @@ Resources:
         NonEmergencyAlertsSnsArn: !GetAtt LightrailAlertChannels.Outputs.NonEmergencySNSArn
   LightrailDatadog:
     Type: AWS::CloudFormation::Stack
-    Condition: RegionIsUSWest2
+    Condition: AccountIsDevAndRegionIsUSWest2
     Properties:
       TemplateURL: ../modules/datadog.yaml
       Parameters:
         EnvironmentName: !Ref EnvironmentName
   LightrailServices:
     Type: AWS::CloudFormation::Stack
-    Condition: RegionIsUSWest2
+    Condition: AccountIsDevAndRegionIsUSWest2
     Properties:
       TemplateURL: ../modules/services-service.yaml
       Parameters:
@@ -150,7 +154,7 @@ Resources:
           Value: Services
   LightrailBatch:
     Type: AWS::CloudFormation::Stack
-    Condition: RegionIsUSWest2
+    Condition: AccountIsDevAndRegionIsUSWest2
     Properties:
       TemplateURL: ../modules/batch-service.yaml
       Parameters:
@@ -165,7 +169,6 @@ Resources:
 
   SSM:
     Type: AWS::CloudFormation::Stack
-    Condition: RegionIsUSWest2
     Properties:
       TemplateURL: ../modules/ssm.yaml
 
