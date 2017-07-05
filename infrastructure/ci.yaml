@@ -81,7 +81,8 @@ Parameters:
     Default: ""
   CurrentAccountStackName:
     Type: String
-    Description: The CloudFormation Stack that should be used for the currency account
+    Description: The CloudFormation Stack that should be used for the lightrail account
+    Default: "production"
 
 Conditions:
   DevAccountIsEnabled: !Not [!Equals [!Ref DevAccountId, ""]]
@@ -637,9 +638,7 @@ Resources:
       Handler: index.handler
       Runtime: nodejs6.10
       Timeout: 15
-      Code:
-        S3Bucket: lambda-public-resources
-        S3Key: lambda/approval-diff-notifier-20170328-1706.zip
+      Code: ../res/approval-diff-notifier.zip
       Environment:
         Variables:
           ARTIFACT_BUCKET: !Ref DeploymentArtifactBucket
@@ -700,9 +699,7 @@ Resources:
       Handler: index.handler
       Runtime: nodejs6.10
       Timeout: 15
-      Code:
-        S3Bucket: lambda-public-resources
-        S3Key: lambda/stage-revision-updater-20170328-1706.zip
+      Code: ../res/stage-revision-updater.zip
       Environment:
         Variables:
           ARTIFACT_BUCKET: !Ref DeploymentArtifactBucket
