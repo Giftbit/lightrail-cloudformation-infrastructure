@@ -12,6 +12,7 @@ Parameters:
     Description: Comma Separated list of SES Domain Arns for sending Emails
     AllowedPattern:
       "(arn:aws:ses:[a-z0-9-]+:\\d{12}:identity\\/[a-z0-9._-]+(,arn:aws:ses:[a-z0-9-]+:\\d{12}:identity\\/[a-z0-9._-]+)*)?"
+    Default: ""
 
 Conditions:
   RegionIsUSWest2: !Equals [!Ref "AWS::Region", us-west-2]
