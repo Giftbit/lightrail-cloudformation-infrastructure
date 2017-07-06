@@ -59,19 +59,20 @@ elif [ "$COMMAND" = "deploy" ]; then
         exit 2
     fi
 
-    aws cloudformation package --template-file $SCRIPT_DIR/lightrail-stack.yaml --s3-bucket $BUILD_ARTIFACT_BUCKET --output-template-file /tmp/$ACCOUNT.yaml
+    aws cloudformation package --template-file $SCRIPT_DIR/lightrail-stack.yaml --s3-bucket $BUILD_ARTIFACT_BUCKET --output-template-file /tmp/lightrail-stack.yaml
     if [ $? -ne 0 ]; then
         exit 3
     fi
 
     echo "Executing aws cloudformation deploy..."
-    aws cloudformation deploy --template-file /tmp/$ACCOUNT.yaml --stack-name $ACCOUNT --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM ${@:3}
+    aws cloudformation deploy --template-file /tmp/lightrail-stack.yaml --stack-name $ACCOUNT --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM ${@:3}
 
     if [ $? -ne 0 ]; then
         # Print some help on why it failed.
         echo ""
         echo "Printing recent CloudFormation errors..."
-        aws cloudformation describe-stack-events --stack-name $ACCOUNT --query 'reverse(StackEvents[?ResourceStatus==`CREATE_FAILED`||ResourceStatus==`UPDATE_FAILED`].[ResourceType,LogicalResourceId,ResourceStatusReason])' --output text
+        ONE_HOUR_AGO=$(date -v -1H -u +"%Y-%m-%dT%H:%M:%SZ")
+        aws cloudformation describe-stack-events --stack-name $ACCOUNT --query "reverse(StackEvents[?Timestamp > \`$ONE_HOUR_AGO\` && (ResourceStatus==\`CREATE_FAILED\`||ResourceStatus==\`UPDATE_FAILED\`)].[Timestamp,ResourceType,LogicalResourceId,ResourceStatusReason])" --output text
         exit 4
     fi
 elif [ "$COMMAND" = "package" ]; then
