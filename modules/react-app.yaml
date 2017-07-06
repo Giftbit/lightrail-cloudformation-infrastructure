@@ -59,7 +59,7 @@ Resources:
                 - s3:GetObject*
                 - s3:GetBucketLocation
                 - s3:PutObject*
-              Principals:
+              Principal:
                 AWS: !Split [",", !Ref AccountsToGrantBuildArtifactFullAccess]
               Resource:
                 - !Sub "arn:aws:s3::${BuildArtifactBucket}"
