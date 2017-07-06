@@ -4,7 +4,7 @@
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd $SCRIPT_DIR
 
-STACK_NAME="LightrailInfrastructureCI"
+STACK_NAME="DevLightrailInfrastructureCI"
 
 if ! type "aws" &> /dev/null; then
     echo "'aws' was not found in the path.  Install awscli using 'sudo pip install awscli' then try again."

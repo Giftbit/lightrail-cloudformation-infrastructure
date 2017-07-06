@@ -19,12 +19,31 @@ Parameters:
     Type: String
     Description: The Name of the bucket to use for Build Artifacts
     Default: ""
+  ProductionAccountId:
+    Type: String
+    Description: The ID of the account to be considered Production
+    Default: ""
+    AllowedPattern: (\d{12})?
+  StagingAccountId:
+    Type: String
+    Description: The ID of the account to be considered Staging
+    Default: ""
+    AllowedPattern: (\d{12})?
+  DevAccountId:
+    Type: String
+    Description: The ID of the account to be considered Dev
+    Default: ""
+    AllowedPattern: (\d{12})?
 
 Conditions:
   RegionIsUSWest2: !Equals [!Ref "AWS::Region", us-west-2]
   RegionIsUSEast1: !Equals [!Ref "AWS::Region", us-east-1]
   EnvIsDev: !Equals [!Ref EnvironmentName, Dev]
   EnvIsDevAndRegionIsUSWest2: !And [{Condition: EnvIsDev}, {Condition: RegionIsUSWest2}]
+  EnvIsProduction: !Equals [!Ref EnvironmentName, Production]
+  ProductionAccountIdProvided: !Not [!Equals [!Ref ProductionAccountId, ""]]
+  StagingAccountIdProvided: !Not [!Equals [!Ref StagingAccountId, ""]]
+  DevAccountIdProvided: !Not [!Equals [!Ref DevAccountId, ""]]
   SesConfigured: !Not [!Equals [!Ref SesDomainArns, ""]]
   ShouldOverrideBuildArtifactBucket: !Not [!Equals [!Ref ReactBuildArtifactBucketOverride, ""]]
 
@@ -68,6 +87,21 @@ Resources:
       TemplateURL: ./modules/react-app.yaml
       Parameters:
         EnvironmentName: !Ref EnvironmentName
+        AccountsToGrantBuildArtifactFullAccess: !Join
+          - ","
+          -
+            - !If
+              - ProductionAccountIdProvided
+              - !Ref ProductionAccountId
+              - !Ref AWS::NoValue
+            - !If
+              - StagingAccountIdProvided
+              - !Ref StagingAccountId
+              - !Ref AWS::NoValue
+            - !If
+              - DevAccountIdProvided
+              - !Ref DevAccountId
+              - !Ref AWS::NoValue
   LightrailVPC:
     Type: AWS::CloudFormation::Stack
     Condition: EnvIsDevAndRegionIsUSWest2
