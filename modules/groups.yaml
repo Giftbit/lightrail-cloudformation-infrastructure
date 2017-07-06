@@ -125,7 +125,7 @@ Resources:
         - !Ref DevelopersGroup
 
 Outputs:
-  DeveloperGroupName:
+  DevelopersGroupName:
     Description: The Name of the Developers Group
     Value: !Ref DevelopersGroup
   MarkettingGroupName:
