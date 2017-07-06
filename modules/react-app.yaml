@@ -45,6 +45,7 @@ Resources:
       AccessControl: Private
   BuildArtifactBucketPolicy:
     Type: AWS::S3::BucketPolicy
+    Condition: ShouldConfigureBuildArtifactAccess
     Properties:
       Bucket: !Ref BuildArtifactBucket
       PolicyDocument: !If
