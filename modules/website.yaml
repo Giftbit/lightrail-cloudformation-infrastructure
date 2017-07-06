@@ -33,13 +33,13 @@ Resources:
             Action:
               - s3:Get*
             Resource:
-              - !Sub "arn:aws:s3:::List${Bucket}/*"
+              - !Sub "arn:aws:s3:::${Bucket}/*"
             Principal: "*"
   BucketAccessPolicy:
     Type: AWS::IAM::Policy
     Properties:
       PolicyName: WebsiteBucketReadWrite
-      Groups: !Split [",", GroupsToGrantWebsiteReadWrite]
+      Groups: !Split [",", !Ref GroupsToGrantWebsiteReadWrite]
       PolicyDocument:
         Version: 2012-10-17
         Statement:

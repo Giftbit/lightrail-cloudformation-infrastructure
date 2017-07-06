@@ -15,13 +15,19 @@ Parameters:
     AllowedPattern:
       "(arn:aws:ses:[a-z0-9-]+:\\d{12}:identity\\/[a-z0-9._-]+(,arn:aws:ses:[a-z0-9-]+:\\d{12}:identity\\/[a-z0-9._-]+)*)?"
     Default: ""
+  ReactBuildArtifactBucket:
+    Type: String
+    Description: The Name of the bucket to use for Build Artifacts
+    Default: ""
 
 Conditions:
   RegionIsUSWest2: !Equals [!Ref "AWS::Region", us-west-2]
   RegionIsUSEast1: !Equals [!Ref "AWS::Region", us-east-1]
-  AccountIsDev: !Equals [!Ref EnvironmentName, "Dev"]
-  AccountIsDevAndRegionIsUSWest2: !And [{Condition: AccountIsDev}, {Condition: RegionIsUSWest2}]
+  EnvIsDev: !Equals [!Ref EnvironmentName, Dev]
+  EnvIsDevAndRegionIsUSWest2: !And [{Condition: EnvIsDev}, {Condition: RegionIsUSWest2}]
+  EnvIsProduction: !Equals [!Ref EnvironmentName, Production]
   SesConfigured: !Not [!Equals [!Ref SesDomainArns, ""]]
+  ShouldOutputReactBuildArtifact: !Or [{Condition: EnvIsProduction}, !Not [!Equals [!Ref ReactBuildArtifactBucket, ""]]]
 
 Resources:
   Groups:
@@ -33,7 +39,7 @@ Resources:
         EnvironmentName: !Ref EnvironmentName
   LightrailAlertChannels:
     Type: AWS::CloudFormation::Stack
-    Condition: AccountIsDevAndRegionIsUSWest2
+    Condition: EnvIsDevAndRegionIsUSWest2
     Properties:
       TemplateURL: ./modules/alert-sns.yaml
   LightrailCertificates:
@@ -65,7 +71,7 @@ Resources:
         EnvironmentName: !Ref EnvironmentName
   LightrailVPC:
     Type: AWS::CloudFormation::Stack
-    Condition: AccountIsDevAndRegionIsUSWest2
+    Condition: EnvIsDevAndRegionIsUSWest2
     Properties:
       TemplateURL: ./modules/vpc.yaml
       Parameters:
@@ -75,7 +81,7 @@ Resources:
         VPCUniqueNumber: 1
   LightrailECSCluster:
     Type: AWS::CloudFormation::Stack
-    Condition: AccountIsDevAndRegionIsUSWest2
+    Condition: EnvIsDevAndRegionIsUSWest2
     Properties:
       TemplateURL: ./modules/ecs-cluster.yaml
       Parameters:
@@ -93,28 +99,28 @@ Resources:
         Ec2SsmPolicyArn: !GetAtt SSM.Outputs.EC2PolicyArn
   LightrailSecureConfig:
     Type: AWS::CloudFormation::Stack
-    Condition: AccountIsDevAndRegionIsUSWest2
+    Condition: EnvIsDevAndRegionIsUSWest2
     Properties:
       TemplateURL: ./modules/secure-bucket.yaml
       Parameters:
         EnvironmentName: !Ref EnvironmentName
   LightrailSecureDownload:
     Type: AWS::CloudFormation::Stack
-    Condition: AccountIsDevAndRegionIsUSWest2
+    Condition: EnvIsDevAndRegionIsUSWest2
     Properties:
       TemplateURL: ./modules/secure-bucket.yaml
       Parameters:
         EnvironmentName: !Ref EnvironmentName
   LightrailEventStream:
     Type: AWS::CloudFormation::Stack
-    Condition: AccountIsDevAndRegionIsUSWest2
+    Condition: EnvIsDevAndRegionIsUSWest2
     Properties:
       TemplateURL: ./modules/event-stream.yaml
       Parameters:
         EnvironmentName: !Ref EnvironmentName
   LightrailLogstash:
     Type: AWS::CloudFormation::Stack
-    Condition: AccountIsDevAndRegionIsUSWest2
+    Condition: EnvIsDevAndRegionIsUSWest2
     Properties:
       TemplateURL: ./modules/logstash.yaml
       Parameters:
@@ -122,14 +128,14 @@ Resources:
         NonEmergencyAlertsSnsArn: !GetAtt LightrailAlertChannels.Outputs.NonEmergencySNSArn
   LightrailDatadog:
     Type: AWS::CloudFormation::Stack
-    Condition: AccountIsDevAndRegionIsUSWest2
+    Condition: EnvIsDevAndRegionIsUSWest2
     Properties:
       TemplateURL: ./modules/datadog.yaml
       Parameters:
         EnvironmentName: !Ref EnvironmentName
   LightrailServices:
     Type: AWS::CloudFormation::Stack
-    Condition: AccountIsDevAndRegionIsUSWest2
+    Condition: EnvIsDevAndRegionIsUSWest2
     Properties:
       TemplateURL: ./modules/services-service.yaml
       Parameters:
@@ -154,7 +160,7 @@ Resources:
           Value: Services
   LightrailBatch:
     Type: AWS::CloudFormation::Stack
-    Condition: AccountIsDevAndRegionIsUSWest2
+    Condition: EnvIsDevAndRegionIsUSWest2
     Properties:
       TemplateURL: ./modules/batch-service.yaml
       Parameters:
@@ -181,4 +187,8 @@ Outputs:
     Value: !GetAtt LightrailReact.Outputs.ReactBucketName
   ReactArtifactBucketName:
     Description: The Bucket to put the React Build Artifacts
-    Value: !GetAtt LightrailReact.Outputs.ActifactBucketName
+    Condition: ShouldOutputReactBuildArtifact
+    Value: !If
+      - EnvIsProduction
+      - !GetAtt LightrailReact.Outputs.ArtifactBucketName
+      - !Ref ReactBuildArtifactBucket

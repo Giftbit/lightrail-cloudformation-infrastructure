@@ -75,7 +75,7 @@ Outputs:
   ReactDomainName:
     Description: The Domain name to use for serving the React resources
     Value: !Sub "${ReactBucket}.s3-website-${AWS::Region}.amazonaws.com"
-  ActifactBucketName:
+  ArtifactBucketName:
     Description: The name of the Build Artifact Bucket
     Condition: ShouldGenerateBuildArtifactBucket
     Value: !Ref BuildArtifactBucket
