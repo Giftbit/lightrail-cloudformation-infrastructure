@@ -258,7 +258,7 @@ Resources:
                   - Name: BuildOutputArtifact
                 Configuration:
                   ActionMode: CHANGE_SET_REPLACE
-                  ChangeSetName: "dev"
+                  ChangeSetName: !Sub "${ProjectName}-dev"
                   Capabilities: CAPABILITY_NAMED_IAM
                   StackName: "dev"
                   ParameterOverrides: !Sub >
@@ -290,7 +290,7 @@ Resources:
                 Configuration:
                   StackName: "dev"
                   ActionMode: CHANGE_SET_EXECUTE
-                  ChangeSetName: "dev"
+                  ChangeSetName: !Sub "${ProjectName}-dev"
                   RoleArn: !Sub "arn:aws:iam::${DevAccountId}:role/${ProjectName}-CloudFormationServiceRole"
                 RoleArn: !Sub "arn:aws:iam::${DevAccountId}:role/${ProjectName}-CloudFormationExecutorRole"
                 RunOrder: 3
@@ -319,7 +319,7 @@ Resources:
                   - Name: BuildOutputArtifact
                 Configuration:
                   ActionMode: CHANGE_SET_REPLACE
-                  ChangeSetName: "staging"
+                  ChangeSetName: !Sub "${ProjectName}-staging"
                   Capabilities: CAPABILITY_NAMED_IAM
                   StackName: "staging"
                   ParameterOverrides: !Sub >
@@ -351,7 +351,7 @@ Resources:
                 Configuration:
                   StackName: "staging"
                   ActionMode: CHANGE_SET_EXECUTE
-                  ChangeSetName: "staging"
+                  ChangeSetName: !Sub "${ProjectName}-staging"
                   RoleArn: !Sub "arn:aws:iam::${StagingAccountId}:role/${ProjectName}-CloudFormationServiceRole"
                 RoleArn: !Sub "arn:aws:iam::${StagingAccountId}:role/${ProjectName}-CloudFormationExecutorRole"
                 RunOrder: 3
@@ -380,7 +380,7 @@ Resources:
                   - Name: BuildOutputArtifact
                 Configuration:
                   ActionMode: CHANGE_SET_REPLACE
-                  ChangeSetName: "production"
+                  ChangeSetName: !Sub "${ProjectName}-production"
                   Capabilities: CAPABILITY_NAMED_IAM
                   StackName: "production"
                   ParameterOverrides: !Sub >
@@ -412,7 +412,7 @@ Resources:
                 Configuration:
                   StackName: "production"
                   ActionMode: CHANGE_SET_EXECUTE
-                  ChangeSetName: "production"
+                  ChangeSetName: !Sub "${ProjectName}-production"
                   RoleArn: !Sub "arn:aws:iam::${ProductionAccountId}:role/${ProjectName}-CloudFormationServiceRole"
                 RoleArn: !Sub "arn:aws:iam::${ProductionAccountId}:role/${ProjectName}-CloudFormationExecutorRole"
                 RunOrder: 3
