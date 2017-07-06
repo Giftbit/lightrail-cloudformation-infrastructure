@@ -53,8 +53,8 @@ Resources:
         GroupsToGrantWebsiteReadWrite: !Join
           - ","
           -
-            - !GetAtt Groups.Outputs.MarkettingGroup
-            - !GetAtt Groups.Outputs.DevelopersGroup
+            - !GetAtt Groups.Outputs.MarkettingGroupName
+            - !GetAtt Groups.Outputs.DevelopersGroupName
 
   LightrailReact:
     Type: AWS::CloudFormation::Stack
