@@ -74,5 +74,4 @@ Outputs:
     Value: !Sub "${ReactBucket}.s3-website-${AWS::Region}.amazonaws.com"
   ArtifactBucketName:
     Description: The name of the Build Artifact Bucket
-    Condition: ShouldGenerateBuildArtifactBucket
     Value: !Ref BuildArtifactBucket

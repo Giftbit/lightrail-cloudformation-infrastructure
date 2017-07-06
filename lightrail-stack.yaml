@@ -186,7 +186,6 @@ Outputs:
     Value: !GetAtt LightrailReact.Outputs.ReactBucketName
   ReactArtifactBucketName:
     Description: The Bucket to put the React Build Artifacts
-    Condition: ShouldOutputReactBuildArtifact
     Value: !If
       - ShouldOverrideBuildArtifactBucket
       - !Ref ReactBuildArtifactBucketOverride
