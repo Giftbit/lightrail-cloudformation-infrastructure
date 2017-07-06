@@ -15,7 +15,7 @@ Parameters:
     AllowedPattern:
       "(arn:aws:ses:[a-z0-9-]+:\\d{12}:identity\\/[a-z0-9._-]+(,arn:aws:ses:[a-z0-9-]+:\\d{12}:identity\\/[a-z0-9._-]+)*)?"
     Default: ""
-  ReactBuildArtifactBucket:
+  ReactBuildArtifactBucketOverride:
     Type: String
     Description: The Name of the bucket to use for Build Artifacts
     Default: ""
@@ -25,9 +25,8 @@ Conditions:
   RegionIsUSEast1: !Equals [!Ref "AWS::Region", us-east-1]
   EnvIsDev: !Equals [!Ref EnvironmentName, Dev]
   EnvIsDevAndRegionIsUSWest2: !And [{Condition: EnvIsDev}, {Condition: RegionIsUSWest2}]
-  EnvIsProduction: !Equals [!Ref EnvironmentName, Production]
   SesConfigured: !Not [!Equals [!Ref SesDomainArns, ""]]
-  ShouldOutputReactBuildArtifact: !Or [{Condition: EnvIsProduction}, !Not [!Equals [!Ref ReactBuildArtifactBucket, ""]]]
+  ShouldOverrideBuildArtifactBucket: !Not [!Equals [!Ref ReactBuildArtifactBucketOverride, ""]]
 
 Resources:
   Groups:
@@ -189,6 +188,6 @@ Outputs:
     Description: The Bucket to put the React Build Artifacts
     Condition: ShouldOutputReactBuildArtifact
     Value: !If
-      - EnvIsProduction
+      - ShouldOverrideBuildArtifactBucket
+      - !Ref ReactBuildArtifactBucketOverride
       - !GetAtt LightrailReact.Outputs.ArtifactBucketName
-      - !Ref ReactBuildArtifactBucket

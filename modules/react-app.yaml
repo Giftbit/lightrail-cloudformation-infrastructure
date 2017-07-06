@@ -17,7 +17,6 @@ Parameters:
 
 Conditions:
   ShouldConfigureBuildArtifactAccess: !Not [!Equals [!Ref AccountsToGrantBuildArtifactFullAccess, ""]]
-  ShouldGenerateBuildArtifactBucket: !Equals [!Ref EnvironmentName, Production]
 
 Resources:
   ReactBucket:
@@ -42,12 +41,10 @@ Resources:
             Principal: "*"
   BuildArtifactBucket:
     Type: AWS::S3::Bucket
-    Condition: ShouldGenerateBuildArtifactBucket
     Properties:
       AccessControl: Private
   BuildArtifactBucketPolicy:
-    Type: AWS::S3::Bucket
-    Condition: ShouldGenerateBuildArtifactBucket
+    Type: AWS::S3::BucketPolicy
     Properties:
       Bucket: !Ref BuildArtifactBucket
       PolicyDocument: !If
