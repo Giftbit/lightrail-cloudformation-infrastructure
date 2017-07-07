@@ -60,6 +60,23 @@ Resources:
   MarkettingGroup:
     Type: AWS::IAM::Group
 
+  BasicCloudformationAccessPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: BasicCloudformationAccess
+      Groups:
+        - !Ref MarkettingGroup
+        - !Ref DevelopersGroup
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - cloudformation:ListExports
+              - cloudformation:DescribeStacks
+            Resource: "*"
+
   BryanD:
     Type: AWS::IAM::User
     Properties:
