@@ -48,23 +48,20 @@ Resources:
     Condition: ShouldConfigureBuildArtifactAccess
     Properties:
       Bucket: !Ref BuildArtifactBucket
-      PolicyDocument: !If
-        - ShouldConfigureBuildArtifactAccess
-        -
-          Statement:
-            -
-              Effect: Allow
-              Action:
-                - s3:ListBucket
-                - s3:GetObject*
-                - s3:GetBucketLocation
-                - s3:PutObject*
-              Principal:
-                AWS: !Split [",", !Ref AccountsToGrantBuildArtifactFullAccess]
-              Resource:
-                - !Sub "arn:aws:s3:::${BuildArtifactBucket}"
-                - !Sub "arn:aws:s3:::${BuildArtifactBucket}/*"
-        - !Ref AWS::NoValue
+      PolicyDocument:
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - s3:ListBucket
+              - s3:GetObject*
+              - s3:GetBucketLocation
+              - s3:PutObject*
+            Principal:
+              AWS: !Split [",", !Ref AccountsToGrantBuildArtifactFullAccess]
+            Resource:
+              - !Sub "arn:aws:s3:::${BuildArtifactBucket}"
+              - !Sub "arn:aws:s3:::${BuildArtifactBucket}/*"
 
 Outputs:
   ReactBucketName:
