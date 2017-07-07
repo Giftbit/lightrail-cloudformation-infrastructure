@@ -62,8 +62,8 @@ Resources:
               Principal:
                 AWS: !Split [",", !Ref AccountsToGrantBuildArtifactFullAccess]
               Resource:
-                - !Sub "arn:aws:s3::${BuildArtifactBucket}"
-                - !Sub "arn:aws:s3::${BuildArtifactBucket}/*"
+                - !Sub "arn:aws:s3:::${BuildArtifactBucket}"
+                - !Sub "arn:aws:s3:::${BuildArtifactBucket}/*"
         - !Ref AWS::NoValue
 
 Outputs:
