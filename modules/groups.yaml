@@ -44,7 +44,7 @@ Resources:
                     - iam:ListRoles
                   NotResource:
                     -
-                      !ImportValue InfrastructureAdminRoleArnB
+                      !ImportValue InfrastructureAdminRoleArn
           - !Ref AWS::NoValue
         -
           PolicyName: NoCloudtrail
