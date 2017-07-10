@@ -8,7 +8,7 @@ Parameters:
     Default: "LightrailInfrastructureCI"
   StackName:
     Type: String
-    Description: Enter the name of the stack we will be granting access execute against
+    Description: Enter the name of the CloudFormation Stack that the remote code pipeline should be able to access
   CodePipelineAccountId:
     Type: String
     Description: Enter the AWS Account ID associated with the Code Pipeline
@@ -55,7 +55,8 @@ Resources:
               -
                 Effect: "Deny"
                 Action:
-                  - "iam:*UserPolic*"
+                  - "iam:*UserPolicy"
+                  - "iam:*UserPolicies"
                   - "cloudtrail:*"
                 Resource: "*"
 
