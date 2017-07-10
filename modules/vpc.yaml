@@ -121,6 +121,7 @@ Resources:
       GroupDescription: !Sub "Lightrail ${EnvironmentName} NAT"
       VpcId: !Ref VPC
       SecurityGroupIngress:
+        # HTTP Access from the App Server Subnet
         -
           FromPort: 80
           ToPort: 80
@@ -136,6 +137,7 @@ Resources:
           ToPort: 80
           IpProtocol: tcp
           CidrIp: !Sub "10.${VPCUniqueNumber}.23.0/24"
+        # HTTPS Access from the App Server Subnet
         -
           FromPort: 443
           ToPort: 443
@@ -150,17 +152,41 @@ Resources:
           FromPort: 443
           ToPort: 443
           IpProtocol: tcp
+          CidrIp: !Sub "10.${VPCUniqueNumber}.23.0/24"
+        # HTTPS Access from the App Server Subnet
+        -
+          FromPort: 123
+          ToPort: 123
+          IpProtocol: udp
+          CidrIp: !Sub "10.${VPCUniqueNumber}.21.0/24"
+        -
+          FromPort: 123
+          ToPort: 123
+          IpProtocol: udp
+          CidrIp: !Sub "10.${VPCUniqueNumber}.22.0/24"
+        -
+          FromPort: 123
+          ToPort: 123
+          IpProtocol: udp
           CidrIp: !Sub "10.${VPCUniqueNumber}.23.0/24"
       SecurityGroupEgress:
+        # Outgoing HTTP Access
         -
           FromPort: 80
           ToPort: 80
           IpProtocol: tcp
           CidrIp: 0.0.0.0/0
+        # Outgoing HTTPS Access
         -
           FromPort: 443
           ToPort: 443
           IpProtocol: tcp
+          CidrIp: 0.0.0.0/0
+        # Outgoing NTP Access
+        -
+          FromPort: 123
+          ToPort: 123
+          IpProtocol: udp
           CidrIp: 0.0.0.0/0
       Tags:
         -
