@@ -22,7 +22,7 @@ Metadata:
           - ApprovalNotificationTopicExport
       -
         Label:
-          default: Enabled Accounts
+          default: Enabled Accounts (Deploy this stack first with no enabled accounts, then set up the CI Roles in the accounts, before enabling the accounts below)
         Parameters:
           - DevAccountId
           - StagingAccountId
