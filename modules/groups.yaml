@@ -1,0 +1,150 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Lightrail Groups"
+
+Parameters:
+  EnvironmentName:
+    Type: String
+    Description: The Name of the Environment
+    AllowedValues:
+      - Dev
+      - Staging
+      - Production
+
+Conditions:
+  EnvironmentIsDevelopment: !Equals [!Ref EnvironmentName, Dev]
+
+Resources:
+  AllEmployees:
+    Type: AWS::IAM::Group
+    Properties:
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/IAMUserChangePassword
+
+  DevelopersGroup:
+    Type: AWS::IAM::Group
+    Properties:
+      ManagedPolicyArns: !If
+        - EnvironmentIsDevelopment
+        -
+          - arn:aws:iam::aws:policy/PowerUserAccess
+        - !Ref AWS::NoValue
+      Policies:
+        - !If
+          - EnvironmentIsDevelopment
+          -
+            PolicyName: PassRoles
+            PolicyDocument:
+              Version: 2012-10-17
+              Statement:
+                -
+                  Effect: Allow
+                  Action:
+                    - iam:GetRole
+                    - iam:PassRole
+                    - iam:ListRoles
+                  NotResource:
+                    -
+                      !ImportValue InfrastructureAdminRoleArn
+          - !Ref AWS::NoValue
+        -
+          PolicyName: NoCloudtrail
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              -
+                Effect: Deny
+                Action:
+                  - "cloudtrail:*"
+                Resource: "*"
+
+  MarkettingGroup:
+    Type: AWS::IAM::Group
+
+  BasicCloudformationAccessPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: BasicCloudformationAccess
+      Groups:
+        - !Ref MarkettingGroup
+        - !Ref DevelopersGroup
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - cloudformation:ListExports
+              - cloudformation:DescribeStacks
+            Resource: "*"
+
+  BryanD:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: bryan.d
+      Groups:
+        - !Ref AllEmployees
+        - !Ref MarkettingGroup
+  DanO:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: dan.o
+      Groups:
+        - !Ref AllEmployees
+        - !Ref DevelopersGroup
+  GrahamB:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: graham.b
+      Groups:
+        - !Ref AllEmployees
+        - !Ref DevelopersGroup
+  JamieS:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: jamie.s
+      Groups:
+        - !Ref AllEmployees
+        - !Ref DevelopersGroup
+  JamieT:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: jamie.t
+      Groups:
+        - !Ref AllEmployees
+        - !Ref DevelopersGroup
+  JeffG:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: jeff.g
+      Groups:
+        - !Ref AllEmployees
+        - !Ref DevelopersGroup
+  MohammadJ:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: mohammad.j
+      Groups:
+        - !Ref AllEmployees
+        - !Ref DevelopersGroup
+  TanaJ:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: tana.j
+      Groups:
+        - !Ref AllEmployees
+        - !Ref DevelopersGroup
+  TimJ:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: tim.j
+      Groups:
+        - !Ref AllEmployees
+        - !Ref DevelopersGroup
+
+Outputs:
+  DevelopersGroupName:
+    Description: The Name of the Developers Group
+    Value: !Ref DevelopersGroup
+  MarkettingGroupName:
+    Description: The Name of the Marketting Group
+    Value: !Ref MarkettingGroup

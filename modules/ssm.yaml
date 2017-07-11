@@ -104,6 +104,7 @@ Resources:
                     --query Role.RoleId \
                     --output text)
                 - instance_id=$(curl 169.254.169.254/latest/meta-data/instance-id)
+                - sudo aws configure set default.s3.multipart_threshold 5GB
                 - !Sub |
                   sudo aws s3 sync \
                     --acl bucket-owner-full-control \

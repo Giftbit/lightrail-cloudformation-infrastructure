@@ -1,0 +1,35 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Lightrail Certificates"
+
+Parameters:
+  EnvironmentName:
+    Type: String
+    Description: The Name of the Environment
+    AllowedValues:
+      - Dev
+      - Staging
+      - Production
+
+Mappings:
+  CertificateDomains:
+    Dev:
+      Primary: dev.lightrail.com
+      Additional: devapi.lightrail.com
+    Staging:
+      Primary: staging.lightrail.com
+      Additional: stagingapi.lightrail.com
+    Production:
+      Primary: lightrail.com
+      Additional: www.lightrail.com,api.lightrail.com
+
+Resources:
+  Certificate:
+    Type: AWS::CertificateManager::Certificate
+    Properties:
+      DomainName: !FindInMap [CertificateDomains, !Ref EnvironmentName, Primary]
+      SubjectAlternativeNames: !Split [",", !FindInMap [CertificateDomains, !Ref EnvironmentName, Additional]]
+
+Outputs:
+  CertificateArn:
+    Description: The ARN of the certificate
+    Value: !Ref Certificate

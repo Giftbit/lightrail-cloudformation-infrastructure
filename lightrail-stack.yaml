@@ -1,0 +1,226 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Lightrail Stack"
+
+Parameters:
+  EnvironmentName:
+    Type: String
+    AllowedValues:
+      - Production
+      - Staging
+      - Dev
+    Default: Dev
+  SesDomainArns:
+    Type: String
+    Description: Comma Separated list of SES Domain Arns for sending Emails
+    AllowedPattern:
+      "(arn:aws:ses:[a-z0-9-]+:\\d{12}:identity\\/[a-z0-9._-]+(,arn:aws:ses:[a-z0-9-]+:\\d{12}:identity\\/[a-z0-9._-]+)*)?"
+    Default: ""
+  ReactBuildArtifactBucketOverride:
+    Type: String
+    Description: The Name of the bucket to use for Build Artifacts
+    Default: ""
+  ProductionAccountId:
+    Type: String
+    Description: The ID of the account to be considered Production
+    Default: ""
+    AllowedPattern: (\d{12})?
+  StagingAccountId:
+    Type: String
+    Description: The ID of the account to be considered Staging
+    Default: ""
+    AllowedPattern: (\d{12})?
+  DevAccountId:
+    Type: String
+    Description: The ID of the account to be considered Dev
+    Default: ""
+    AllowedPattern: (\d{12})?
+
+Conditions:
+  RegionIsUSWest2: !Equals [!Ref "AWS::Region", us-west-2]
+  RegionIsUSEast1: !Equals [!Ref "AWS::Region", us-east-1]
+  EnvIsDev: !Equals [!Ref EnvironmentName, Dev]
+  EnvIsDevAndRegionIsUSWest2: !And [{Condition: EnvIsDev}, {Condition: RegionIsUSWest2}]
+  EnvIsProduction: !Equals [!Ref EnvironmentName, Production]
+  ProductionAccountIdProvided: !Not [!Equals [!Ref ProductionAccountId, ""]]
+  StagingAccountIdProvided: !Not [!Equals [!Ref StagingAccountId, ""]]
+  DevAccountIdProvided: !Not [!Equals [!Ref DevAccountId, ""]]
+  SesConfigured: !Not [!Equals [!Ref SesDomainArns, ""]]
+  ShouldOverrideBuildArtifactBucket: !Not [!Equals [!Ref ReactBuildArtifactBucketOverride, ""]]
+
+Resources:
+  Groups:
+    Type: AWS::CloudFormation::Stack
+    Condition: RegionIsUSWest2  # Users and groups are global, so we only want it in the primary region
+    Properties:
+      TemplateURL: ./modules/groups.yaml
+      Parameters:
+        EnvironmentName: !Ref EnvironmentName
+  LightrailAlertChannels:
+    Type: AWS::CloudFormation::Stack
+    Condition: EnvIsDevAndRegionIsUSWest2
+    Properties:
+      TemplateURL: ./modules/alert-sns.yaml
+  LightrailCertificates:
+    Type: AWS::CloudFormation::Stack
+    Condition: RegionIsUSEast1
+    Properties:
+      TemplateURL: ./modules/certificates.yaml
+      Parameters:
+        EnvironmentName: !Ref EnvironmentName
+  LightrailWebsite:
+    Type: AWS::CloudFormation::Stack
+    Condition: RegionIsUSWest2
+    Properties:
+      TemplateURL: ./modules/website.yaml
+      Parameters:
+        EnvironmentName: !Ref EnvironmentName
+        GroupsToGrantWebsiteReadWrite: !Join
+          - ","
+          -
+            - !GetAtt Groups.Outputs.MarkettingGroupName
+            - !GetAtt Groups.Outputs.DevelopersGroupName
+
+  LightrailReact:
+    Type: AWS::CloudFormation::Stack
+    Condition: RegionIsUSWest2
+    Properties:
+      TemplateURL: ./modules/react-app.yaml
+      Parameters:
+        EnvironmentName: !Ref EnvironmentName
+        AccountsToGrantBuildArtifactFullAccess: !Join
+          - ","
+          -
+            - !If
+              - ProductionAccountIdProvided
+              - !Ref ProductionAccountId
+              - !Ref AWS::NoValue
+            - !If
+              - StagingAccountIdProvided
+              - !Ref StagingAccountId
+              - !Ref AWS::NoValue
+            - !If
+              - DevAccountIdProvided
+              - !Ref DevAccountId
+              - !Ref AWS::NoValue
+  LightrailVPC:
+    Type: AWS::CloudFormation::Stack
+    Condition: EnvIsDevAndRegionIsUSWest2
+    Properties:
+      TemplateURL: ./modules/vpc.yaml
+      Parameters:
+        BastionHostAuthorizedUsersGroup: Developers
+        EnvironmentName: !Ref EnvironmentName
+        NatInstanceType: t2.nano
+        VPCUniqueNumber: 1
+  LightrailECSCluster:
+    Type: AWS::CloudFormation::Stack
+    Condition: EnvIsDevAndRegionIsUSWest2
+    Properties:
+      TemplateURL: ./modules/ecs-cluster.yaml
+      Parameters:
+        EnvironmentName: !Ref EnvironmentName
+        ClusterName: lightrail-dev
+        ClusterMinInstances: 1
+        ClusterMaxInstances: 3
+        ClusterInstanceType: t2.nano
+        ClusterSSHKeyName: LightrailDevECS
+        ClusterSecurityGroupIDs: !GetAtt LightrailVPC.Outputs.EcsClusterInstanceSecurityGroupId
+        ClusterScaleUpRecurrence: "0 15 * * MON-FRI"
+        ClusterScaleDownRecurrence: "0 3 * * TUE-SAT"
+        VpcId: !GetAtt LightrailVPC.Outputs.VpcId
+        VpcPublicSubnetIds: !GetAtt LightrailVPC.Outputs.PrivateSubnetIds
+        Ec2SsmPolicyArn: !GetAtt SSM.Outputs.EC2PolicyArn
+  LightrailSecureConfig:
+    Type: AWS::CloudFormation::Stack
+    Condition: EnvIsDevAndRegionIsUSWest2
+    Properties:
+      TemplateURL: ./modules/secure-bucket.yaml
+      Parameters:
+        EnvironmentName: !Ref EnvironmentName
+  LightrailSecureDownload:
+    Type: AWS::CloudFormation::Stack
+    Condition: EnvIsDevAndRegionIsUSWest2
+    Properties:
+      TemplateURL: ./modules/secure-bucket.yaml
+      Parameters:
+        EnvironmentName: !Ref EnvironmentName
+  LightrailEventStream:
+    Type: AWS::CloudFormation::Stack
+    Condition: EnvIsDevAndRegionIsUSWest2
+    Properties:
+      TemplateURL: ./modules/event-stream.yaml
+      Parameters:
+        EnvironmentName: !Ref EnvironmentName
+  LightrailLogstash:
+    Type: AWS::CloudFormation::Stack
+    Condition: EnvIsDevAndRegionIsUSWest2
+    Properties:
+      TemplateURL: ./modules/logstash.yaml
+      Parameters:
+        EnvironmentName: !Ref EnvironmentName
+        NonEmergencyAlertsSnsArn: !GetAtt LightrailAlertChannels.Outputs.NonEmergencySNSArn
+  LightrailDatadog:
+    Type: AWS::CloudFormation::Stack
+    Condition: EnvIsDevAndRegionIsUSWest2
+    Properties:
+      TemplateURL: ./modules/datadog.yaml
+      Parameters:
+        EnvironmentName: !Ref EnvironmentName
+  LightrailServices:
+    Type: AWS::CloudFormation::Stack
+    Condition: EnvIsDevAndRegionIsUSWest2
+    Properties:
+      TemplateURL: ./modules/services-service.yaml
+      Parameters:
+        EnvironmentName: !Ref EnvironmentName
+        ConfigurationBucketArn: !GetAtt LightrailSecureConfig.Outputs.BucketArn
+        ConfigurationBucketKeyArn: !GetAtt LightrailSecureConfig.Outputs.EncryptionKeyArn
+        SecureDownloadBucketArn: !GetAtt LightrailSecureDownload.Outputs.BucketArn
+        SecureDownloadBucketKeyArn: !GetAtt LightrailSecureDownload.Outputs.EncryptionKeyArn
+        SesDomainArns: !If [SesConfigured, !Ref SesDomainArns, !Ref "AWS::NoValue"]
+        KinesisStreamArn: !GetAtt LightrailEventStream.Outputs.KinesisStreamArn
+        RemoteECRRepositoryArn: ""
+        RdsInstanceClass: db.t2.small
+        RdsInstanceAllocation: 100
+        RdsMultiAZ: true
+        RdsSnapshotId: ""
+        VpcRdsSubnetIds: !GetAtt LightrailVPC.Outputs.RdsSubnetIds
+        VpcHostedZoneId: !GetAtt LightrailVPC.Outputs.VpcHostedZoneId
+        VpcRdsSecurityGroupIds: !GetAtt LightrailVPC.Outputs.RdsSecurityGroupId
+      Tags:
+        -
+          Key: Service
+          Value: Services
+  LightrailBatch:
+    Type: AWS::CloudFormation::Stack
+    Condition: EnvIsDevAndRegionIsUSWest2
+    Properties:
+      TemplateURL: ./modules/batch-service.yaml
+      Parameters:
+        EnvironmentName: !Ref EnvironmentName
+        ConfigurationBucketArn: !GetAtt LightrailSecureConfig.Outputs.BucketArn
+        ConfigurationBucketKeyArn: !GetAtt LightrailSecureConfig.Outputs.EncryptionKeyArn
+        SecureDownloadBucketArn: !GetAtt LightrailSecureDownload.Outputs.BucketArn
+        SecureDownloadBucketKeyArn: !GetAtt LightrailSecureDownload.Outputs.EncryptionKeyArn
+        SesDomainArns: !If [SesConfigured, !Ref SesDomainArns, !Ref "AWS::NoValue"]
+        KinesisStreamArn: !GetAtt LightrailEventStream.Outputs.KinesisStreamArn
+        RemoteECRRepositoryArn: ""
+
+  SSM:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: ./modules/ssm.yaml
+
+Outputs:
+  WebsiteBucket:
+    Description: The Website bucket for the Lightrail website
+    Value: !GetAtt LightrailWebsite.Outputs.Bucket
+  ReactBucketName:
+    Description: The React bucket for the Lightrail React App
+    Value: !GetAtt LightrailReact.Outputs.ReactBucketName
+  ReactArtifactBucketName:
+    Description: The Bucket to put the React Build Artifacts
+    Value: !If
+      - ShouldOverrideBuildArtifactBucket
+      - !Ref ReactBuildArtifactBucketOverride
+      - !GetAtt LightrailReact.Outputs.ArtifactBucketName

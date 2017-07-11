@@ -1,0 +1,806 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "CloudFormation Continuous Delivery"
+
+Metadata:
+  "AWS::CloudFormation::Interface":
+    ParameterGroups:
+      -
+        Label:
+          default: Project Parameters
+        Parameters:
+          - ProjectName
+      -
+        Label:
+          default: Pipeline Parameters
+        Parameters:
+          - GithubRepoOwner
+          - GithubRepoName
+          - GithubRepoBranch
+          - GitHubOAuthToken
+          - PreferredSlackChannel
+          - CurrentAccountStackName
+          - ApprovalNotificationTopicExport
+      -
+        Label:
+          default: >
+            Enabled Accounts (Deploy this stack first with no enabled accounts, then set up the CI Roles in the
+            accounts, before enabling the accounts below)
+        Parameters:
+          - DevAccountId
+          - StagingAccountId
+          - ProductionAccountId
+
+Parameters:
+  ProjectName:
+    Type: String
+    Description: The Name of the Project. This is used to synchronize the names of roles
+    Default: "LightrailInfrastructureCI"
+  GithubRepoOwner:
+    Type: String
+    Description: The Name of the Repo Owner to use for this pipeline
+    Default: Giftbit
+  GithubRepoName:
+    Type: String
+    Description: The Name of the Repo Name to use for this pipeline
+    Default: lightrail-cloudformation-infrastructure
+  GithubRepoBranch:
+    Type: String
+    Description: The Name of the Repo branch to use for this pipeline
+    Default: master
+  GitHubOAuthToken:
+    Type: String
+    Description: GitHub OAuth token. This user must have admin access to the repo.
+    NoEcho: true
+  ApprovalNotificationTopicExport:
+    Type: String
+    Description: The name of the CloudFormation Export to use for Approval Notifications
+    Default: ""
+  PreferredSlackChannel:
+    Type: String
+    Description: The preferred slack channel to send Approval Notifications to.
+    Default: "#codepipeline"
+    AllowedPattern: "#[a-z0-9-]+"
+  DevAccountId:
+    Type: String
+    Description: >
+      (Optional) The Account ID of the account to use as Dev.
+      This account will not be effected by the pipeline if disabled.
+    AllowedPattern: "(\\d{12})?"
+    Default: ""
+  StagingAccountId:
+    Type: String
+    Description: >
+      (Optional) The Account ID of the account to use as Staging.
+      This account will not be effected by the pipeline if disabled.
+    AllowedPattern: "(\\d{12})?"
+    Default: ""
+  ProductionAccountId:
+    Type: String
+    Description: >
+      (Optional) The Account ID of the account to use as Production.
+      This account will not be effected by the pipeline if disabled.
+    AllowedPattern: "(\\d{12})?"
+    Default: ""
+  CurrentAccountStackName:
+    Type: String
+    Description: The CloudFormation Stack that should be used for the lightrail account
+    Default: "production"
+
+Conditions:
+  DevAccountIsEnabled: !Not [!Equals [!Ref DevAccountId, ""]]
+  StagingAccountIsEnabled: !Not [!Equals [!Ref StagingAccountId, ""]]
+  ProductionAccountIsEnabled: !Not [!Equals [!Ref ProductionAccountId, ""]]
+  AnAccountIsEnabled: !Or
+    - Condition: DevAccountIsEnabled
+    - Condition: StagingAccountIsEnabled
+    - Condition: ProductionAccountIsEnabled
+  ShouldConfigureApprovalNotifications: !Not [!Equals [!Ref ApprovalNotificationTopicExport, ""]]
+
+Resources:
+
+  # S3 bucket where build artifacts go
+  DeploymentArtifactBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Delete
+    Properties:
+      AccessControl: Private
+  DeploymentArtifactBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref "DeploymentArtifactBucket"
+      PolicyDocument:
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - s3:GetObject*
+              - s3:ListBucket*
+              - s3:GetBucketLocation
+              - s3:PutObject*
+            Resource:
+              - !Sub "arn:aws:s3:::${DeploymentArtifactBucket}"
+              - !Sub "arn:aws:s3:::${DeploymentArtifactBucket}/*"
+            Principal:
+              AWS:  # For cross account access, we have to explicitly allow either the role or the root for the account
+                - !If  # Dev
+                  - DevAccountIsEnabled
+                  - !Ref DevAccountId
+                  - !Ref AWS::NoValue
+                - !If  # Staging
+                  - StagingAccountIsEnabled
+                  - !Ref StagingAccountId
+                  - !Ref AWS::NoValue
+                - !If  # Staging
+                  - ProductionAccountIsEnabled
+                  - !Ref ProductionAccountId
+                  - !Ref AWS::NoValue
+  DeploymentArtifactKey:
+    Type: "AWS::KMS::Key"
+    Properties:
+      Description: KMS Key for encrypting the Deployment Artifacts for CloudFormation Continuous Delivery
+      KeyPolicy:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: Allow
+            Principal:
+              AWS:
+                !Sub "arn:aws:iam::${AWS::AccountId}:root"
+            Action:
+              - kms:*
+            Resource: "*"
+          - !If
+            - AnAccountIsEnabled
+            -
+              Effect: Allow
+              Action:
+                - kms:decrypt
+              Resource: "*"
+              Principal:
+                AWS:  # For cross account access, we have to explicitly allow either the role
+                  - !If
+                    - DevAccountIsEnabled
+                    - !Sub "arn:aws:iam::${DevAccountId}:role/${ProjectName}-CloudFormationServiceRole"
+                    - !Ref "AWS::NoValue"
+                  - !If
+                    - DevAccountIsEnabled
+                    - !Sub "arn:aws:iam::${DevAccountId}:role/${ProjectName}-CloudFormationExecutorRole"
+                    - !Ref "AWS::NoValue"
+                  - !If
+                    - StagingAccountIsEnabled
+                    - !Sub "arn:aws:iam::${StagingAccountId}:role/${ProjectName}-CloudFormationServiceRole"
+                    - !Ref "AWS::NoValue"
+                  - !If
+                    - StagingAccountIsEnabled
+                    - !Sub "arn:aws:iam::${StagingAccountId}:role/${ProjectName}-CloudFormationExecutorRole"
+                    - !Ref "AWS::NoValue"
+                  - !If
+                    - ProductionAccountIsEnabled
+                    - !Sub "arn:aws:iam::${ProductionAccountId}:role/${ProjectName}-CloudFormationServiceRole"
+                    - !Ref "AWS::NoValue"
+                  - !If
+                    - ProductionAccountIsEnabled
+                    - !Sub "arn:aws:iam::${ProductionAccountId}:role/${ProjectName}-CloudFormationExecutorRole"
+                    - !Ref "AWS::NoValue"
+              Condition:
+                StringLike:
+                  "kms:ViaService":
+                    !Sub "s3.${AWS::Region}.amazonaws.com"
+                  "kms:EncryptionContext:aws:s3:arn":
+                    !Sub "arn:aws:s3:::${DeploymentArtifactBucket}/*"
+            - !Ref AWS::NoValue
+  DeploymentArtifactKeyAlias:
+    Type: "AWS::KMS::Alias"
+    Properties:
+      AliasName:
+        !Sub "alias/${AWS::StackName}-DeploymentArtifactKey"
+      TargetKeyId:
+        !GetAtt DeploymentArtifactKey.Arn
+
+  CodePipeline:
+    Type: AWS::CodePipeline::Pipeline
+    DependsOn:
+      - CloudFormationRole
+      # This resource fails if it attempts to assumes one of the cross account roles before the CodePipelineServiceRole
+      # permission to assume the role has propagated to the SecurityTokenService.
+      - CodepipelineServiceRolePolicyDelay
+    Properties:
+      RoleArn: !GetAtt CodePipelineServiceRole.Arn
+      ArtifactStore:
+        Type: S3
+        Location: !Ref DeploymentArtifactBucket
+        EncryptionKey:
+          Id: !GetAtt DeploymentArtifactKey.Arn
+          Type: KMS
+      Name: !Ref "AWS::StackName"
+      Stages:
+        - Name: Source
+          Actions:
+            - Name: Source
+              ActionTypeId:
+                Category: Source
+                Owner: ThirdParty
+                Version: 1
+                Provider: GitHub
+              OutputArtifacts:
+                - Name: SourceCodeOutputArtifact
+              Configuration:
+                Owner: !Ref GithubRepoOwner
+                Repo: !Ref GithubRepoName
+                Branch: !Ref GithubRepoBranch
+                OAuthToken: !Ref GitHubOAuthToken
+              RunOrder: 1
+        - Name: Build
+          Actions:
+            - Name: CodeBuild
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              InputArtifacts:
+                - Name: SourceCodeOutputArtifact
+              OutputArtifacts:
+                - Name: BuildOutputArtifact
+              Configuration:
+                ProjectName: !Ref ProjectName
+              RunOrder: 1
+        - !If
+          - DevAccountIsEnabled
+          -
+            Name: Dev
+            Actions:
+              - Name: CreateChangeSet
+                ActionTypeId:
+                  Category: Deploy
+                  Owner: AWS
+                  Version: 1
+                  Provider: CloudFormation
+                InputArtifacts:
+                  - Name: BuildOutputArtifact
+                Configuration:
+                  ActionMode: CHANGE_SET_REPLACE
+                  ChangeSetName: !Sub "${ProjectName}-dev"
+                  Capabilities: CAPABILITY_NAMED_IAM
+                  StackName: "dev"
+                  ParameterOverrides: !Sub >
+                    {
+                      "EnvironmentName":"Dev",
+                      "ProductionAccountId": "${ProductionAccountId}",
+                      "StagingAccountId": "${StagingAccountId}",
+                      "DevAccountId": "${DevAccountId}"
+                    }
+                  TemplatePath: BuildOutputArtifact::lightrail-stack.yaml
+                  RoleArn: !Sub "arn:aws:iam::${DevAccountId}:role/${ProjectName}-CloudFormationServiceRole"
+                RoleArn: !Sub "arn:aws:iam::${DevAccountId}:role/${ProjectName}-CloudFormationExecutorRole"
+                RunOrder: 1
+              - Name: ApprovalForRelease
+                ActionTypeId:
+                  Category: Approval
+                  Owner: AWS
+                  Version: 1
+                  Provider: Manual
+                Configuration:
+                  NotificationArn: !Ref CodePipelineApprovalSNSTopic
+                RunOrder: 2
+              - Name: ExecuteChangeSet
+                ActionTypeId:
+                  Category: Deploy
+                  Owner: AWS
+                  Version: 1
+                  Provider: CloudFormation
+                Configuration:
+                  StackName: "dev"
+                  ActionMode: CHANGE_SET_EXECUTE
+                  ChangeSetName: !Sub "${ProjectName}-dev"
+                  RoleArn: !Sub "arn:aws:iam::${DevAccountId}:role/${ProjectName}-CloudFormationServiceRole"
+                RoleArn: !Sub "arn:aws:iam::${DevAccountId}:role/${ProjectName}-CloudFormationExecutorRole"
+                RunOrder: 3
+              - Name: UpdateRevisionState
+                ActionTypeId:
+                  Category: Invoke
+                  Owner: AWS
+                  Version: 1
+                  Provider: Lambda
+                Configuration:
+                  FunctionName: !Ref CodePipelineStageRevisionUpdater
+                RunOrder: 4
+          - !Ref "AWS::NoValue"
+        - !If
+          - StagingAccountIsEnabled
+          -
+            Name: Staging
+            Actions:
+              - Name: CreateChangeSet
+                ActionTypeId:
+                  Category: Deploy
+                  Owner: AWS
+                  Version: 1
+                  Provider: CloudFormation
+                InputArtifacts:
+                  - Name: BuildOutputArtifact
+                Configuration:
+                  ActionMode: CHANGE_SET_REPLACE
+                  ChangeSetName: !Sub "${ProjectName}-staging"
+                  Capabilities: CAPABILITY_NAMED_IAM
+                  StackName: "staging"
+                  ParameterOverrides: !Sub >
+                    {
+                      "EnvironmentName":"Staging",
+                      "ProductionAccountId": "${ProductionAccountId}",
+                      "StagingAccountId": "${StagingAccountId}",
+                      "DevAccountId": "${DevAccountId}"
+                    }
+                  TemplatePath: BuildOutputArtifact::lightrail-stack.yaml
+                  RoleArn: !Sub "arn:aws:iam::${StagingAccountId}:role/${ProjectName}-CloudFormationServiceRole"
+                RoleArn: !Sub "arn:aws:iam::${StagingAccountId}:role/${ProjectName}-CloudFormationExecutorRole"
+                RunOrder: 1
+              - Name: ApprovalForRelease
+                ActionTypeId:
+                  Category: Approval
+                  Owner: AWS
+                  Version: 1
+                  Provider: Manual
+                Configuration:
+                  NotificationArn: !Ref CodePipelineApprovalSNSTopic
+                RunOrder: 2
+              - Name: ExecuteChangeSet
+                ActionTypeId:
+                  Category: Deploy
+                  Owner: AWS
+                  Version: 1
+                  Provider: CloudFormation
+                Configuration:
+                  StackName: "staging"
+                  ActionMode: CHANGE_SET_EXECUTE
+                  ChangeSetName: !Sub "${ProjectName}-staging"
+                  RoleArn: !Sub "arn:aws:iam::${StagingAccountId}:role/${ProjectName}-CloudFormationServiceRole"
+                RoleArn: !Sub "arn:aws:iam::${StagingAccountId}:role/${ProjectName}-CloudFormationExecutorRole"
+                RunOrder: 3
+              - Name: UpdateRevisionState
+                ActionTypeId:
+                  Category: Invoke
+                  Owner: AWS
+                  Version: 1
+                  Provider: Lambda
+                Configuration:
+                  FunctionName: !Ref CodePipelineStageRevisionUpdater
+                RunOrder: 4
+          - !Ref AWS::NoValue
+        - !If
+          - ProductionAccountIsEnabled
+          -
+            Name: Production
+            Actions:
+              - Name: CreateChangeSet
+                ActionTypeId:
+                  Category: Deploy
+                  Owner: AWS
+                  Version: 1
+                  Provider: CloudFormation
+                InputArtifacts:
+                  - Name: BuildOutputArtifact
+                Configuration:
+                  ActionMode: CHANGE_SET_REPLACE
+                  ChangeSetName: !Sub "${ProjectName}-production"
+                  Capabilities: CAPABILITY_NAMED_IAM
+                  StackName: "production"
+                  ParameterOverrides: !Sub >
+                    {
+                      "EnvironmentName":"Production",
+                      "ProductionAccountId": "${ProductionAccountId}",
+                      "StagingAccountId": "${StagingAccountId}",
+                      "DevAccountId": "${DevAccountId}"
+                    }
+                  TemplatePath: BuildOutputArtifact::lightrail-stack.yaml
+                  RoleArn: !Sub "arn:aws:iam::${ProductionAccountId}:role/${ProjectName}-CloudFormationServiceRole"
+                RoleArn: !Sub "arn:aws:iam::${ProductionAccountId}:role/${ProjectName}-CloudFormationExecutorRole"
+                RunOrder: 1
+              - Name: ApprovalForRelease
+                ActionTypeId:
+                  Category: Approval
+                  Owner: AWS
+                  Version: 1
+                  Provider: Manual
+                Configuration:
+                  NotificationArn: !Ref CodePipelineApprovalSNSTopic
+                RunOrder: 2
+              - Name: ExecuteChangeSet
+                ActionTypeId:
+                  Category: Deploy
+                  Owner: AWS
+                  Version: 1
+                  Provider: CloudFormation
+                Configuration:
+                  StackName: "production"
+                  ActionMode: CHANGE_SET_EXECUTE
+                  ChangeSetName: !Sub "${ProjectName}-production"
+                  RoleArn: !Sub "arn:aws:iam::${ProductionAccountId}:role/${ProjectName}-CloudFormationServiceRole"
+                RoleArn: !Sub "arn:aws:iam::${ProductionAccountId}:role/${ProjectName}-CloudFormationExecutorRole"
+                RunOrder: 3
+              - Name: UpdateRevisionState
+                ActionTypeId:
+                  Category: Invoke
+                  Owner: AWS
+                  Version: 1
+                  Provider: Lambda
+                Configuration:
+                  FunctionName: !Ref CodePipelineStageRevisionUpdater
+                RunOrder: 4
+          - !Ref AWS::NoValue
+  CodePipelineServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${ProjectName}-CodePipelineServiceRole"
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - sts:AssumeRole
+            Principal:
+              Service:
+                - codepipeline.amazonaws.com
+  CodePipelineServiceRolePolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: CodePipelineServiceRoleAccess
+      Roles:
+        - !Ref CodePipelineServiceRole
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - logs:CreateLogGroup
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+            Resource: "arn:aws:logs:*:*:*"
+          -
+            Effect: Allow
+            Action:
+              - s3:GetObject
+              - s3:GetObjectVersion
+              - s3:PutObject
+            Resource: !Sub "arn:aws:s3:::${DeploymentArtifactBucket}/*"
+          -
+            Effect: Allow
+            Action:
+              - kms:DescribeKey
+              - kms:GenerateDataKey*
+              - kms:Encrypt
+              - kms:ReEncrypt*
+              - kms:Decrypt
+            Resource: !GetAtt DeploymentArtifactKey.Arn
+          -
+            Effect: Allow
+            Action:
+              - codebuild:BatchGetBuilds
+              - codebuild:StartBuild
+              - codebuild:StopBuild
+            Resource: !GetAtt CodeBuildProject.Arn
+          - !If
+            - AnAccountIsEnabled
+            -
+              Effect: Allow
+              Action:
+                - sts:AssumeRole
+              Resource:
+                - !If
+                  - DevAccountIsEnabled
+                  - !Sub "arn:aws:iam::${DevAccountId}:role/${ProjectName}-CloudFormationExecutorRole"
+                  - !Ref "AWS::NoValue"
+                - !If
+                  - StagingAccountIsEnabled
+                  - !Sub "arn:aws:iam::${StagingAccountId}:role/${ProjectName}-CloudFormationExecutorRole"
+                  - !Ref "AWS::NoValue"
+                - !If
+                  - ProductionAccountIsEnabled
+                  - !Sub "arn:aws:iam::${ProductionAccountId}:role/${ProjectName}-CloudFormationExecutorRole"
+                  - !Ref "AWS::NoValue"
+            - !Ref AWS::NoValue
+          -
+            Effect: Allow
+            Action:
+              - sns:publish
+            Resource:
+              - !Ref CodePipelineApprovalSNSTopic
+          -
+            Effect: Allow
+            Action:
+              - lambda:ListFunctions
+            Resource: "*"
+          -
+            Effect: Allow
+            Action: lambda:InvokeFunction
+            Resource:
+              - !GetAtt CodePipelineStageRevisionUpdater.Arn
+  CodepipelineServiceRolePolicyDelay:
+    # We went with an arbitrary delay on this because this change should happen so rarely, assuming the role, which
+    # was the only other solution we could think of has serious security implications.
+    Type: Custom::Delay
+    Properties:
+      ServiceToken: !GetAtt CloudformationDelayFunction.Arn
+      WaitTime: 15
+      DelayConditions:
+        - !Ref CodePipelineServiceRole  # The Role changes
+        - !Ref CodePipelineServiceRolePolicy  # Policy Name changes
+        - !If  # Dev Account becomes enabled, or it's Cloudformation Role Changes
+          - DevAccountIsEnabled
+          - !Sub "arn:aws:iam::${DevAccountId}:role/${ProjectName}-CloudFormationExecutorRole"
+          - !Ref "AWS::NoValue"
+        - !If  # Staging Account becomes enabled, or it's Cloudformation Role Changes
+          - StagingAccountIsEnabled
+          - !Sub "arn:aws:iam::${StagingAccountId}:role/${ProjectName}-CloudFormationExecutorRole"
+          - !Ref "AWS::NoValue"
+        - !If  # Production Account becomes enabled, or it's Cloudformation Role Changes
+          - ProductionAccountIsEnabled
+          - !Sub "arn:aws:iam::${ProductionAccountId}:role/${ProjectName}-CloudFormationExecutorRole"
+          - !Ref "AWS::NoValue"
+  CloudformationDelayFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Description: Backs a CloudFormation Delay Custom Resource
+      Role:
+        !GetAtt CloudformationDelayFunctionRole.Arn
+      Handler: index.handler
+      Runtime: nodejs6.10
+      Timeout: 30  # Twice our expected delay.
+      Code: ../res/delay.zip
+  CloudformationDelayFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - sts:AssumeRole
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+
+  CodeBuildProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: !Ref ProjectName
+      ServiceRole: !GetAtt CodeBuildServiceRole.Arn
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        Type: LINUX_CONTAINER
+        # ComputeType options: BUILD_GENERAL1_SMALL, BUILD_GENERAL1_MEDIUM, BUILD_GENERAL1_LARGE
+        ComputeType: BUILD_GENERAL1_SMALL
+        # aws/codebuild/nodejs:7.0.0 is a default image provided by CodeBuild.
+        # You can enable using a custom image by uncommenting the CodeBuildDockerImageRepositoryGitSSHImageArn
+        # resource above, using the `Image: !ImportValue` variant below.
+        # Image: aws/codebuild/nodejs:7.0.0
+        Image: aws/codebuild/ubuntu-base:14.04
+        EnvironmentVariables:
+          - Name: BUILD_ARTIFACT_BUCKET
+            Value: !Ref DeploymentArtifactBucket
+      Source:
+        Type: CODEPIPELINE
+      EncryptionKey: !GetAtt DeploymentArtifactKey.Arn
+      TimeoutInMinutes: 10
+  CodeBuildServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - sts:AssumeRole
+            Principal:
+              Service:
+                - codebuild.amazonaws.com
+      Policies:
+        -
+          PolicyName: CodeBuildServicePolicy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              -
+                Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: "arn:aws:logs:*:*:*"
+              -
+                Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:GetObjectVersion
+                  - s3:PutObject
+                Resource:
+                  - !Sub "arn:aws:s3:::codepipeline-${AWS::Region}-*/*"
+                  - !Sub "arn:aws:s3:::${DeploymentArtifactBucket}/*"
+              -
+                Effect: Allow
+                Action:
+                  - kms:DescribeKey
+                  - kms:GenerateDataKey*
+                  - kms:Encrypt
+                  - kms:ReEncrypt*
+                  - kms:Decrypt
+                Resource: !GetAtt DeploymentArtifactKey.Arn
+              -
+                Effect: Allow
+                Action:
+                  - cloudformation:ValidateTemplate
+                Resource: "*"
+
+  CloudFormationRole:
+    Type: "AWS::CloudFormation::Stack"
+    DependsOn:
+      - CodePipelineServiceRole
+    Properties:
+      TemplateURL: ./ci-roles.yaml
+      Parameters:
+        ProjectName: !Ref ProjectName
+        StackName: !Ref CurrentAccountStackName
+        DeploymentArtifactBucket: !Ref DeploymentArtifactBucket
+        DeploymentArtifactKeyArn: !GetAtt DeploymentArtifactKey.Arn
+        CodePipelineAccountId: !Ref AWS::AccountId
+
+  CodePipelineApprovalDiffNotifier:
+    Type: "AWS::Lambda::Function"
+    Condition: ShouldConfigureApprovalNotifications
+    Properties:
+      Description: Creates the diff for a given stage and a new revision, sends to Activity Aware
+      Role:
+        !GetAtt CodePipelineApprovalDiffNotifierRole.Arn
+      Handler: index.handler
+      Runtime: nodejs6.10
+      Timeout: 15
+      Code: ../res/approval-diff-notifier.zip
+      Environment:
+        Variables:
+          ARTIFACT_BUCKET: !Ref DeploymentArtifactBucket
+          PREFERRED_SLACK_CHANNEL: !Ref PreferredSlackChannel
+          SNS_TOPIC:
+            "Fn::ImportValue": !Ref ApprovalNotificationTopicExport
+  CodePipelineApprovalDiffNotifierRole:
+    Type: AWS::IAM::Role
+    Condition: ShouldConfigureApprovalNotifications
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - sts:AssumeRole
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+      Policies:
+        -
+          PolicyName: CodePipelineApprovalDiffNotifierPolicy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              -
+                Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: arn:aws:logs:*:*:*
+              -
+                Effect: Allow
+                Action:
+                  - codepipeline:GetPipelineState
+                  - codepipeline:GetPipelineExecution
+                Resource: !Sub "arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:${CodePipeline}"
+              -
+                Effect: Allow
+                Action:
+                  - s3:GetObject
+                Resource: !Sub "arn:aws:s3:::${DeploymentArtifactBucket}/StageState/*"
+              -
+                Effect: Allow
+                Action:
+                  - sns:publish
+                Resource:
+                  "Fn::ImportValue": !Ref ApprovalNotificationTopicExport
+
+  CodePipelineStageRevisionUpdater:
+    Type: "AWS::Lambda::Function"
+
+    Properties:
+      Description: Updates the current revision for the given stage of a code pipeline
+      Role:
+        !GetAtt CodePipelineStageRevisionUpdaterRole.Arn
+      Handler: index.handler
+      Runtime: nodejs6.10
+      Timeout: 15
+      Code: ../res/stage-revision-updater.zip
+      Environment:
+        Variables:
+          ARTIFACT_BUCKET: !Ref DeploymentArtifactBucket
+  CodePipelineStageRevisionUpdaterRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - sts:AssumeRole
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+  CodePipelineStageRevisionUpdaterRolePolicy:
+    Type: "AWS::IAM::Policy"
+    Properties:
+      Roles:
+        - !Ref CodePipelineStageRevisionUpdaterRole
+      PolicyName: CodePipelineStageRevisionUpdaterPolicy
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - logs:CreateLogGroup
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+            Resource: arn:aws:logs:*:*:*
+          -
+            Effect: Allow
+            Action:
+              - codepipeline:GetPipelineState
+              - codepipeline:GetPipelineExecution
+            Resource:
+              - !Sub "arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:${CodePipeline}"
+          -
+            Effect: Allow
+            Action:
+              - codepipeline:GetJobDetails
+              - codepipeline:PutJobSuccessResult
+              - codepipeline:PutJobFailureResult
+            Resource: "*"
+          -
+            Effect: Allow
+            Action:
+              - s3:PutObject
+            Resource: !Sub "arn:aws:s3:::${DeploymentArtifactBucket}/StageState/*"
+
+  CodePipelineApprovalSNSTopic:
+    Type: "AWS::SNS::Topic"
+    Properties:
+      DisplayName: !Sub "${AWS::StackName} Code Pipeline Approval Topic"
+  SNSTopicCodePipelineApprovalDiffNotifierInvokePermission:
+    Type: "AWS::Lambda::Permission"
+    Condition: ShouldConfigureApprovalNotifications
+    Properties:
+      Action: "lambda:InvokeFunction"
+      Principal: "sns.amazonaws.com"
+      SourceArn:
+        Ref: CodePipelineApprovalSNSTopic
+      FunctionName:
+        !GetAtt CodePipelineApprovalDiffNotifier.Arn
+  CodePipelineApprovalDiffNotifierSNSSubscription:
+    Type: "AWS::SNS::Subscription"
+    Condition: ShouldConfigureApprovalNotifications
+    Properties:
+      TopicArn:
+        Ref: CodePipelineApprovalSNSTopic
+      Endpoint:
+        !GetAtt CodePipelineApprovalDiffNotifier.Arn
+      Protocol: lambda
+
+Outputs:
+  ProjectName:
+    Value: !Ref ProjectName
+  CodePipelineAccountId:
+    Value: !Ref "AWS::AccountId"
+  DeploymentArtifactBucket:
+    Value: !Ref DeploymentArtifactBucket
+  DeploymentArtifactKey:
+    Value: !GetAtt DeploymentArtifactKey.Arn
