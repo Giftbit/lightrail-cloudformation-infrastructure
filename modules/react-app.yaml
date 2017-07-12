@@ -14,9 +14,14 @@ Parameters:
     Description: Comma separated list of AWS Account IDs to grant Build Artifact Access
     Default: ""
     AllowedPattern: (\d{12}(,\d{12})*)?
+  GroupsToGrantReactReadWrite:
+    Type: String
+    Description: The name of the groups to grant React read write access
+    AllowedPattern: "([a-zA-Z0-9+=,.@_-]+(,[a-zA-Z0-9+=,.@_-]+)*)?"
 
 Conditions:
   ShouldConfigureBuildArtifactAccess: !Not [!Equals [!Ref AccountsToGrantBuildArtifactFullAccess, ""]]
+  ShouldConfigureReactReadWriteAccess: !Not [!Equals [!Ref GroupsToGrantReactReadWrite, ""]]
 
 Resources:
   ReactBucket:
@@ -26,7 +31,7 @@ Resources:
       WebsiteConfiguration:
         IndexDocument: index.html
         ErrorDocument: error.html
-  ReactBucketPolicy:
+  ReactBucketPublicPolicy:
     Type: AWS::S3::BucketPolicy
     Properties:
       Bucket: !Ref ReactBucket
@@ -39,6 +44,27 @@ Resources:
             Resource:
               - !Sub "arn:aws:s3:::${ReactBucket}/*"
             Principal: "*"
+  ReactBucketUpdatePolicy:
+    Type: AWS::IAM::Policy
+    Condition: ShouldConfigureReactReadWriteAccess
+    Properties:
+      PolicyName: ReactBucketReadWrite
+      Groups: !Split [",", !Ref GroupsToGrantReactReadWrite]
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - s3:ListBucket
+              - s3:GetBucket*
+              - S3:GetObject*
+              - s3:PutObject*
+              - s3:DeleteObject*
+              - s3:ListBucketMultipartUploads
+            Resource:
+              - !Sub "arn:aws:s3:::${ReactBucket}"
+              - !Sub "arn:aws:s3:::${ReactBucket}/*"
   BuildArtifactBucket:
     Type: AWS::S3::Bucket
     Properties:

@@ -17,7 +17,9 @@ Parameters:
     Default: ""
   ReactBuildArtifactBucketOverride:
     Type: String
-    Description: The Name of the bucket to use for Build Artifacts
+    Description: >
+      The Name of the bucket to use for React Build Artifacts. For Dev and Staging, you will normally want to add this
+      manually to link it up to the Production ReactBuildArtifactBucket to be able to deploy consistent builds
     Default: ""
   ProductionAccountId:
     Type: String
@@ -34,6 +36,19 @@ Parameters:
     Description: The ID of the account to be considered Dev
     Default: ""
     AllowedPattern: (\d{12})?
+  AppAliases:
+    Type: String
+    Description: Enter the App domains that this stack should respond for (comma separated)
+    Default: ""
+  ApiAliases:
+    Type: String
+    Description: Enter the API domains that this stack should respond for (comma separated)
+    Default: ""
+  CloudFrontACMCertificateArn:
+    Type: String
+    Description: The Arn of the ACM Certificate that should be used for CloudFront (this should be in us-east-1)
+    Default: ""
+    AllowedPattern: (arn:aws:acm:[a-z0-9-]+:\d{12}:certificate\/[a-z0-9._-]+)?
 
 Conditions:
   RegionIsUSWest2: !Equals [!Ref "AWS::Region", us-west-2]
@@ -46,6 +61,7 @@ Conditions:
   DevAccountIdProvided: !Not [!Equals [!Ref DevAccountId, ""]]
   SesConfigured: !Not [!Equals [!Ref SesDomainArns, ""]]
   ShouldOverrideBuildArtifactBucket: !Not [!Equals [!Ref ReactBuildArtifactBucketOverride, ""]]
+  CloudFrontACMCertificateArnProvided: !Not [!Equals [!Ref CloudFrontACMCertificateArn, ""]]
 
 Resources:
   Groups:
@@ -67,6 +83,21 @@ Resources:
       TemplateURL: ./modules/certificates.yaml
       Parameters:
         EnvironmentName: !Ref EnvironmentName
+  LightrailCloudfront:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: ./modules/cloudfront.yaml
+      Parameters:
+        EnvironmentName: !Ref EnvironmentName
+        AppAliases: !Ref AppAliases
+        ApiAliases: !Ref ApiAliases
+        ViewerCertificateArn: !If [CloudFrontACMCertificateArnProvided, !Ref CloudFrontACMCertificateArn, ""]
+        WebsiteEndpoint: !GetAtt LightrailWebsite.Outputs.Domain
+        ReactEndpoint: !GetAtt LightrailReact.Outputs.ReactDomainName
+        ServicesEndpoint: "preprodhttpservices.giftbit.com"
+        StatsEndpoint: "0dp3zkwhxe.execute-api.us-west-2.amazonaws.com"
+        BatchEndpoint: "preprodbatchservice.giftbit.com"
+        CardsSearchEndpoint: "9te30f224k.execute-api.us-west-2.amazonaws.com"
   LightrailWebsite:
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2
@@ -87,6 +118,10 @@ Resources:
       TemplateURL: ./modules/react-app.yaml
       Parameters:
         EnvironmentName: !Ref EnvironmentName
+        GroupsToGrantReactReadWrite: !Join
+          - ","
+          -
+            - !GetAtt Groups.Outputs.DevelopersGroupName
         AccountsToGrantBuildArtifactFullAccess: !Join
           - ","
           -
@@ -205,6 +240,10 @@ Resources:
         SesDomainArns: !If [SesConfigured, !Ref SesDomainArns, !Ref "AWS::NoValue"]
         KinesisStreamArn: !GetAtt LightrailEventStream.Outputs.KinesisStreamArn
         RemoteECRRepositoryArn: ""
+      Tags:
+        -
+          Key: Service
+          Value: Batch
 
   SSM:
     Type: AWS::CloudFormation::Stack
@@ -224,3 +263,9 @@ Outputs:
       - ShouldOverrideBuildArtifactBucket
       - !Ref ReactBuildArtifactBucketOverride
       - !GetAtt LightrailReact.Outputs.ArtifactBucketName
+  AppDomain:
+    Description: The Domain for the App
+    Value: !GetAtt LightrailCloudfront.Outputs.AppDistributionDomain
+  ApiDomain:
+    Description: The Domain for the API
+    Value: !GetAtt LightrailCloudfront.Outputs.ApiDistributionDomain
