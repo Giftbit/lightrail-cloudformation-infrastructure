@@ -107,7 +107,7 @@ Resources:
     Type: AWS::IAM::Policy
     Condition: ShouldConfigureReactBuildArtifactReadWriteAccess
     Properties:
-      PolicyName: ReactBucketReadWrite
+      PolicyName: ReactBuildArtifactBucketRead
       Groups: !Split [",", !Ref GroupsToGrantReactBuildArtifactReadWrite]
       PolicyDocument:
         Version: 2012-10-17
@@ -136,7 +136,7 @@ Resources:
     Type: AWS::IAM::Policy
     Condition: ShouldConfigureReactBuildArtifactReadOnlyAccess
     Properties:
-      PolicyName: ReactBucketReadWrite
+      PolicyName: ReactBuildArtifactBucketRead
       Groups: !Split [",", !Ref GroupsToGrantReactBuildArtifactReadOnly]
       PolicyDocument:
         Version: 2012-10-17
