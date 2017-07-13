@@ -55,7 +55,7 @@ Conditions:
   RegionIsUSEast1: !Equals [!Ref "AWS::Region", us-east-1]
   EnvIsDev: !Equals [!Ref EnvironmentName, Dev]
   EnvIsDevAndRegionIsUSWest2: !And [{Condition: EnvIsDev}, {Condition: RegionIsUSWest2}]
-  EnvIsProduction: !Equals [!Ref EnvironmentName, Production]
+  EnvIsNotDevAndRegionIsUSWest2: !And [!Not [{Condition: EnvIsDev}], {Condition: RegionIsUSWest2}]
   ProductionAccountIdProvided: !Not [!Equals [!Ref ProductionAccountId, ""]]
   StagingAccountIdProvided: !Not [!Equals [!Ref StagingAccountId, ""]]
   DevAccountIdProvided: !Not [!Equals [!Ref DevAccountId, ""]]
@@ -118,6 +118,7 @@ Resources:
       TemplateURL: ./modules/react-app.yaml
       Parameters:
         EnvironmentName: !Ref EnvironmentName
+        BuildArtifactBucketOverride: !If [ShouldOverrideBuildArtifactBucket, !Ref ReactBuildArtifactBucketOverride, ""]
         GroupsToGrantReactReadWrite: !Join
           - ","
           -
@@ -137,6 +138,14 @@ Resources:
               - DevAccountIdProvided
               - !Ref DevAccountId
               - !Ref AWS::NoValue
+        GroupsToGrantReactBuildArtifactReadOnly: !If
+          - EnvIsNotDevAndRegionIsUSWest2
+          - !GetAtt Groups.Outputs.DevelopersGroupName
+          - ""
+        GroupsToGrantReactBuildArtifactReadWrite: !If
+          - EnvIsDevAndRegionIsUSWest2
+          - !GetAtt Groups.Outputs.DevelopersGroupName
+          - ""
   LightrailVPC:
     Type: AWS::CloudFormation::Stack
     Condition: EnvIsDevAndRegionIsUSWest2
@@ -259,10 +268,7 @@ Outputs:
     Value: !GetAtt LightrailReact.Outputs.ReactBucketName
   ReactArtifactBucketName:
     Description: The Bucket to put the React Build Artifacts
-    Value: !If
-      - ShouldOverrideBuildArtifactBucket
-      - !Ref ReactBuildArtifactBucketOverride
-      - !GetAtt LightrailReact.Outputs.ArtifactBucketName
+    Value: !GetAtt LightrailReact.Outputs.ArtifactBucketName
   AppDomain:
     Description: The Domain for the App
     Value: !GetAtt LightrailCloudfront.Outputs.AppDistributionDomain

@@ -18,10 +18,25 @@ Parameters:
     Type: String
     Description: The name of the groups to grant React read write access
     AllowedPattern: "([a-zA-Z0-9+=,.@_-]+(,[a-zA-Z0-9+=,.@_-]+)*)?"
+  GroupsToGrantReactBuildArtifactReadOnly:
+    Type: String
+    Description: The name of the groups to grant React read access
+    AllowedPattern: "([a-zA-Z0-9+=,.@_-]+(,[a-zA-Z0-9+=,.@_-]+)*)?"
+  GroupsToGrantReactBuildArtifactReadWrite:
+    Type: String
+    Description: The name of the groups to grant React read/write access
+    AllowedPattern: "([a-zA-Z0-9+=,.@_-]+(,[a-zA-Z0-9+=,.@_-]+)*)?"
+  BuildArtifactBucketOverride:
+    Type: String
+    Description: (Optional) The React BuildArtifactBucket we should configure
+    Default: ""
 
 Conditions:
   ShouldConfigureBuildArtifactAccess: !Not [!Equals [!Ref AccountsToGrantBuildArtifactFullAccess, ""]]
   ShouldConfigureReactReadWriteAccess: !Not [!Equals [!Ref GroupsToGrantReactReadWrite, ""]]
+  ShouldConfigureReactBuildArtifactReadOnlyAccess: !Not [!Equals [!Ref GroupsToGrantReactBuildArtifactReadOnly, ""]]
+  ShouldConfigureReactBuildArtifactReadWriteAccess: !Not [!Equals [!Ref GroupsToGrantReactBuildArtifactReadWrite, ""]]
+  OverrideBuildArtifactBucketIsSet: !Not [!Equals [!Ref BuildArtifactBucketOverride, ""]]
 
 Resources:
   ReactBucket:
@@ -88,6 +103,61 @@ Resources:
             Resource:
               - !Sub "arn:aws:s3:::${BuildArtifactBucket}"
               - !Sub "arn:aws:s3:::${BuildArtifactBucket}/*"
+  ReactBuildArtifactReadWriteAccessPolicy:
+    Type: AWS::IAM::Policy
+    Condition: ShouldConfigureReactBuildArtifactReadWriteAccess
+    Properties:
+      PolicyName: ReactBucketReadWrite
+      Groups: !Split [",", !Ref GroupsToGrantReactBuildArtifactReadWrite]
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - s3:ListBucket
+              - s3:GetBucket*
+              - S3:GetObject*
+              - s3:PutObject*
+              - s3:DeleteObject*
+              - s3:ListBucketMultipartUploads
+            Resource:
+              - !Sub "arn:aws:s3:::${BuildArtifactBucket}"
+              - !Sub "arn:aws:s3:::${BuildArtifactBucket}/*"
+              - !If
+                - OverrideBuildArtifactBucketIsSet
+                - !Sub "arn:aws:s3:::${BuildArtifactBucketOverride}"
+                - !Ref AWS::NoValue
+              - !If
+                - OverrideBuildArtifactBucketIsSet
+                - !Sub "arn:aws:s3:::${BuildArtifactBucketOverride}/*"
+                - !Ref AWS::NoValue
+  ReactBuildArtifactReadAccessPolicy:
+    Type: AWS::IAM::Policy
+    Condition: ShouldConfigureReactBuildArtifactReadOnlyAccess
+    Properties:
+      PolicyName: ReactBucketReadWrite
+      Groups: !Split [",", !Ref GroupsToGrantReactBuildArtifactReadOnly]
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - s3:ListBucket
+              - s3:GetBucket*
+              - S3:GetObject*
+            Resource:
+              - !Sub "arn:aws:s3:::${BuildArtifactBucket}"
+              - !Sub "arn:aws:s3:::${BuildArtifactBucket}/*"
+              - !If
+                - OverrideBuildArtifactBucketIsSet
+                - !Sub "arn:aws:s3:::${BuildArtifactBucketOverride}"
+                - !Ref AWS::NoValue
+              - !If
+                - OverrideBuildArtifactBucketIsSet
+                - !Sub "arn:aws:s3:::${BuildArtifactBucketOverride}/*"
+                - !Ref AWS::NoValue
 
 Outputs:
   ReactBucketName:
@@ -98,4 +168,4 @@ Outputs:
     Value: !Sub "${ReactBucket}.s3-website-${AWS::Region}.amazonaws.com"
   ArtifactBucketName:
     Description: The name of the Build Artifact Bucket
-    Value: !Ref BuildArtifactBucket
+    Value: !If [OverrideBuildArtifactBucketIsSet, !Ref BuildArtifactBucketOverride, !Ref BuildArtifactBucket]
