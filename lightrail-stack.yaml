@@ -9,18 +9,6 @@ Parameters:
       - Staging
       - Dev
     Default: Dev
-  SesDomainArns:
-    Type: String
-    Description: Comma Separated list of SES Domain Arns for sending Emails
-    AllowedPattern:
-      "(arn:aws:ses:[a-z0-9-]+:\\d{12}:identity\\/[a-z0-9._-]+(,arn:aws:ses:[a-z0-9-]+:\\d{12}:identity\\/[a-z0-9._-]+)*)?"
-    Default: ""
-  ReactBuildArtifactBucketOverride:
-    Type: String
-    Description: >
-      The Name of the bucket to use for React Build Artifacts. For Dev and Staging, you will normally want to add this
-      manually to link it up to the Production ReactBuildArtifactBucket to be able to deploy consistent builds
-    Default: ""
   ProductionAccountId:
     Type: String
     Description: The ID of the account to be considered Production
@@ -36,19 +24,30 @@ Parameters:
     Description: The ID of the account to be considered Dev
     Default: ""
     AllowedPattern: (\d{12})?
-  AppAliases:
-    Type: String
-    Description: Enter the App domains that this stack should respond for (comma separated)
-    Default: ""
-  ApiAliases:
-    Type: String
-    Description: Enter the API domains that this stack should respond for (comma separated)
-    Default: ""
-  CloudFrontACMCertificateArn:
-    Type: String
-    Description: The Arn of the ACM Certificate that should be used for CloudFront (this should be in us-east-1)
-    Default: ""
-    AllowedPattern: (arn:aws:acm:[a-z0-9-]+:\d{12}:certificate\/[a-z0-9._-]+)?
+
+Mappings:
+  Dev:
+    us-west-2:
+      ReactBuildArtifactBucketOverride: production-lightrailreact-pdq-buildartifactbucket-1ayml8o883kh7
+      AppAliases: ""
+      ApiAliases: ""
+      SesDomainArns: ""
+      CloudFormationACMCertificateArn:
+        arn:aws:acm:us-east-1:757264843183:certificate/5ac83a3b-1f05-4756-bd3a-3a4705846b53
+  Staging:
+    us-west-2:
+      ReactBuildArtifactBucketOverride: production-lightrailreact-pdq-buildartifactbucket-1ayml8o883kh7
+      AppAliases: ""
+      ApiAliases: ""
+      SesDomainArns: ""
+      CloudFormationACMCertificateArn: ""
+  Production:
+    us-west-2:
+      ReactBuildArtifactBucketOverride: ""
+      AppAliases: ""
+      ApiAliases: ""
+      SesDomainArns: ""
+      CloudFormationACMCertificateArn: ""
 
 Conditions:
   RegionIsUSWest2: !Equals [!Ref "AWS::Region", us-west-2]
@@ -59,9 +58,6 @@ Conditions:
   ProductionAccountIdProvided: !Not [!Equals [!Ref ProductionAccountId, ""]]
   StagingAccountIdProvided: !Not [!Equals [!Ref StagingAccountId, ""]]
   DevAccountIdProvided: !Not [!Equals [!Ref DevAccountId, ""]]
-  SesConfigured: !Not [!Equals [!Ref SesDomainArns, ""]]
-  ShouldOverrideBuildArtifactBucket: !Not [!Equals [!Ref ReactBuildArtifactBucketOverride, ""]]
-  CloudFrontACMCertificateArnProvided: !Not [!Equals [!Ref CloudFrontACMCertificateArn, ""]]
 
 Resources:
   Groups:
@@ -89,9 +85,9 @@ Resources:
       TemplateURL: ./modules/cloudfront.yaml
       Parameters:
         EnvironmentName: !Ref EnvironmentName
-        AppAliases: !Ref AppAliases
-        ApiAliases: !Ref ApiAliases
-        ViewerCertificateArn: !If [CloudFrontACMCertificateArnProvided, !Ref CloudFrontACMCertificateArn, ""]
+        AppAliases: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", AppAliases]
+        ApiAliases: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", ApiAliases]
+        ViewerCertificateArn: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CloudFormationACMCertificateArn]
         WebsiteEndpoint: !GetAtt LightrailWebsite.Outputs.Domain
         ReactEndpoint: !GetAtt LightrailReact.Outputs.ReactDomainName
         ServicesEndpoint: "preprodhttpservices.giftbit.com"
@@ -118,7 +114,10 @@ Resources:
       TemplateURL: ./modules/react-app.yaml
       Parameters:
         EnvironmentName: !Ref EnvironmentName
-        BuildArtifactBucketOverride: !If [ShouldOverrideBuildArtifactBucket, !Ref ReactBuildArtifactBucketOverride, ""]
+        BuildArtifactBucketOverride: !FindInMap
+          - !Ref EnvironmentName
+          - !Ref "AWS::Region"
+          - ReactBuildArtifactBucketOverride
         GroupsToGrantReactReadWrite: !Join
           - ","
           -
@@ -221,7 +220,7 @@ Resources:
         ConfigurationBucketKeyArn: !GetAtt LightrailSecureConfig.Outputs.EncryptionKeyArn
         SecureDownloadBucketArn: !GetAtt LightrailSecureDownload.Outputs.BucketArn
         SecureDownloadBucketKeyArn: !GetAtt LightrailSecureDownload.Outputs.EncryptionKeyArn
-        SesDomainArns: !If [SesConfigured, !Ref SesDomainArns, !Ref "AWS::NoValue"]
+        SesDomainArns: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", SesDomainArns]
         KinesisStreamArn: !GetAtt LightrailEventStream.Outputs.KinesisStreamArn
         RemoteECRRepositoryArn: ""
         RdsInstanceClass: db.t2.small
@@ -246,7 +245,7 @@ Resources:
         ConfigurationBucketKeyArn: !GetAtt LightrailSecureConfig.Outputs.EncryptionKeyArn
         SecureDownloadBucketArn: !GetAtt LightrailSecureDownload.Outputs.BucketArn
         SecureDownloadBucketKeyArn: !GetAtt LightrailSecureDownload.Outputs.EncryptionKeyArn
-        SesDomainArns: !If [SesConfigured, !Ref SesDomainArns, !Ref "AWS::NoValue"]
+        SesDomainArns: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", SesDomainArns]
         KinesisStreamArn: !GetAtt LightrailEventStream.Outputs.KinesisStreamArn
         RemoteECRRepositoryArn: ""
       Tags:
