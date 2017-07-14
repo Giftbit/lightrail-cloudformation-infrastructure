@@ -36,14 +36,14 @@ Mappings:
         arn:aws:acm:us-east-1:757264843183:certificate/5ac83a3b-1f05-4756-bd3a-3a4705846b53
   Staging:
     us-west-2:
-      ReactBuildArtifactBucketOverride: dev-LightrailReact-1XYN4-BuildArtifactBucketPoli-1A2Z9HKYCBCJO
+      ReactBuildArtifactBucketOverride: dev-lightrailreact-1xyn4dsi4a-buildartifactbucket-17n7679jwqtyw
       AppAliases: ""
       ApiAliases: ""
       SesDomainArns: ""
       CloudFormationACMCertificateArn: ""
   Production:
     us-west-2:
-      ReactBuildArtifactBucketOverride: dev-LightrailReact-1XYN4-BuildArtifactBucketPoli-1A2Z9HKYCBCJO
+      ReactBuildArtifactBucketOverride: dev-lightrailreact-1xyn4dsi4a-buildartifactbucket-17n7679jwqtyw
       AppAliases: ""
       ApiAliases: ""
       SesDomainArns: ""
