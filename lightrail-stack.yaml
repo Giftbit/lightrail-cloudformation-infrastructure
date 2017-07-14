@@ -28,7 +28,7 @@ Parameters:
 Mappings:
   Dev:
     us-west-2:
-      ReactBuildArtifactBucketOverride: production-lightrailreact-pdq-buildartifactbucket-1ayml8o883kh7
+      ReactBuildArtifactBucketOverride: ""
       AppAliases: ""
       ApiAliases: ""
       SesDomainArns: ""
@@ -36,14 +36,14 @@ Mappings:
         arn:aws:acm:us-east-1:757264843183:certificate/5ac83a3b-1f05-4756-bd3a-3a4705846b53
   Staging:
     us-west-2:
-      ReactBuildArtifactBucketOverride: production-lightrailreact-pdq-buildartifactbucket-1ayml8o883kh7
+      ReactBuildArtifactBucketOverride: dev-LightrailReact-1XYN4-BuildArtifactBucketPoli-1A2Z9HKYCBCJO
       AppAliases: ""
       ApiAliases: ""
       SesDomainArns: ""
       CloudFormationACMCertificateArn: ""
   Production:
     us-west-2:
-      ReactBuildArtifactBucketOverride: ""
+      ReactBuildArtifactBucketOverride: dev-LightrailReact-1XYN4-BuildArtifactBucketPoli-1A2Z9HKYCBCJO
       AppAliases: ""
       ApiAliases: ""
       SesDomainArns: ""
@@ -58,7 +58,7 @@ Conditions:
   ProductionAccountIdProvided: !Not [!Equals [!Ref ProductionAccountId, ""]]
   StagingAccountIdProvided: !Not [!Equals [!Ref StagingAccountId, ""]]
   DevAccountIdProvided: !Not [!Equals [!Ref DevAccountId, ""]]
-
+git 
 Resources:
   Groups:
     Type: AWS::CloudFormation::Stack
@@ -122,7 +122,7 @@ Resources:
           - ","
           -
             - !GetAtt Groups.Outputs.DevelopersGroupName
-        AccountsToGrantBuildArtifactFullAccess: !Join
+        AccountsToGrantBuildArtifactReadAccess: !Join
           - ","
           -
             - !If

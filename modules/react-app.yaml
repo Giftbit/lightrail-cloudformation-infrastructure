@@ -9,7 +9,7 @@ Parameters:
       - Dev
       - Staging
       - Production
-  AccountsToGrantBuildArtifactFullAccess:
+  AccountsToGrantBuildArtifactReadAccess:
     Type: String
     Description: Comma separated list of AWS Account IDs to grant Build Artifact Access
     Default: ""
@@ -32,7 +32,7 @@ Parameters:
     Default: ""
 
 Conditions:
-  ShouldConfigureBuildArtifactAccess: !Not [!Equals [!Ref AccountsToGrantBuildArtifactFullAccess, ""]]
+  ShouldConfigureBuildArtifactReadAccess: !Not [!Equals [!Ref AccountsToGrantBuildArtifactReadAccess, ""]]
   ShouldConfigureReactReadWriteAccess: !Not [!Equals [!Ref GroupsToGrantReactReadWrite, ""]]
   ShouldConfigureReactBuildArtifactReadOnlyAccess: !Not [!Equals [!Ref GroupsToGrantReactBuildArtifactReadOnly, ""]]
   ShouldConfigureReactBuildArtifactReadWriteAccess: !Not [!Equals [!Ref GroupsToGrantReactBuildArtifactReadWrite, ""]]
@@ -86,7 +86,7 @@ Resources:
       AccessControl: Private
   BuildArtifactBucketPolicy:
     Type: AWS::S3::BucketPolicy
-    Condition: ShouldConfigureBuildArtifactAccess
+    Condition: ShouldConfigureBuildArtifactReadAccess
     Properties:
       Bucket: !Ref BuildArtifactBucket
       PolicyDocument:
@@ -97,9 +97,8 @@ Resources:
               - s3:ListBucket
               - s3:GetObject*
               - s3:GetBucketLocation
-              - s3:PutObject*
             Principal:
-              AWS: !Split [",", !Ref AccountsToGrantBuildArtifactFullAccess]
+              AWS: !Split [",", !Ref AccountsToGrantBuildArtifactReadAccess]
             Resource:
               - !Sub "arn:aws:s3:::${BuildArtifactBucket}"
               - !Sub "arn:aws:s3:::${BuildArtifactBucket}/*"
