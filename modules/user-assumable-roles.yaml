@@ -1,0 +1,75 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Assumable Roles useful for Lightrail Devs
+
+Parameters:
+  EnvironmentName:
+    Type: String
+    AllowedValues:
+      - Production
+      - Staging
+      - Dev
+    Default: Dev
+  ProductionAccountId:
+    Type: String
+    Description: The ID of the account to be considered Production
+    Default: ""
+    AllowedPattern: (\d{12})?
+  StagingAccountId:
+    Type: String
+    Description: The ID of the account to be considered Staging
+    Default: ""
+    AllowedPattern: (\d{12})?
+  DevAccountId:
+    Type: String
+    Description: The ID of the account to be considered Dev
+    Default: ""
+    AllowedPattern: (\d{12})?
+  GroupsToGrantCodePipelineApproverAccess:
+    Type: String
+    Description: The name of the groups to grant React read/write access
+    Default: ""
+    AllowedPattern: "([a-zA-Z0-9+=,.@_-]+(,[a-zA-Z0-9+=,.@_-]+)*)?"
+
+Conditions:
+  ShouldGenerateCodePipelineApproverAssumePolicy: !Not [!Equals [!Ref GroupsToGrantCodePipelineApproverAccess, ""]]
+
+Resources:
+  CodePipelineApprover:
+    Type: "AWS::IAM::Role"
+    Properties:
+      RoleName: CodePipelineApprover
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/AWSCodePipelineApproverAccess"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: "Allow"
+            Action:
+              - "sts:AssumeRole"
+            Principal:
+              AWS:
+                - !Ref DevAccountId  # Allow this role to be assumed from the Dev Account
+            Condition:
+              Bool:
+                "aws:MultiFactorAuthPresent": true
+  CodePipelineApproverAssumePolicy:
+    Type: "AWS::IAM::Policy"
+    Condition: ShouldGenerateCodePipelineApproverAssumePolicy
+    Properties:
+      PolicyName: AssumeCodePipelineApprover
+      Groups: !Split [",", !Ref GroupsToGrantCodePipelineApproverAccess]
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: "Allow"
+            Action:
+              - "sts:AssumeRole"
+            Resource:  # On the Dev Account, grant access to the Production Staging and Dev account pipelines
+              - !Sub "arn:aws:iam::${ProductionAccountId}:role/CodePipelineApprover"
+              - !Sub "arn:aws:iam::${StagingAccountId}:role/CodePipelineApprover"
+              - !Sub "arn:aws:iam::${DevAccountId}:role/CodePipelineApprover"
+            Condition:
+              Bool:
+                "aws:MultiFactorAuthPresent": true

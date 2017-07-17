@@ -252,6 +252,18 @@ Resources:
           Key: Service
           Value: Batch
 
+  UserAssumableRoles:
+    Type: AWS::CloudFormation::Stack
+    Condition: RegionIsUSWest2
+    Properties:
+      TemplateURL: ./modules/user-assumable-roles.yaml
+      Parameters:
+        EnvironmentName: Dev
+        ProductionAccountId: !Ref ProductionAccountId
+        StagingAccountId: !Ref StagingAccountId
+        DevAccountId: !Ref DevAccountId
+        GroupsToGrantCodePipelineApproverAccess: !GetAtt Groups.Outputs.DevelopersGroupName
+
   SSM:
     Type: AWS::CloudFormation::Stack
     Properties:
