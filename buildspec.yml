@@ -10,7 +10,7 @@ phases:
     commands:
       - bash auto.sh test
       - >
-        bash -c "echo \"${ENCRYPTED_GITHUB_OAUTH_TOKEN}"\
+        bash -c "echo \"${ENCRYPTED_GITHUB_OAUTH_TOKEN}\"
         | base64 --decode
         | base64 --decode > temp
         && aws kms decrypt --ciphertext-blob fileb://temp --query Plaintext --output text
