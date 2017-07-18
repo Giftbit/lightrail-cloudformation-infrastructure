@@ -27,8 +27,8 @@ Parameters:
   CommonString:
     Type: String
     Description: >
-      A Common String that will be shared between the different environments, but can be unique so we can launch multiple
-      copies of a stack in an account for testing
+      A Common String that will be shared between the different environments, but can be unique so we can launch
+      multiple copies of a stack in an account for testing
     Default: "lightrail-ci-resources-20170717"
 
 Conditions:
