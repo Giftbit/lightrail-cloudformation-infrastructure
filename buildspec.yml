@@ -4,7 +4,7 @@ phases:
     commands:
       - echo Build enviromment `uname -a` aws/`aws --version 2>&1` git/`git --version`
       - pip install --upgrade awscli yamllint
-      - apt-get update && apt-get install curl
+      - apt-get update && apt-get install curl rsync
       - echo aws/`aws --version 2>&1`
   pre_build:
     commands:

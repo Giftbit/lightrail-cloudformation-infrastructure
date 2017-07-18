@@ -93,17 +93,11 @@ elif [ "$COMMAND" = "package" ]; then
     [ -d "$SCRIPT_DIR/tmp" ] || mkdir $SCRIPT_DIR/tmp
     rm -rf $SCRIPT_DIR/tmp/* > /dev/null 2>&1
 
-    if [ "$(uname)" = "Darwin" ]; then
-        RECURSIVE_COPY_COMMAND="rsync -a"
-    else
-        RECURSIVE_COPY_COMMAND="cp -R"
-    fi
-
     # Copy all of the files to a temporary directory, because we're going to dynamically change some things
-    $RECURSIVE_COPY_COMMAND --exclude="tmp/" --exclude="build/" $SCRIPT_DIR/* $SCRIPT_DIR/tmp
+    rsync -a --exclude="tmp/" --exclude="build/" $SCRIPT_DIR/* $SCRIPT_DIR/tmp
 
     # Find all of the references to CloudFormation Templates in GitHub
-
+    # Then download them, replace github references with the local copy
     regex="([^:]+):[[:space:]]+TemplateURL:[[:space:]]+(.*)"
     grep -E -r '^\s+TemplateURL:\s+https://raw.githubusercontent.com/' $SCRIPT_DIR/tmp | while read match; do
         if [ ! -e "$HOME/.github/token" ]; then
