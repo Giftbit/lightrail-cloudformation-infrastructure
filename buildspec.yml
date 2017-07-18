@@ -12,6 +12,7 @@ phases:
       - >
         bash -c "echo \"${ENCRYPTED_GITHUB_OAUTH_TOKEN}\"
         | base64 --decode > temp
+        && mkdir ~/.github
         && aws kms decrypt --ciphertext-blob fileb://temp --query Plaintext --output text
         | base64 --decode > ~/.github/token
         && rm temp"
