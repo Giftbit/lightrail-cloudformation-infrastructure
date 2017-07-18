@@ -583,7 +583,7 @@ Resources:
           - Name: BUILD_ARTIFACT_BUCKET
             Value: !Ref DeploymentArtifactBucket
           - Name: ENCRYPTED_GITHUB_OAUTH_TOKEN
-            Value: !Ref EncryptedGitHubOAuthToken
+            Value: !GetAtt EncryptedGitHubOAuthToken.CipherText
       Source:
         Type: CODEPIPELINE
       EncryptionKey: !GetAtt DeploymentArtifactKey.Arn
