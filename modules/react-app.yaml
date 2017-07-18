@@ -17,15 +17,15 @@ Parameters:
   GroupsToGrantReactReadWrite:
     Type: String
     Description: The name of the groups to grant React read write access
-    AllowedPattern: "([a-zA-Z0-9+=,.@_-]+(,[a-zA-Z0-9+=,.@_-]+)*)?"
+    AllowedPattern: "([a-zA-Z0-9+=.@_-]+(,[a-zA-Z0-9+=.@_-]+)*)?"
   GroupsToGrantReactBuildArtifactReadOnly:
     Type: String
     Description: The name of the groups to grant React read access
-    AllowedPattern: "([a-zA-Z0-9+=,.@_-]+(,[a-zA-Z0-9+=,.@_-]+)*)?"
+    AllowedPattern: "([a-zA-Z0-9+=.@_-]+(,[a-zA-Z0-9+=.@_-]+)*)?"
   GroupsToGrantReactBuildArtifactReadWrite:
     Type: String
     Description: The name of the groups to grant React read/write access
-    AllowedPattern: "([a-zA-Z0-9+=,.@_-]+(,[a-zA-Z0-9+=,.@_-]+)*)?"
+    AllowedPattern: "([a-zA-Z0-9+=.@_-]+(,[a-zA-Z0-9+=.@_-]+)*)?"
   BuildArtifactBucketOverride:
     Type: String
     Description: (Optional) The React BuildArtifactBucket we should configure
