@@ -32,6 +32,8 @@ Parameters:
 
 Conditions:
   ShouldGenerateCodePipelineApproverAssumePolicy: !Not [!Equals [!Ref GroupsToGrantCodePipelineApproverAccess, ""]]
+  ProductionAccountIsEnabled: !Not [!Equals [!Ref ProductionAccountId, ""]]
+  StagingAccountIsEnabled: !Not [!Equals [!Ref StagingAccountId, ""]]
 
 Resources:
   CodePipelineApprover:
@@ -67,8 +69,14 @@ Resources:
             Action:
               - "sts:AssumeRole"
             Resource:  # On the Dev Account, grant access to the Production Staging and Dev account pipelines
-              - !Sub "arn:aws:iam::${ProductionAccountId}:role/CodePipelineApprover"
-              - !Sub "arn:aws:iam::${StagingAccountId}:role/CodePipelineApprover"
+              - !If
+                - ProductionAccountIsEnabled
+                - !Sub "arn:aws:iam::${ProductionAccountId}:role/CodePipelineApprover"
+                - !Ref "AWS::NoValue"
+              - !If
+                - StagingAccountIsEnabled
+                - !Sub "arn:aws:iam::${StagingAccountId}:role/CodePipelineApprover"
+                - !Ref "AWS::NoValue"
               - !Sub "arn:aws:iam::${DevAccountId}:role/CodePipelineApprover"
             Condition:
               Bool:

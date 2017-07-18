@@ -24,6 +24,11 @@ Parameters:
     Description: The ID of the account to be considered Dev
     Default: ""
     AllowedPattern: (\d{12})?
+  GitHubOAuthToken:
+    Type: String
+    Description: GitHub OAuth Token. Used for CI Stacks to access GitHub Repos
+    Default: "****"
+    NoEcho: true
 
 Mappings:
   Dev:
@@ -251,19 +256,45 @@ Resources:
         -
           Key: Service
           Value: Batch
-
+  Credentials:
+    Type: AWS::CloudFormation::Stack
+    Condition: RegionIsUSWest2
+    DependsOn: CIResources
+    Properties:
+      # yamllint disable-line rule:line-length
+      TemplateURL: https://raw.githubusercontent.com/Giftbit/credentials/5b24a34/infrastructure/ci.yaml
+      Parameters:
+        ProjectParameterOverrides: !Sub >
+          {
+            "SecureConfigBucket": "${LightrailSecureConfig.Outputs.BucketName}",
+            "SecureConfigKMSArn": "${LightrailSecureConfig.Outputs.EncryptionKeyArn}"
+          }
+        GitHubOAuthToken: !Ref GitHubOAuthToken
+        CodeBuildImageNodeSSH: !GetAtt CIResources.Outputs.CodebuildImageNodeSSH
+        CiKeysAccessRoleArn: !GetAtt CIResources.Outputs.KeysAccessRoleArn
+        CiKeysBucketName: !GetAtt CIResources.Outputs.KeysBucketName
   UserAssumableRoles:
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2
     Properties:
       TemplateURL: ./modules/user-assumable-roles.yaml
       Parameters:
-        EnvironmentName: Dev
+        EnvironmentName: !Ref EnvironmentName
         ProductionAccountId: !Ref ProductionAccountId
         StagingAccountId: !Ref StagingAccountId
         DevAccountId: !Ref DevAccountId
         GroupsToGrantCodePipelineApproverAccess: !GetAtt Groups.Outputs.DevelopersGroupName
 
+  CIResources:
+    Type: AWS::CloudFormation::Stack
+    Condition: RegionIsUSWest2
+    Properties:
+      TemplateURL: ./modules/ci-common-resources.yaml
+      Parameters:
+        EnvironmentName: !Ref EnvironmentName
+        ProductionAccountId: !Ref ProductionAccountId
+        StagingAccountId: !Ref StagingAccountId
+        DevAccountId: !Ref DevAccountId
   SSM:
     Type: AWS::CloudFormation::Stack
     Properties:

@@ -1,0 +1,181 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Creates resources enabling CI in other projects
+
+Parameters:
+  EnvironmentName:
+    Type: String
+    AllowedValues:
+      - Production
+      - Staging
+      - Dev
+    Default: Dev
+  ProductionAccountId:
+    Type: String
+    Description: The ID of the account to be considered Production
+    Default: ""
+    AllowedPattern: (\d{12})?
+  StagingAccountId:
+    Type: String
+    Description: The ID of the account to be considered Staging
+    Default: ""
+    AllowedPattern: (\d{12})?
+  DevAccountId:
+    Type: String
+    Description: The ID of the account to be considered Dev
+    Default: ""
+    AllowedPattern: (\d{12})?
+  CommonString:
+    Type: String
+    Description: >
+      A Common String that will be shared between the different environments, but can be unique so we can launch multiple
+      copies of a stack in an account for testing
+    Default: "lightrail-ci-resources-20170717"
+
+Conditions:
+  EnvIsDev: !Equals [!Ref EnvironmentName, Dev]
+  ProductionAccountIsEnabled: !Not [!Equals [!Ref ProductionAccountId, ""]]
+  StagingAccountIsEnabled: !Not [!Equals [!Ref StagingAccountId, ""]]
+
+Resources:
+  KeysBucket:
+    Type: AWS::S3::Bucket
+    Condition: EnvIsDev
+    DeletionPolicy: Delete
+    Properties:
+      BucketName: !Sub "${CommonString}-keys-bucket"
+      AccessControl: Private
+
+  KeysBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Condition: EnvIsDev
+    Properties:
+      Bucket: !Ref KeysBucket
+      PolicyDocument:
+        Statement:
+          -
+            Effect: Deny
+            Action:
+              - s3:PutObject
+            Resource:
+              - !Sub "arn:aws:s3:::${KeysBucket}/*"
+            Principal: "*"
+            Condition:
+              StringNotEquals:
+                "s3:x-amz-server-side-encryption-aws-kms-key-id": !GetAtt KMS.Arn
+
+  KMS:
+    Type: AWS::KMS::Key
+    Condition: EnvIsDev
+    Properties:
+      Description: KMS Key used for encrypting CI Secrets
+      KeyPolicy:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: "Allow"
+            Principal:
+              AWS:
+                - !Sub "arn:aws:iam::${AWS::AccountId}:root"
+            Action:
+              - "kms:*"
+            Resource: "*"
+
+  KMSAlias:
+    Type: AWS::KMS::Alias
+    Condition: EnvIsDev
+    Properties:
+      AliasName: alias/ci-kms
+      TargetKeyId: !Ref KMS
+
+  KeysAccessRole:
+    Type: AWS::IAM::Role
+    Condition: EnvIsDev
+    Properties:
+      RoleName: !Sub "${CommonString}-KeyAccessRole"
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - sts:AssumeRole
+            Principal:
+              AWS:
+                - !If
+                  - ProductionAccountIsEnabled
+                  - !Sub "arn:aws:iam::${ProductionAccountId}:root"
+                  - !Ref "AWS::NoValue"
+                - !If
+                  - StagingAccountIsEnabled
+                  - !Sub "arn:aws:iam::${StagingAccountId}:root"
+                  - !Ref "AWS::NoValue"
+                - !Sub "arn:aws:iam::${DevAccountId}:root"
+
+  KeysAccessPolicy:
+    Type: AWS::IAM::Policy
+    Condition: EnvIsDev
+    Properties:
+      PolicyName: KeysAccessPolicy
+      Roles:
+        - !Ref KeysAccessRole
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - logs:CreateLogGroup
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+            Resource: "arn:aws:logs:*:*:*"
+          - Effect: Allow
+            Action:
+              - s3:GetObject
+              - s3:ListBucket
+            Resource:
+              - !Sub "arn:aws:s3:::${KeysBucket}"
+              - !Sub "arn:aws:s3:::${KeysBucket}/*"
+          - Effect: "Allow"
+            Action:
+              - "kms:decrypt"
+            Resource:
+              - !GetAtt KMS.Arn
+            Condition:
+              StringLike:
+                "kms:ViaService": "s3.us-west-2.amazonaws.com"
+                "kms:EncryptionContext:aws:s3:arn": !Sub "arn:aws:s3:::${KeysBucket}/*"
+
+  # CodeBuild
+  NodeSSHImageRepository:
+    Type: AWS::ECR::Repository
+    Condition: EnvIsDev
+    Properties:
+      RepositoryName: !Sub "${CommonString}-node-ssh"
+      RepositoryPolicyText:
+        Version: 2012-10-17
+        Statement:
+          -
+            Sid: CodeBuildAccess
+            Effect: Allow
+            Principal:
+              AWS:
+                # internal AWS account IDs used by AWS CodeBuild to access Amazon ECR repositories in supported AWS
+                # regions. see: http://docs.aws.amazon.com/codebuild/latest/userguide/sample-ecr.html
+                - "arn:aws:iam::201349592320:root"
+                - "arn:aws:iam::570169269855:root"
+                - "arn:aws:iam::964771811575:root"
+                - "arn:aws:iam::883865855280:root"
+            Action:
+              - "ecr:GetDownloadUrlForLayer"
+              - "ecr:BatchGetImage"
+              - "ecr:BatchCheckLayerAvailability"
+
+Outputs:
+  KeysBucketName:
+    Description: The name of the KeysBucket
+    Value: !Sub "${CommonString}-keys-bucket"
+  KeysAccessRoleArn:
+    Description: The Arn for CiKeysAccessRole
+    Value: !Sub "arn:aws:iam::${DevAccountId}:role/${CommonString}-KeyAccessRole"
+  CodebuildImageNodeSSH:
+    Description: The Codebuild accessible docker image reference
+    Value: !Sub "${DevAccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${CommonString}-node-ssh"
