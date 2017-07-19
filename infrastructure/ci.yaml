@@ -274,7 +274,8 @@ Resources:
                       "ProductionAccountId": "${ProductionAccountId}",
                       "StagingAccountId": "${StagingAccountId}",
                       "DevAccountId": "${DevAccountId}",
-                      "GitHubOAuthToken": "${DownstreamGitHubOAuthToken}"
+                      "GitHubOAuthToken": "${DownstreamGitHubOAuthToken}",
+                      "CloudFormationServiceRoleName": "${ProjectName}-CloudFormationServiceRole"
                     }
                   TemplatePath: BuildOutputArtifact::lightrail-stack.yaml
                   RoleArn: !Sub "arn:aws:iam::${DevAccountId}:role/${ProjectName}-CloudFormationServiceRole"
@@ -336,7 +337,8 @@ Resources:
                       "ProductionAccountId": "${ProductionAccountId}",
                       "StagingAccountId": "${StagingAccountId}",
                       "DevAccountId": "${DevAccountId}",
-                      "GitHubOAuthToken": "${DownstreamGitHubOAuthToken}"
+                      "GitHubOAuthToken": "${DownstreamGitHubOAuthToken}",
+                      "CloudFormationServiceRoleName": "${ProjectName}-CloudFormationServiceRole"
                     }
                   TemplatePath: BuildOutputArtifact::lightrail-stack.yaml
                   RoleArn: !Sub "arn:aws:iam::${StagingAccountId}:role/${ProjectName}-CloudFormationServiceRole"
@@ -398,7 +400,8 @@ Resources:
                       "ProductionAccountId": "${ProductionAccountId}",
                       "StagingAccountId": "${StagingAccountId}",
                       "DevAccountId": "${DevAccountId}",
-                      "GitHubOAuthToken": "${DownstreamGitHubOAuthToken}"
+                      "GitHubOAuthToken": "${DownstreamGitHubOAuthToken}",
+                      "CloudFormationServiceRoleName": "${ProjectName}-CloudFormationServiceRole"
                     }
                   TemplatePath: BuildOutputArtifact::lightrail-stack.yaml
                   RoleArn: !Sub "arn:aws:iam::${ProductionAccountId}:role/${ProjectName}-CloudFormationServiceRole"

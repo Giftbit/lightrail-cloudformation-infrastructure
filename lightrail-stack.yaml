@@ -29,6 +29,11 @@ Parameters:
     Description: GitHub OAuth Token. Used for CI Stacks to access GitHub Repos
     Default: "****"
     NoEcho: true
+  CloudFormationServiceRoleName:
+    Type: String
+    Description: >
+      The name of the role that performs the CloudFormationServices, so that we can grant it access to
+      the secure buckets to update policies, etc.
 
 Mappings:
   Dev:
@@ -188,6 +193,7 @@ Resources:
       Parameters:
         EnvironmentName: !Ref EnvironmentName
         UserIdsToGrantReadAccess: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", SecureConfigReadUserIds]
+        CloudFormationServiceRoleId: !Ref CloudFormationServiceRoleId
   LightrailSecureDownload:
     Type: AWS::CloudFormation::Stack
     Condition: EnvIsDevAndRegionIsUSWest2
@@ -303,6 +309,48 @@ Resources:
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: ./modules/ssm.yaml
+
+  RoleLookupRole:
+    Type: AWS::IAM::Role
+    Properties:
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - sts:AssumeRole
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+      Policies:
+        -
+          PolicyName: RoleAccess
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              -
+                Effect: Allow
+                Action:
+                  - iam:GetRole
+                Resource: "*"
+  RoleLookupLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      Description: Backs a CloudFormation Custom Resource for looking up Role Unique IDs (useful in locking down buckets)
+      Role: !GetAtt RoleLookupRole.Arn
+      Handler: lambda_function.lambda_handler
+      Runtime: nodejs6.10
+      Timeout: 15
+      Code: ../res/role-id-lookup.zip
+  CloudFormationServiceRoleId:
+    Type: AWS::CloudFormation::CustomResource
+    Version: 1.0
+    Properties:
+      ServiceToken: !GetAtt RoleLookupLambda.Arn
+      RoleName: !Ref CloudFormationServiceRoleName
+
 
 Outputs:
   WebsiteBucket:

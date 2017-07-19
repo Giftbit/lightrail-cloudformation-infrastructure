@@ -23,6 +23,11 @@ Parameters:
       (See http://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_variables.html#policy-vars-infotouse)
     Default: ""
     AllowedPattern: (([A-Z0-9]+(:\*)?|\d{12})(,([A-Z0-9]+(:\*)?|\d{12}))*)?
+  CloudFormationServiceRoleId:
+    Type: String
+    Description: >
+      The Cloudformation Service Role Id, so we can grant it permissions necessary to update the bucket policies
+    AllowedPattern: "[A-Z0-9]+:\*"
 
 Conditions:
   ShouldAllowInfrastructureAdminToPutConfiguration: !Equals [!Ref EnvironmentName, "Dev"]
@@ -70,6 +75,18 @@ Resources:
             Condition:
               StringNotEquals:
                 "s3:x-amz-server-side-encryption-aws-kms-key-id": !GetAtt EncryptionKey.Arn
+          -
+            Effect: "Deny"
+            NotAction:
+              - s3:PutBucketPolicy
+              - s3:GetBucketPolicy
+              - s3:DeleteBucketPolicy
+            Resource:
+              - !Sub "arn:aws:s3:::${Bucket}"
+              - !Sub "arn:aws:s3:::${Bucket}/*"
+            Condition:
+              StringLike:
+                aws:userid: !Ref CloudFormationServiceRoleId
           - !If  # In Dev, InfrastructureAdmin can set values and update policies (to test them out before codepipeline)
             - ShouldAllowInfrastructureAdminToPutConfiguration
             -
@@ -146,6 +163,7 @@ Resources:
                     - ","
                     -
                       - !Ref AWS::AccountId
+                      - !Ref CloudFormationServiceRoleId
                       - !If  # In Dev, Don't block the Infrastructure Admin Role
                         - ShouldAllowInfrastructureAdminToPutConfiguration
                         - AROAINEQ7YDEFE7R3L24E:*
