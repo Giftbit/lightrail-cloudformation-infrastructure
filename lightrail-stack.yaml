@@ -179,7 +179,7 @@ Resources:
         Ec2SsmPolicyArn: !GetAtt SSM.Outputs.EC2PolicyArn
   LightrailSecureConfig:
     Type: AWS::CloudFormation::Stack
-    Condition: EnvIsDevAndRegionIsUSWest2
+    Condition: RegionIsUSWest2
     Properties:
       TemplateURL: ./modules/secure-bucket.yaml
       Parameters:
