@@ -1,0 +1,788 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Currency CloudFront distribution configurations"
+Metadata:
+  "AWS::CloudFormation::Interface":
+    ParameterGroups:
+      -
+        Label:
+          default: Stack Environment
+        Parameters:
+          - StackEnvironment
+      -
+        Label:
+          default: Domains
+        Parameters:
+          - AppAliases
+          - ApiAliases
+      -
+        Label:
+          default: Price Class
+        Parameters:
+          - PriceClass
+      -
+        Label:
+          default: SSL Certificates
+        Parameters:
+          - ViewerCertificateArn
+      -
+        Label:
+          default: Endpoints
+        Parameters:
+          - WebsiteEndpoint
+          - ReactEndpoint
+          - ServicesEndpoint
+          - StatsEndpoint
+          - BatchEndpoint
+Parameters:
+  EnvironmentName:
+    Type: String
+    Description: Please select your environment
+    AllowedValues:
+      - Dev
+      - Staging
+      - Production
+  AppAliases:
+    Type: String
+    Description: Enter the App domains that this CloudFront distribution should respond for
+  ApiAliases:
+    Type: String
+    Description: Enter the API domains that this CloudFront distribution should respond for
+  PriceClass:
+    Type: String
+    Description: Please Select your Price Class
+    Default: PriceClass_100
+    AllowedValues:
+      - PriceClass_All
+      - PriceClass_100
+      - PriceClass_200
+  ViewerCertificateArn:
+    Type: String
+    Description: Please enter in the Arn of the AWS Certificate Manager Certificate you would like to use
+    Default: ""
+  WebsiteEndpoint:
+    Type: String
+    Description: Enter the domain that should handle the website requests
+  ReactEndpoint:
+    Type: String
+    Description: Enter the domain that should handle the React app requests
+    Default: ""
+  ServicesEndpoint:
+    Type: String
+    Description: Enter the domain that should handle the Grails services requests
+  StatsEndpoint:
+    Type: String
+    Description: Enter the domain that should handle the Stats requests
+  CardsSearchEndpoint:
+    Type: String
+    Description: Enter the domain that should handle the Cards Search requests
+  BatchEndpoint:
+    Type: String
+    Description: Enter the domain that should handle the Batch requests
+Conditions:
+  AppAliasSet: !Not [!Equals [!Ref AppAliases, ""]]
+  ApiAliasSet: !Not [!Equals [!Ref ApiAliases, ""]]
+  ViewerCertificateArnSet: !Not [!Equals [!Ref ViewerCertificateArn, ""]]
+  ViewerCertificateArnNotSet: !Equals [!Ref ViewerCertificateArn, ""]
+  ReactEndpointSet: !Not [!Equals [!Ref ReactEndpoint, ""]]
+Resources:
+  AppDistribution:
+    Type: "AWS::CloudFront::Distribution"
+    Properties:
+      DistributionConfig:
+        Aliases: !If [AppAliasSet, !Split [",", !Ref AppAliases], !Ref "AWS::NoValue"]
+        Enabled: true
+        Comment: !Sub "Managed with CloudFormation Stack ${AWS::StackName}"
+        PriceClass: !Ref PriceClass
+        DefaultRootObject: index.html
+        ViewerCertificate:
+          AcmCertificateArn: !If [ViewerCertificateArnSet, !Ref ViewerCertificateArn, !Ref "AWS::NoValue"]
+          CloudFrontDefaultCertificate: !If [ViewerCertificateArnNotSet, true, !Ref "AWS::NoValue"]
+          SslSupportMethod: !If [ViewerCertificateArnSet, "sni-only", !Ref "AWS::NoValue"]
+          MinimumProtocolVersion: TLSv1
+        Origins:
+          -
+            DomainName: !Ref WebsiteEndpoint
+            Id: WebsiteEndpointOrigin
+            CustomOriginConfig:
+              OriginSSLProtocols:
+                - TLSv1.1
+                - TLSv1.2
+              OriginProtocolPolicy: http-only
+              HTTPSPort: 443
+              HTTPPort: 80
+          - !If
+            - ReactEndpointSet
+            -
+              DomainName: !Ref ReactEndpoint
+              Id: ReactEndpointOrigin
+              CustomOriginConfig:
+                OriginSSLProtocols:
+                  - TLSv1.1
+                  - TLSv1.2
+                OriginProtocolPolicy: http-only
+                HTTPSPort: 443
+                HTTPPort: 80
+            - !Ref AWS::NoValue
+          -
+            DomainName: !Ref ServicesEndpoint
+            Id: ServicesEndpointOrigin
+            CustomOriginConfig:
+              OriginSSLProtocols:
+                - TLSv1.1
+                - TLSv1.2
+              OriginProtocolPolicy: https-only
+              HTTPSPort: 443
+              HTTPPort: 80
+          -
+            DomainName: !Ref StatsEndpoint
+            Id: StatsEndpointOrigin
+            OriginPath: /Prod
+            CustomOriginConfig:
+              OriginSSLProtocols:
+                - TLSv1.1
+                - TLSv1.2
+              OriginProtocolPolicy: https-only
+              HTTPSPort: 443
+              HTTPPort: 80
+          -
+            DomainName: !Ref BatchEndpoint
+            Id: BatchEndpointOrigin
+            CustomOriginConfig:
+              OriginSSLProtocols:
+                - TLSv1.1
+                - TLSv1.2
+              OriginProtocolPolicy: https-only
+              HTTPSPort: 443
+              HTTPPort: 80
+          -
+            DomainName: !Ref CardsSearchEndpoint
+            Id: CardsSearchEndpointOrigin
+            OriginPath: /Prod
+            CustomOriginConfig:
+              OriginSSLProtocols:
+                - TLSv1.1
+                - TLSv1.2
+              OriginProtocolPolicy: https-only
+              HTTPSPort: 443
+              HTTPPort: 80
+        CacheBehaviors:
+          -
+            PathPattern: "/v1/search/cards"
+            TargetOriginId: CardsSearchEndpointOrigin
+            ViewerProtocolPolicy: "redirect-to-https"
+            Compress: false
+            MinTTL: 0
+            MaxTTL: 31536000
+            DefaultTTL: 86400
+            AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+              - PUT
+              - POST
+              - PATCH
+              - DELETE
+            CachedMethods:
+              - GET
+              - HEAD
+            ForwardedValues:
+              QueryString: true
+              Headers:
+                - Authorization
+                - Content-Length
+                - Content-Type
+                - Content-MD5
+                - Range
+                - X-Requested-With
+              Cookies:
+                Forward: all
+          -
+            PathPattern: "/v1/search/cards/*"
+            TargetOriginId: CardsSearchEndpointOrigin
+            ViewerProtocolPolicy: "redirect-to-https"
+            Compress: false
+            MinTTL: 0
+            MaxTTL: 31536000
+            DefaultTTL: 86400
+            AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+              - PUT
+              - POST
+              - PATCH
+              - DELETE
+            CachedMethods:
+              - GET
+              - HEAD
+            ForwardedValues:
+              QueryString: true
+              Headers:
+                - Authorization
+                - Content-Length
+                - Content-Type
+                - Content-MD5
+                - Range
+                - X-Requested-With
+              Cookies:
+                Forward: all
+          -
+            PathPattern: "/v1/search/contacts"
+            TargetOriginId: CardsSearchEndpointOrigin
+            ViewerProtocolPolicy: "redirect-to-https"
+            Compress: false
+            MinTTL: 0
+            MaxTTL: 31536000
+            DefaultTTL: 86400
+            AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+              - PUT
+              - POST
+              - PATCH
+              - DELETE
+            CachedMethods:
+              - GET
+              - HEAD
+            ForwardedValues:
+              QueryString: true
+              Headers:
+                - Authorization
+                - Content-Length
+                - Content-Type
+                - Content-MD5
+                - Range
+                - X-Requested-With
+              Cookies:
+                Forward: all
+          -
+            PathPattern: "/v1/search/contacts/*"
+            TargetOriginId: CardsSearchEndpointOrigin
+            ViewerProtocolPolicy: "redirect-to-https"
+            Compress: false
+            MinTTL: 0
+            MaxTTL: 31536000
+            DefaultTTL: 86400
+            AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+              - PUT
+              - POST
+              - PATCH
+              - DELETE
+            CachedMethods:
+              - GET
+              - HEAD
+            ForwardedValues:
+              QueryString: true
+              Headers:
+                - Authorization
+                - Content-Length
+                - Content-Type
+                - Content-MD5
+                - Range
+                - X-Requested-With
+              Cookies:
+                Forward: all
+          -
+            PathPattern: "/v1/dailystats/*"
+            TargetOriginId: StatsEndpointOrigin
+            ViewerProtocolPolicy: "redirect-to-https"
+            Compress: false
+            MinTTL: 0
+            MaxTTL: 31536000
+            DefaultTTL: 86400
+            AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+              - PUT
+              - POST
+              - PATCH
+              - DELETE
+            CachedMethods:
+              - GET
+              - HEAD
+            ForwardedValues:
+              QueryString: true
+              Headers:
+                - Authorization
+                - Content-Length
+                - Content-Type
+                - Content-MD5
+                - Range
+                - X-Requested-With
+              Cookies:
+                Forward: all
+          -
+            PathPattern: "/v1/stats/*"
+            TargetOriginId: StatsEndpointOrigin
+            ViewerProtocolPolicy: "redirect-to-https"
+            Compress: false
+            MinTTL: 0
+            MaxTTL: 31536000
+            DefaultTTL: 86400
+            AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+              - PUT
+              - POST
+              - PATCH
+              - DELETE
+            CachedMethods:
+              - GET
+              - HEAD
+            ForwardedValues:
+              QueryString: true
+              Headers:
+                - Authorization
+                - Content-Length
+                - Content-Type
+                - Content-MD5
+                - Range
+                - X-Requested-With
+              Cookies:
+                Forward: all
+          -
+            PathPattern: "/v1/batch/*"
+            TargetOriginId: BatchEndpointOrigin
+            ViewerProtocolPolicy: "redirect-to-https"
+            Compress: false
+            MinTTL: 0
+            MaxTTL: 31536000
+            DefaultTTL: 86400
+            AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+              - PUT
+              - POST
+              - PATCH
+              - DELETE
+            CachedMethods:
+              - GET
+              - HEAD
+            ForwardedValues:
+              QueryString: true
+              Headers:
+                - Authorization
+                - Content-Length
+                - Content-Type
+                - Content-MD5
+                - Range
+                - X-Requested-With
+              Cookies:
+                Forward: all
+          -
+            PathPattern: "/v1/*"
+            TargetOriginId: ServicesEndpointOrigin
+            ViewerProtocolPolicy: "redirect-to-https"
+            Compress: false
+            MinTTL: 0
+            MaxTTL: 31536000
+            DefaultTTL: 86400
+            AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+              - PUT
+              - POST
+              - PATCH
+              - DELETE
+            CachedMethods:
+              - GET
+              - HEAD
+            ForwardedValues:
+              QueryString: true
+              Headers:
+                - "*"
+              Cookies:
+                Forward: all
+          - !If
+            - ReactEndpointSet
+            -
+              PathPattern: "/app/*"
+              TargetOriginId: ReactEndpointOrigin
+              ViewerProtocolPolicy: "redirect-to-https"
+              Compress: false
+              MinTTL: 0
+              MaxTTL: 300
+              DefaultTTL: 60
+              AllowedMethods:
+                - GET
+                - HEAD
+              CachedMethods:
+                - GET
+                - HEAD
+              ForwardedValues:
+                QueryString: true
+                Cookies:
+                  Forward: none
+            - !Ref AWS::NoValue
+          - !If
+            - ReactEndpointSet
+            -
+              PathPattern: "/app/"
+              TargetOriginId: ReactEndpointOrigin
+              ViewerProtocolPolicy: "redirect-to-https"
+              Compress: false
+              MinTTL: 0
+              MaxTTL: 60
+              DefaultTTL: 5
+              AllowedMethods:
+                - GET
+                - HEAD
+              CachedMethods:
+                - GET
+                - HEAD
+              ForwardedValues:
+                QueryString: true
+                Cookies:
+                  Forward: none
+            - !Ref AWS::NoValue
+        DefaultCacheBehavior:
+          TargetOriginId: WebsiteEndpointOrigin
+          ViewerProtocolPolicy: redirect-to-https
+          AllowedMethods:
+            - GET
+            - HEAD
+          CachedMethods:
+            - GET
+            - HEAD
+          MinTTL: 0
+          MaxTTL: 300
+          DefaultTTL: 60
+          ForwardedValues:
+            QueryString: true
+            Cookies:
+              Forward: none
+  ApiDistribution:
+    Type: "AWS::CloudFront::Distribution"
+    Properties:
+      DistributionConfig:
+        Aliases: !If [ApiAliasSet, !Split [",", !Ref ApiAliases], !Ref "AWS::NoValue"]
+        Enabled: true
+        Comment: !Sub "Managed with CloudFormation Stack ${AWS::StackName}"
+        PriceClass: !Ref PriceClass
+        DefaultRootObject: index.html
+        ViewerCertificate:
+          AcmCertificateArn: !If [ViewerCertificateArnSet, !Ref ViewerCertificateArn, !Ref "AWS::NoValue"]
+          CloudFrontDefaultCertificate: !If [ViewerCertificateArnNotSet, true, !Ref "AWS::NoValue"]
+          SslSupportMethod: !If [ViewerCertificateArnSet, "sni-only", !Ref "AWS::NoValue"]
+          MinimumProtocolVersion: TLSv1
+        Origins:
+          -
+            DomainName: "giftbit-api-forwarding.s3-website-us-west-2.amazonaws.com"
+            Id: ApiRedirectOrigin
+            CustomOriginConfig:
+              OriginSSLProtocols:
+                - TLSv1.1
+                - TLSv1.2
+              OriginProtocolPolicy: http-only
+              HTTPSPort: 443
+              HTTPPort: 80
+          -
+            DomainName: !Ref ServicesEndpoint
+            Id: ServicesEndpointOrigin
+            CustomOriginConfig:
+              OriginSSLProtocols:
+                - TLSv1.1
+                - TLSv1.2
+              OriginProtocolPolicy: https-only
+              HTTPSPort: 443
+              HTTPPort: 80
+          -
+            DomainName: !Ref StatsEndpoint
+            Id: StatsEndpointOrigin
+            OriginPath: /Prod
+            CustomOriginConfig:
+              OriginSSLProtocols:
+                - TLSv1.1
+                - TLSv1.2
+              OriginProtocolPolicy: https-only
+              HTTPSPort: 443
+              HTTPPort: 80
+          -
+            DomainName: !Ref BatchEndpoint
+            Id: BatchEndpointOrigin
+            CustomOriginConfig:
+              OriginSSLProtocols:
+                - TLSv1.1
+                - TLSv1.2
+              OriginProtocolPolicy: https-only
+              HTTPSPort: 443
+              HTTPPort: 80
+          -
+            DomainName: !Ref CardsSearchEndpoint
+            Id: CardsSearchEndpointOrigin
+            OriginPath: /Prod
+            CustomOriginConfig:
+              OriginSSLProtocols:
+                - TLSv1.1
+                - TLSv1.2
+              OriginProtocolPolicy: https-only
+              HTTPSPort: 443
+              HTTPPort: 80
+        CacheBehaviors:
+          -
+            PathPattern: "/v1/search/cards"
+            TargetOriginId: CardsSearchEndpointOrigin
+            ViewerProtocolPolicy: "redirect-to-https"
+            Compress: false
+            MinTTL: 0
+            MaxTTL: 31536000
+            DefaultTTL: 86400
+            AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+              - PUT
+              - POST
+              - PATCH
+              - DELETE
+            CachedMethods:
+              - GET
+              - HEAD
+            ForwardedValues:
+              QueryString: true
+              Headers:
+                - Authorization
+                - Content-Length
+                - Content-Type
+                - Content-MD5
+                - Range
+                - X-Requested-With
+              Cookies:
+                Forward: all
+          -
+            PathPattern: "/v1/search/cards/*"
+            TargetOriginId: CardsSearchEndpointOrigin
+            ViewerProtocolPolicy: "redirect-to-https"
+            Compress: false
+            MinTTL: 0
+            MaxTTL: 31536000
+            DefaultTTL: 86400
+            AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+              - PUT
+              - POST
+              - PATCH
+              - DELETE
+            CachedMethods:
+              - GET
+              - HEAD
+            ForwardedValues:
+              QueryString: true
+              Headers:
+                - Authorization
+                - Content-Length
+                - Content-Type
+                - Content-MD5
+                - Range
+                - X-Requested-With
+              Cookies:
+                Forward: all
+          -
+            PathPattern: "/v1/search/contacts"
+            TargetOriginId: CardsSearchEndpointOrigin
+            ViewerProtocolPolicy: "redirect-to-https"
+            Compress: false
+            MinTTL: 0
+            MaxTTL: 31536000
+            DefaultTTL: 86400
+            AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+              - PUT
+              - POST
+              - PATCH
+              - DELETE
+            CachedMethods:
+              - GET
+              - HEAD
+            ForwardedValues:
+              QueryString: true
+              Headers:
+                - Authorization
+                - Content-Length
+                - Content-Type
+                - Content-MD5
+                - Range
+                - X-Requested-With
+              Cookies:
+                Forward: all
+          -
+            PathPattern: "/v1/search/contacts/*"
+            TargetOriginId: CardsSearchEndpointOrigin
+            ViewerProtocolPolicy: "redirect-to-https"
+            Compress: false
+            MinTTL: 0
+            MaxTTL: 31536000
+            DefaultTTL: 86400
+            AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+              - PUT
+              - POST
+              - PATCH
+              - DELETE
+            CachedMethods:
+              - GET
+              - HEAD
+            ForwardedValues:
+              QueryString: true
+              Headers:
+                - Authorization
+                - Content-Length
+                - Content-Type
+                - Content-MD5
+                - Range
+                - X-Requested-With
+              Cookies:
+                Forward: all
+          -
+            PathPattern: "/v1/dailystats/*"
+            TargetOriginId: StatsEndpointOrigin
+            ViewerProtocolPolicy: "redirect-to-https"
+            Compress: false
+            MinTTL: 0
+            MaxTTL: 31536000
+            DefaultTTL: 86400
+            AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+              - PUT
+              - POST
+              - PATCH
+              - DELETE
+            CachedMethods:
+              - GET
+              - HEAD
+            ForwardedValues:
+              QueryString: true
+              Headers:
+                - Authorization
+                - Content-Length
+                - Content-Type
+                - Content-MD5
+                - Range
+                - X-Requested-With
+              Cookies:
+                Forward: all
+          -
+            PathPattern: "/v1/stats/*"
+            TargetOriginId: StatsEndpointOrigin
+            ViewerProtocolPolicy: "redirect-to-https"
+            Compress: false
+            MinTTL: 0
+            MaxTTL: 31536000
+            DefaultTTL: 86400
+            AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+              - PUT
+              - POST
+              - PATCH
+              - DELETE
+            CachedMethods:
+              - GET
+              - HEAD
+            ForwardedValues:
+              QueryString: true
+              Headers:
+                - Authorization
+                - Content-Length
+                - Content-Type
+                - Content-MD5
+                - Range
+                - X-Requested-With
+              Cookies:
+                Forward: all
+          -
+            PathPattern: "/v1/batch/*"
+            TargetOriginId: BatchEndpointOrigin
+            ViewerProtocolPolicy: "redirect-to-https"
+            Compress: false
+            MinTTL: 0
+            MaxTTL: 31536000
+            DefaultTTL: 86400
+            AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+              - PUT
+              - POST
+              - PATCH
+              - DELETE
+            CachedMethods:
+              - GET
+              - HEAD
+            ForwardedValues:
+              QueryString: true
+              Headers:
+                - Authorization
+                - Content-Length
+                - Content-Type
+                - Content-MD5
+                - Range
+                - X-Requested-With
+              Cookies:
+                Forward: all
+          -
+            PathPattern: "/v1/*"
+            TargetOriginId: ServicesEndpointOrigin
+            ViewerProtocolPolicy: "redirect-to-https"
+            Compress: false
+            MinTTL: 0
+            MaxTTL: 31536000
+            DefaultTTL: 86400
+            AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+              - PUT
+              - POST
+              - PATCH
+              - DELETE
+            CachedMethods:
+              - GET
+              - HEAD
+            ForwardedValues:
+              QueryString: true
+              Headers:
+                - "*"
+              Cookies:
+                Forward: all
+        DefaultCacheBehavior:
+          TargetOriginId: ApiRedirectOrigin
+          ViewerProtocolPolicy: redirect-to-https
+          AllowedMethods:
+            - GET
+            - HEAD
+          CachedMethods:
+            - GET
+            - HEAD
+          MinTTL: 0
+          MaxTTL: 31536000
+          DefaultTTL: 86400
+          ForwardedValues:
+            QueryString: true
+            Cookies:
+              Forward: none
+
+Outputs:
+  AppDistributionDomain:
+    Description: The Domain for the Lightrail CloudFront Distribution
+    Value: !GetAtt AppDistribution.DomainName
+  ApiDistributionDomain:
+    Description: The Domain for the Lightrail CloudFront Distribution
+    Value: !GetAtt ApiDistribution.DomainName

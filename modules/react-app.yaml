@@ -9,14 +9,34 @@ Parameters:
       - Dev
       - Staging
       - Production
-  AccountsToGrantBuildArtifactFullAccess:
+  AccountsToGrantBuildArtifactReadAccess:
     Type: String
     Description: Comma separated list of AWS Account IDs to grant Build Artifact Access
     Default: ""
     AllowedPattern: (\d{12}(,\d{12})*)?
+  GroupsToGrantReactReadWrite:
+    Type: String
+    Description: The name of the groups to grant React read write access
+    AllowedPattern: "([a-zA-Z0-9+=.@_-]+(,[a-zA-Z0-9+=.@_-]+)*)?"
+  GroupsToGrantReactBuildArtifactReadOnly:
+    Type: String
+    Description: The name of the groups to grant React read access
+    AllowedPattern: "([a-zA-Z0-9+=.@_-]+(,[a-zA-Z0-9+=.@_-]+)*)?"
+  GroupsToGrantReactBuildArtifactReadWrite:
+    Type: String
+    Description: The name of the groups to grant React read/write access
+    AllowedPattern: "([a-zA-Z0-9+=.@_-]+(,[a-zA-Z0-9+=.@_-]+)*)?"
+  BuildArtifactBucketOverride:
+    Type: String
+    Description: (Optional) The React BuildArtifactBucket we should configure
+    Default: ""
 
 Conditions:
-  ShouldConfigureBuildArtifactAccess: !Not [!Equals [!Ref AccountsToGrantBuildArtifactFullAccess, ""]]
+  ShouldConfigureBuildArtifactReadAccess: !Not [!Equals [!Ref AccountsToGrantBuildArtifactReadAccess, ""]]
+  ShouldConfigureReactReadWriteAccess: !Not [!Equals [!Ref GroupsToGrantReactReadWrite, ""]]
+  ShouldConfigureReactBuildArtifactReadOnlyAccess: !Not [!Equals [!Ref GroupsToGrantReactBuildArtifactReadOnly, ""]]
+  ShouldConfigureReactBuildArtifactReadWriteAccess: !Not [!Equals [!Ref GroupsToGrantReactBuildArtifactReadWrite, ""]]
+  OverrideBuildArtifactBucketIsSet: !Not [!Equals [!Ref BuildArtifactBucketOverride, ""]]
 
 Resources:
   ReactBucket:
@@ -26,7 +46,7 @@ Resources:
       WebsiteConfiguration:
         IndexDocument: index.html
         ErrorDocument: error.html
-  ReactBucketPolicy:
+  ReactBucketPublicPolicy:
     Type: AWS::S3::BucketPolicy
     Properties:
       Bucket: !Ref ReactBucket
@@ -39,13 +59,34 @@ Resources:
             Resource:
               - !Sub "arn:aws:s3:::${ReactBucket}/*"
             Principal: "*"
+  ReactBucketUpdatePolicy:
+    Type: AWS::IAM::Policy
+    Condition: ShouldConfigureReactReadWriteAccess
+    Properties:
+      PolicyName: ReactBucketReadWrite
+      Groups: !Split [",", !Ref GroupsToGrantReactReadWrite]
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - s3:ListBucket
+              - s3:GetBucket*
+              - s3:GetObject*
+              - s3:PutObject*
+              - s3:DeleteObject*
+              - s3:ListBucketMultipartUploads
+            Resource:
+              - !Sub "arn:aws:s3:::${ReactBucket}"
+              - !Sub "arn:aws:s3:::${ReactBucket}/*"
   BuildArtifactBucket:
     Type: AWS::S3::Bucket
     Properties:
       AccessControl: Private
   BuildArtifactBucketPolicy:
     Type: AWS::S3::BucketPolicy
-    Condition: ShouldConfigureBuildArtifactAccess
+    Condition: ShouldConfigureBuildArtifactReadAccess
     Properties:
       Bucket: !Ref BuildArtifactBucket
       PolicyDocument:
@@ -56,12 +97,66 @@ Resources:
               - s3:ListBucket
               - s3:GetObject*
               - s3:GetBucketLocation
-              - s3:PutObject*
             Principal:
-              AWS: !Split [",", !Ref AccountsToGrantBuildArtifactFullAccess]
+              AWS: !Split [",", !Ref AccountsToGrantBuildArtifactReadAccess]
             Resource:
               - !Sub "arn:aws:s3:::${BuildArtifactBucket}"
               - !Sub "arn:aws:s3:::${BuildArtifactBucket}/*"
+  ReactBuildArtifactReadWriteAccessPolicy:
+    Type: AWS::IAM::Policy
+    Condition: ShouldConfigureReactBuildArtifactReadWriteAccess
+    Properties:
+      PolicyName: ReactBuildArtifactBucketRead
+      Groups: !Split [",", !Ref GroupsToGrantReactBuildArtifactReadWrite]
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - s3:ListBucket
+              - s3:GetBucket*
+              - s3:GetObject*
+              - s3:PutObject*
+              - s3:DeleteObject*
+              - s3:ListBucketMultipartUploads
+            Resource:
+              - !Sub "arn:aws:s3:::${BuildArtifactBucket}"
+              - !Sub "arn:aws:s3:::${BuildArtifactBucket}/*"
+              - !If
+                - OverrideBuildArtifactBucketIsSet
+                - !Sub "arn:aws:s3:::${BuildArtifactBucketOverride}"
+                - !Ref AWS::NoValue
+              - !If
+                - OverrideBuildArtifactBucketIsSet
+                - !Sub "arn:aws:s3:::${BuildArtifactBucketOverride}/*"
+                - !Ref AWS::NoValue
+  ReactBuildArtifactReadAccessPolicy:
+    Type: AWS::IAM::Policy
+    Condition: ShouldConfigureReactBuildArtifactReadOnlyAccess
+    Properties:
+      PolicyName: ReactBuildArtifactBucketRead
+      Groups: !Split [",", !Ref GroupsToGrantReactBuildArtifactReadOnly]
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - s3:ListBucket
+              - s3:GetBucket*
+              - s3:GetObject*
+            Resource:
+              - !Sub "arn:aws:s3:::${BuildArtifactBucket}"
+              - !Sub "arn:aws:s3:::${BuildArtifactBucket}/*"
+              - !If
+                - OverrideBuildArtifactBucketIsSet
+                - !Sub "arn:aws:s3:::${BuildArtifactBucketOverride}"
+                - !Ref AWS::NoValue
+              - !If
+                - OverrideBuildArtifactBucketIsSet
+                - !Sub "arn:aws:s3:::${BuildArtifactBucketOverride}/*"
+                - !Ref AWS::NoValue
 
 Outputs:
   ReactBucketName:
@@ -72,4 +167,4 @@ Outputs:
     Value: !Sub "${ReactBucket}.s3-website-${AWS::Region}.amazonaws.com"
   ArtifactBucketName:
     Description: The name of the Build Artifact Bucket
-    Value: !Ref BuildArtifactBucket
+    Value: !If [OverrideBuildArtifactBucketIsSet, !Ref BuildArtifactBucketOverride, !Ref BuildArtifactBucket]
