@@ -52,7 +52,6 @@ Parameters:
     Type: String
     Description: GitHub OAuth token. This user must have admin access to the repo.
     NoEcho: true
-
   ApprovalNotificationTopicExport:
     Type: String
     Description: The name of the CloudFormation Export to use for Approval Notifications
