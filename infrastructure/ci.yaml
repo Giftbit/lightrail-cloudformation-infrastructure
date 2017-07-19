@@ -857,33 +857,6 @@ Resources:
                   - kms:DescribeKey
                   - kms:GenerateDataKey
                 Resource: !GetAtt EncryptionKey.Arn
-  EncryptionLambdaRole:
-    Type: AWS::IAM::Role
-    Properties:
-      ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
-      AssumeRolePolicyDocument:
-        Version: 2012-10-17
-        Statement:
-          - Effect: Allow
-            Action:
-              - sts:AssumeRole
-            Principal:
-              Service:
-                - lambda.amazonaws.com
-      Policies:
-        -
-          PolicyName: EncryptionAccess
-          PolicyDocument:
-            Version: 2012-10-17
-            Statement:
-              -
-                Effect: Allow
-                Action:
-                  - kms:Encrypt
-                  - kms:DescribeKey
-                  - kms:GenerateDataKey
-                Resource: !GetAtt EncryptionKey.Arn
   EncryptionLambda:
     Type: AWS::Lambda::Function
     Properties:
