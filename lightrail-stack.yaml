@@ -39,6 +39,7 @@ Mappings:
       SesDomainArns: ""
       CloudFormationACMCertificateArn:
         arn:aws:acm:us-east-1:757264843183:certificate/5ac83a3b-1f05-4756-bd3a-3a4705846b53
+      SecureConfigReadUserIds: "AROAI4BVHO7XW6RTMBUPI:*"
   Staging:
     us-west-2:
       ReactBuildArtifactBucketOverride: dev-lightrailreact-1xyn4dsi4a-buildartifactbucket-17n7679jwqtyw
@@ -46,6 +47,7 @@ Mappings:
       ApiAliases: ""
       SesDomainArns: ""
       CloudFormationACMCertificateArn: ""
+      SecureConfigReadUserIds: ""
   Production:
     us-west-2:
       ReactBuildArtifactBucketOverride: dev-lightrailreact-1xyn4dsi4a-buildartifactbucket-17n7679jwqtyw
@@ -53,6 +55,7 @@ Mappings:
       ApiAliases: ""
       SesDomainArns: ""
       CloudFormationACMCertificateArn: ""
+      SecureConfigReadUserIds: ""
 
 Conditions:
   RegionIsUSWest2: !Equals [!Ref "AWS::Region", us-west-2]
@@ -184,6 +187,7 @@ Resources:
       TemplateURL: ./modules/secure-bucket.yaml
       Parameters:
         EnvironmentName: !Ref EnvironmentName
+        UserIdsToGrantReadAccess: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", SecureConfigReadUserIds]
   LightrailSecureDownload:
     Type: AWS::CloudFormation::Stack
     Condition: EnvIsDevAndRegionIsUSWest2
