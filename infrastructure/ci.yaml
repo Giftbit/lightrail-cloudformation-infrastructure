@@ -17,6 +17,7 @@ Metadata:
           - GithubRepoName
           - GithubRepoBranch
           - GitHubOAuthToken
+          - DownstreamGitHubOAuthToken
           - PreferredSlackChannel
           - CurrentAccountStackName
           - ApprovalNotificationTopicExport
@@ -51,6 +52,7 @@ Parameters:
     Type: String
     Description: GitHub OAuth token. This user must have admin access to the repo.
     NoEcho: true
+
   ApprovalNotificationTopicExport:
     Type: String
     Description: The name of the CloudFormation Export to use for Approval Notifications
@@ -85,6 +87,10 @@ Parameters:
     Type: String
     Description: The CloudFormation Stack that should be used for the lightrail account
     Default: "production"
+  DownstreamGitHubOAuthToken:
+    Type: String
+    Description: GitHub OAuth token for downstream CIs. User must have 'repo' and 'admin:repo_hook' access
+    NoEcho: true
 
 Conditions:
   DevAccountIsEnabled: !Not [!Equals [!Ref DevAccountId, ""]]
@@ -268,7 +274,8 @@ Resources:
                       "EnvironmentName":"Dev",
                       "ProductionAccountId": "${ProductionAccountId}",
                       "StagingAccountId": "${StagingAccountId}",
-                      "DevAccountId": "${DevAccountId}"
+                      "DevAccountId": "${DevAccountId}",
+                      "GitHubOAuthToken": "${DownstreamGitHubOAuthToken}"
                     }
                   TemplatePath: BuildOutputArtifact::lightrail-stack.yaml
                   RoleArn: !Sub "arn:aws:iam::${DevAccountId}:role/${ProjectName}-CloudFormationServiceRole"
@@ -329,7 +336,8 @@ Resources:
                       "EnvironmentName":"Staging",
                       "ProductionAccountId": "${ProductionAccountId}",
                       "StagingAccountId": "${StagingAccountId}",
-                      "DevAccountId": "${DevAccountId}"
+                      "DevAccountId": "${DevAccountId}",
+                      "GitHubOAuthToken": "${DownstreamGitHubOAuthToken}"
                     }
                   TemplatePath: BuildOutputArtifact::lightrail-stack.yaml
                   RoleArn: !Sub "arn:aws:iam::${StagingAccountId}:role/${ProjectName}-CloudFormationServiceRole"
@@ -390,7 +398,8 @@ Resources:
                       "EnvironmentName":"Production",
                       "ProductionAccountId": "${ProductionAccountId}",
                       "StagingAccountId": "${StagingAccountId}",
-                      "DevAccountId": "${DevAccountId}"
+                      "DevAccountId": "${DevAccountId}",
+                      "GitHubOAuthToken": "${DownstreamGitHubOAuthToken}"
                     }
                   TemplatePath: BuildOutputArtifact::lightrail-stack.yaml
                   RoleArn: !Sub "arn:aws:iam::${ProductionAccountId}:role/${ProjectName}-CloudFormationServiceRole"
@@ -822,6 +831,33 @@ Resources:
         !Sub "alias/${AWS::StackName}-Key"
       TargetKeyId:
         !GetAtt EncryptionKey.Arn
+  EncryptionLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - sts:AssumeRole
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+      Policies:
+        -
+          PolicyName: EncryptionAccess
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              -
+                Effect: Allow
+                Action:
+                  - kms:Encrypt
+                  - kms:DescribeKey
+                  - kms:GenerateDataKey
+                Resource: !GetAtt EncryptionKey.Arn
   EncryptionLambdaRole:
     Type: AWS::IAM::Role
     Properties:

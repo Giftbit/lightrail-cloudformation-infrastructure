@@ -24,10 +24,14 @@ Parameters:
     Description: The ID of the account to be considered Dev
     Default: ""
     AllowedPattern: (\d{12})?
-  GitHubOAuthToken:
+  EncryptedGitHubOAuthToken:
     Type: String
     Description: GitHub OAuth Token. Used for CI Stacks to access GitHub Repos
     Default: "****"
+    NoEcho: true
+  DecryptionRoleArn:
+    Type: String
+    Description: The Role to use for decrypting Encrypted parameters.
     NoEcho: true
 
 Mappings:
