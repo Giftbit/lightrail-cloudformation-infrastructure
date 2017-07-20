@@ -133,7 +133,7 @@ elif [ "$COMMAND" = "package" ]; then
         echo "Failed in packaging lightrail-stack.yaml"
         exit 4
     fi
-#    rm -rf $SCRIPT_DIR/tmp > /dev/null 2>&1
+    rm -rf $SCRIPT_DIR/tmp > /dev/null 2>&1
 else
     echo "usage:"
     echo -e "\t./auto.sh package"
