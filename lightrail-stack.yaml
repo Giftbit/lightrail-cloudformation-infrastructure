@@ -402,6 +402,7 @@ Resources:
         ProductionAccountId: !Ref ProductionAccountId
         StagingAccountId: !Ref StagingAccountId
         DevAccountId: !Ref DevAccountId
+        GroupsToGrantImageReadWriteAccess: !GetAtt Groups.Outputs.DevelopersGroupName
   SSM:
     Type: AWS::CloudFormation::Stack
     Properties:
