@@ -361,7 +361,7 @@ Resources:
           - >
             {
               "SecureConfigBucket": "${LightrailSecureConfig.Outputs.BucketName}",
-              "SecureConfigKMSArn": "${LightrailSecureConfig.Outputs.EncryptionKeyArn}",
+              "SecureConfigKmsArn": "${LightrailSecureConfig.Outputs.EncryptionKeyArn}",
               "SecureConfigKeyJwt": "${SecureConfigKeyJwt}",
               "SecureConfigKeyDataDog": "${SecureConfigKeyDataDog}",
               "KinesisStreamArn": "${LightrailEventStream.Outputs.KinesisStreamArn}",
