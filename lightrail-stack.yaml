@@ -269,7 +269,7 @@ Resources:
               - !Ref "AWS::NoValue"
   LightrailEventStream:
     Type: AWS::CloudFormation::Stack
-    Condition: EnvIsDevAndRegionIsUSWest2
+    Condition: RegionIsUSWest2
     Properties:
       TemplateURL: ./modules/event-stream.yaml
       Parameters:
