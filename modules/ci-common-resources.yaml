@@ -146,8 +146,9 @@ Resources:
 
   # CodeBuild
   NodeSSHImageRepository:
+    # Unfortunately, this part isn't CId. You will need to push this image up manually. You can find a copy of it in
+    # Any of the Dev accounts.
     Type: AWS::ECR::Repository
-    Condition: EnvIsDev
     Properties:
       RepositoryName: !Sub "${CommonString}-node-ssh"
       RepositoryPolicyText:
@@ -178,4 +179,4 @@ Outputs:
     Value: !Sub "arn:aws:iam::${DevAccountId}:role/${CommonString}-KeyAccessRole"
   CodebuildImageNodeSSH:
     Description: The Codebuild accessible docker image reference
-    Value: !Sub "${DevAccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${CommonString}-node-ssh"
+    Value: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${CommonString}-node-ssh"
