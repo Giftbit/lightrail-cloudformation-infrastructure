@@ -36,6 +36,10 @@ Parameters:
       the secure buckets to update policies, etc.
 
 Mappings:
+  SecureConfig:
+    Files:
+      JWT: authentication_badge_key.json
+      DataDog: datadog.json
   Dev:
     us-west-2:
       ReactBuildArtifactBucketOverride: ""
@@ -47,6 +51,9 @@ Mappings:
       CredentialsRoleName: "credentials-env-RestBadgeValidationLambdaRole-1K22JVCC5UH7Q"
       ServicesRoleName: "dev-LightrailServices-1D5YCESAG92B3-Role-1D1RKUNL3XBWH"
       BatchRoleName: "dev-LightrailBatch-15T0OX937Q0EO-Role-1ETHK95KYFQ02"
+      CredentialsDestinationBranch: ""
+      SimpleRollupDestinationBranch: ""
+      SimpleRollupCapacity: low
   Staging:
     us-west-2:
       ReactBuildArtifactBucketOverride: dev-lightrailreact-1xyn4dsi4a-buildartifactbucket-17n7679jwqtyw
@@ -57,6 +64,9 @@ Mappings:
       CredentialsRoleName: ""
       ServicesRoleName: ""
       BatchRoleName: ""
+      CredentialsDestinationBranch: ""
+      SimpleRollupDestinationBranch: ""
+      SimpleRollupCapacity: low
   Production:
     us-west-2:
       ReactBuildArtifactBucketOverride: dev-lightrailreact-1xyn4dsi4a-buildartifactbucket-17n7679jwqtyw
@@ -67,6 +77,9 @@ Mappings:
       CredentialsRoleName: ""
       ServicesRoleName: ""
       BatchRoleName: ""
+      CredentialsDestinationBranch: ""
+      SimpleRollupDestinationBranch: ""
+      SimpleRollupCapacity: high
 
 Conditions:
   RegionIsUSWest2: !Equals [!Ref "AWS::Region", us-west-2]
@@ -319,10 +332,9 @@ Resources:
         -
           Key: Service
           Value: Batch
-  Credentials:
+  LightrailCredentials:
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2
-    DependsOn: CIResources
     Properties:
       # yamllint disable-line rule:line-length
       TemplateURL: https://raw.githubusercontent.com/Giftbit/credentials/5b24a34/infrastructure/ci.yaml
@@ -332,10 +344,40 @@ Resources:
             "SecureConfigBucket": "${LightrailSecureConfig.Outputs.BucketName}",
             "SecureConfigKMSArn": "${LightrailSecureConfig.Outputs.EncryptionKeyArn}"
           }
+        GitHubBranchDest: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CredentialsDestinationBranch]
         GitHubOAuthToken: !Ref GitHubOAuthToken
         CodeBuildImageNodeSSH: !GetAtt CIResources.Outputs.CodebuildImageNodeSSH
         CiKeysAccessRoleArn: !GetAtt CIResources.Outputs.KeysAccessRoleArn
         CiKeysBucketName: !GetAtt CIResources.Outputs.KeysBucketName
+  LightrailSimpleRollup:
+    Type: AWS::CloudFormation::Stack
+    Condition: RegionIsUSWest2
+    Properties:
+      # yamllint disable-line rule:line-length
+      TemplateURL: https://github.com/Giftbit/giftbit-simple-rollup/blob/86d30a1/infrastructure/ci.yaml
+      Parameters:
+        ProjectParameterOverrides: !Sub
+          - >
+            {
+              "SecureConfigBucket": "${LightrailSecureConfig.Outputs.BucketName}",
+              "SecureConfigKMSArn": "${LightrailSecureConfig.Outputs.EncryptionKeyArn}",
+              "SecureConfigKeyJwt": "${SecureConfigKeyJwt}",
+              "SecureConfigKeyDataDog": "${SecureConfigKeyDataDog}",
+              "KinesisStreamArn": "${LightrailEventStream.Outputs.KinesisStreamArn}",
+              "MessageBucket": "${LightrailEventStream.Outputs.DataBucketName}",
+              "MessageBucketKmsArn": "${LightrailEventStream.Outputs.EncryptionKeyArn}",
+              "Capacity": "${Capacity}"
+            }
+          -
+            SecureConfigKeyJwt: !FindInMap [SecureConfig, Files, JWT]
+            SecureConfigKeyDataDog: !FindInMap [SecureConfig, Files, DataDog]
+            Capacity: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", SimpleRollupCapacity]
+        GitHubBranchDest: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", SimpleRollupDestinationBranch]
+        GitHubOAuthToken: !Ref GitHubOAuthToken
+        CodeBuildImageNodeSSH: !GetAtt CIResources.Outputs.CodebuildImageNodeSSH
+        CiKeysAccessRoleArn: !GetAtt CIResources.Outputs.KeysAccessRoleArn
+        CiKeysBucketName: !GetAtt CIResources.Outputs.KeysBucketName
+
   UserAssumableRoles:
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2
