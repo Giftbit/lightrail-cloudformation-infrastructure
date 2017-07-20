@@ -30,6 +30,10 @@ Parameters:
       A Common String that will be shared between the different environments, but can be unique so we can launch
       multiple copies of a stack in an account for testing
     Default: "lightrail-ci-resources-20170717"
+  GroupsToGrantImageReadWriteAccess:
+    Type: String
+    Description: The name of the groups to grant CodeBuild Image read write access
+    AllowedPattern: "([a-zA-Z0-9+=.@_-]+(,[a-zA-Z0-9+=.@_-]+)*)"
 
 Conditions:
   EnvIsDev: !Equals [!Ref EnvironmentName, Dev]
@@ -169,6 +173,28 @@ Resources:
               - "ecr:GetDownloadUrlForLayer"
               - "ecr:BatchGetImage"
               - "ecr:BatchCheckLayerAvailability"
+
+  NodeSSHImageRepositoryWriteAccess:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: CodeBuildImageReadWriteAccess
+      Groups: !Split [",", !Ref GroupsToGrantImageReadWriteAccess]
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - ecr:InitiateLayerUpload
+              - ecr:UploadLayerPart
+              - ecr:CompleteLayerUpload
+              - ecr:GetDownloadUrlForLayer
+              - ecr:BatchCheckLayerAvailability
+              - ecr:BatchGetImage
+              - ecr:ListImages
+              - ecr:PutImage
+            Resource:
+              - !Sub "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/${NodeSSHImageRepository}"
 
 Outputs:
   KeysBucketName:
