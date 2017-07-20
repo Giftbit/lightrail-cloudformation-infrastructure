@@ -185,6 +185,11 @@ Resources:
           -
             Effect: Allow
             Action:
+              - ecr:GetAuthorizationToken
+            Resource: "*"
+          -
+            Effect: Allow
+            Action:
               - ecr:InitiateLayerUpload
               - ecr:UploadLayerPart
               - ecr:CompleteLayerUpload
