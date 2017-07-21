@@ -72,7 +72,7 @@ Mappings:
       SimpleRollupDestinationBranch: ""
       SimpleRollupCapacity: low
       CardsSearchDestinationBranch: ""
-      CardsSerachElasticSearchInstanceCount: 2
+      CardsSearchElasticSearchInstanceCount: 2
       CardsSearchElasticSearchInstanceType: t2.small.elasticsearch
       CardsSearchElasticSearchMasterInstanceType: none
   Production:
@@ -89,7 +89,7 @@ Mappings:
       SimpleRollupDestinationBranch: ""
       SimpleRollupCapacity: high
       CardsSearchDestinationBranch: ""
-      CardsSerachElasticSearchInstanceCount: 2
+      CardsSearchElasticSearchInstanceCount: 2
       CardsSearchElasticSearchInstanceType: t2.small.elasticsearch
       CardsSearchElasticSearchMasterInstanceType: t2.small.elasticsearch
 
