@@ -256,7 +256,7 @@ Resources:
         -
           Key: Service
           Value: Batch
-  Credentials:
+  LightrailCredentials:
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2
     DependsOn: CIResources
