@@ -336,6 +336,7 @@ Resources:
         CodeBuildImageNodeSSH: !GetAtt CIResources.Outputs.CodebuildImageNodeSSH
         CiKeysAccessRoleArn: !GetAtt CIResources.Outputs.KeysAccessRoleArn
         CiKeysBucketName: !GetAtt CIResources.Outputs.KeysBucketName
+        ProjectName: !Sub "${AWS::StackName}-Credentials"
   UserAssumableRoles:
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2
