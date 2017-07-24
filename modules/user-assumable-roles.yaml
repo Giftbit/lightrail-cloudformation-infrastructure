@@ -55,6 +55,19 @@ Resources:
             Condition:
               Bool:
                 "aws:MultiFactorAuthPresent": true
+      Policies:
+        -
+          PolicyName: EnhancedCodePipelineAccess
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              -
+                Effect: Allow
+                Action:
+                  - codepipeline:RetryStageExecution
+                  - codepipeline:StartPipelineExecution
+                Resource: "*"
+
   CodePipelineApproverAssumePolicy:
     Type: "AWS::IAM::Policy"
     Condition: ShouldGenerateCodePipelineApproverAssumePolicy
