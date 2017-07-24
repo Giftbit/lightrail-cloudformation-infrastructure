@@ -66,6 +66,7 @@ Resources:
                 Action:
                   - codepipeline:RetryStageExecution
                   - codepipeline:StartPipelineExecution
+                  - codepipeline:ListPipelineExecutions
                 Resource: "*"
 
   CodePipelineApproverAssumePolicy:
