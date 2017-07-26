@@ -7,7 +7,7 @@ Metadata:
         Label:
           default: Stack Environment
         Parameters:
-          - StackEnvironment
+          - EnvironmentName
       -
         Label:
           default: Domains
