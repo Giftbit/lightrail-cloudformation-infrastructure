@@ -239,7 +239,7 @@ Resources:
               - ServicesRoleNameSet
               - !Sub "${ServicesRoleId}:*"
               - !Ref "AWS::NoValue"
-        UserIdsToGrantWriteAccess: !Join
+        UserIdsToGrantReadWriteAccess: !Join
           - ","
           -
             - !If
