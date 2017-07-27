@@ -17,6 +17,7 @@ Metadata:
           - GithubRepoName
           - GithubRepoBranch
           - GitHubOAuthToken
+          - DownstreamGitHubOAuthToken
           - PreferredSlackChannel
           - CurrentAccountStackName
           - ApprovalNotificationTopicExport
@@ -85,6 +86,10 @@ Parameters:
     Type: String
     Description: The CloudFormation Stack that should be used for the lightrail account
     Default: "production"
+  DownstreamGitHubOAuthToken:
+    Type: String
+    Description: GitHub OAuth token for downstream CIs. User must have 'repo' and 'admin:repo_hook' access
+    NoEcho: true
 
 Conditions:
   DevAccountIsEnabled: !Not [!Equals [!Ref DevAccountId, ""]]
@@ -268,7 +273,8 @@ Resources:
                       "EnvironmentName":"Dev",
                       "ProductionAccountId": "${ProductionAccountId}",
                       "StagingAccountId": "${StagingAccountId}",
-                      "DevAccountId": "${DevAccountId}"
+                      "DevAccountId": "${DevAccountId}",
+                      "GitHubOAuthToken": "${DownstreamGitHubOAuthToken}"
                     }
                   TemplatePath: BuildOutputArtifact::lightrail-stack.yaml
                   RoleArn: !Sub "arn:aws:iam::${DevAccountId}:role/${ProjectName}-CloudFormationServiceRole"
@@ -329,7 +335,8 @@ Resources:
                       "EnvironmentName":"Staging",
                       "ProductionAccountId": "${ProductionAccountId}",
                       "StagingAccountId": "${StagingAccountId}",
-                      "DevAccountId": "${DevAccountId}"
+                      "DevAccountId": "${DevAccountId}",
+                      "GitHubOAuthToken": "${DownstreamGitHubOAuthToken}"
                     }
                   TemplatePath: BuildOutputArtifact::lightrail-stack.yaml
                   RoleArn: !Sub "arn:aws:iam::${StagingAccountId}:role/${ProjectName}-CloudFormationServiceRole"
@@ -390,7 +397,8 @@ Resources:
                       "EnvironmentName":"Production",
                       "ProductionAccountId": "${ProductionAccountId}",
                       "StagingAccountId": "${StagingAccountId}",
-                      "DevAccountId": "${DevAccountId}"
+                      "DevAccountId": "${DevAccountId}",
+                      "GitHubOAuthToken": "${DownstreamGitHubOAuthToken}"
                     }
                   TemplatePath: BuildOutputArtifact::lightrail-stack.yaml
                   RoleArn: !Sub "arn:aws:iam::${ProductionAccountId}:role/${ProjectName}-CloudFormationServiceRole"
@@ -582,6 +590,8 @@ Resources:
         EnvironmentVariables:
           - Name: BUILD_ARTIFACT_BUCKET
             Value: !Ref DeploymentArtifactBucket
+          - Name: ENCRYPTED_GITHUB_OAUTH_TOKEN
+            Value: !GetAtt EncryptedGitHubOAuthToken.CipherText
       Source:
         Type: CODEPIPELINE
       EncryptionKey: !GetAtt DeploymentArtifactKey.Arn
@@ -634,6 +644,11 @@ Resources:
                 Action:
                   - cloudformation:ValidateTemplate
                 Resource: "*"
+              -
+                Effect: Allow
+                Action:
+                  - kms:decrypt
+                Resource: !GetAtt EncryptionKey.Arn
 
   CloudFormationRole:
     Type: "AWS::CloudFormation::Stack"
@@ -794,6 +809,70 @@ Resources:
       Endpoint:
         !GetAtt CodePipelineApprovalDiffNotifier.Arn
       Protocol: lambda
+
+  EncryptionKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: !Sub "KMS Key used for storing the secrets involved in ${ProjectName} CI"
+      KeyPolicy:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
+            Action:
+              - "kms:*"
+            Resource: "*"
+  EncryptionKeyAlias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName:
+        !Sub "alias/${AWS::StackName}-Key"
+      TargetKeyId:
+        !GetAtt EncryptionKey.Arn
+  EncryptionLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - sts:AssumeRole
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+      Policies:
+        -
+          PolicyName: EncryptionAccess
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              -
+                Effect: Allow
+                Action:
+                  - kms:Encrypt
+                  - kms:DescribeKey
+                  - kms:GenerateDataKey
+                Resource: !GetAtt EncryptionKey.Arn
+  EncryptionLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      Description: Backs a CloudFormation Custom Resource for encypting values with a specified KMS Key
+      Role: !GetAtt EncryptionLambdaRole.Arn
+      Handler: lambda_function.lambda_handler
+      Runtime: python2.7
+      Timeout: 15
+      Code: ../res/kms-encryption-custom-resource.zip
+  EncryptedGitHubOAuthToken:
+    Type: AWS::CloudFormation::CustomResource
+    Version: 1.0
+    Properties:
+      ServiceToken: !GetAtt EncryptionLambda.Arn
+      KeyId: !GetAtt EncryptionKey.Arn
+      PlainText: !Ref GitHubOAuthToken
 
 Outputs:
   ProjectName:

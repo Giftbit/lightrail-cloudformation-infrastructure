@@ -4,10 +4,18 @@ phases:
     commands:
       - echo Build enviromment `uname -a` aws/`aws --version 2>&1` git/`git --version`
       - pip install --upgrade awscli yamllint
+      - apt-get update && apt-get install -y curl rsync uuid-runtime
       - echo aws/`aws --version 2>&1`
   pre_build:
     commands:
       - bash auto.sh test
+      - >
+        bash -c "echo \"${ENCRYPTED_GITHUB_OAUTH_TOKEN}\"
+        | base64 --decode > temp
+        && mkdir ~/.github
+        && aws kms decrypt --ciphertext-blob fileb://temp --query Plaintext --output text
+        | base64 --decode > ~/.github/token
+        && rm temp"
   build:
     commands:
       - bash auto.sh package all

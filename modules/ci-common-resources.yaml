@@ -1,0 +1,221 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Creates resources enabling CI in other projects
+
+Parameters:
+  EnvironmentName:
+    Type: String
+    AllowedValues:
+      - Production
+      - Staging
+      - Dev
+    Default: Dev
+  ProductionAccountId:
+    Type: String
+    Description: The ID of the account to be considered Production
+    Default: ""
+    AllowedPattern: (\d{12})?
+  StagingAccountId:
+    Type: String
+    Description: The ID of the account to be considered Staging
+    Default: ""
+    AllowedPattern: (\d{12})?
+  DevAccountId:
+    Type: String
+    Description: The ID of the account to be considered Dev
+    Default: ""
+    AllowedPattern: (\d{12})?
+  CommonString:
+    Type: String
+    Description: >
+      A Common String that will be shared between the different environments, but can be unique so we can launch
+      multiple copies of a stack in an account for testing
+    Default: "lightrail-ci-resources-20170717"
+  GroupsToGrantImageReadWriteAccess:
+    Type: String
+    Description: The name of the groups to grant CodeBuild Image read write access
+    AllowedPattern: "([a-zA-Z0-9+=.@_-]+(,[a-zA-Z0-9+=.@_-]+)*)"
+
+Conditions:
+  EnvIsDev: !Equals [!Ref EnvironmentName, Dev]
+  ProductionAccountIsEnabled: !Not [!Equals [!Ref ProductionAccountId, ""]]
+  StagingAccountIsEnabled: !Not [!Equals [!Ref StagingAccountId, ""]]
+
+Resources:
+  KeysBucket:
+    Type: AWS::S3::Bucket
+    Condition: EnvIsDev
+    DeletionPolicy: Delete
+    Properties:
+      BucketName: !Sub "${CommonString}-keys-bucket"
+      AccessControl: Private
+
+  KeysBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Condition: EnvIsDev
+    Properties:
+      Bucket: !Ref KeysBucket
+      PolicyDocument:
+        Statement:
+          -
+            Effect: Deny
+            Action:
+              - s3:PutObject
+            Resource:
+              - !Sub "arn:aws:s3:::${KeysBucket}/*"
+            Principal: "*"
+            Condition:
+              StringNotEquals:
+                "s3:x-amz-server-side-encryption-aws-kms-key-id": !GetAtt KMS.Arn
+
+  KMS:
+    Type: AWS::KMS::Key
+    Condition: EnvIsDev
+    Properties:
+      Description: KMS Key used for encrypting CI Secrets
+      KeyPolicy:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: "Allow"
+            Principal:
+              AWS:
+                - !Sub "arn:aws:iam::${AWS::AccountId}:root"
+            Action:
+              - "kms:*"
+            Resource: "*"
+
+  KMSAlias:
+    Type: AWS::KMS::Alias
+    Condition: EnvIsDev
+    Properties:
+      AliasName: alias/ci-kms
+      TargetKeyId: !Ref KMS
+
+  KeysAccessRole:
+    Type: AWS::IAM::Role
+    Condition: EnvIsDev
+    Properties:
+      RoleName: !Sub "${CommonString}-KeyAccessRole"
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - sts:AssumeRole
+            Principal:
+              AWS:
+                - !If
+                  - ProductionAccountIsEnabled
+                  - !Sub "arn:aws:iam::${ProductionAccountId}:root"
+                  - !Ref "AWS::NoValue"
+                - !If
+                  - StagingAccountIsEnabled
+                  - !Sub "arn:aws:iam::${StagingAccountId}:root"
+                  - !Ref "AWS::NoValue"
+                - !Sub "arn:aws:iam::${DevAccountId}:root"
+
+  KeysAccessPolicy:
+    Type: AWS::IAM::Policy
+    Condition: EnvIsDev
+    Properties:
+      PolicyName: KeysAccessPolicy
+      Roles:
+        - !Ref KeysAccessRole
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - logs:CreateLogGroup
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+            Resource: "arn:aws:logs:*:*:*"
+          - Effect: Allow
+            Action:
+              - s3:GetObject
+              - s3:ListBucket
+            Resource:
+              - !Sub "arn:aws:s3:::${KeysBucket}"
+              - !Sub "arn:aws:s3:::${KeysBucket}/*"
+          - Effect: "Allow"
+            Action:
+              - "kms:decrypt"
+            Resource:
+              - !GetAtt KMS.Arn
+            Condition:
+              StringLike:
+                "kms:ViaService": "s3.us-west-2.amazonaws.com"
+                "kms:EncryptionContext:aws:s3:arn": !Sub "arn:aws:s3:::${KeysBucket}/*"
+
+  # CodeBuild
+  NodeSSHImageRepository:
+    # Unfortunately, this part isn't CId. You will need to push this image up manually. You can find a copy of it in
+    # Any of the Dev accounts.
+    # You can do this by doing the following, changing [ACCOUNT_ID] for the id of the account you want to add the
+    # build image to:
+    #
+    # 1. Insert your Lightrail Dev credentials
+    # 2. run: eval $(aws ecr get-login) && docker pull 757264843183.dkr.ecr.us-west-2.amazonaws.com/lightrail-ci-resources-20170717-node-ssh
+    # 3. run: docker tag 757264843183.dkr.ecr.us-west-2.amazonaws.com/lightrail-ci-resources-20170717-node-ssh [ACCOUNT_ID].dkr.ecr.us-west-2.amazonaws.com/lightrail-ci-resources-20170717-node-ssh
+    # 4. Swap in your credentials for the account you want to add the build image to
+    # 5. run: eval $(aws ecr get-login) && docker push [ACCOUNT_ID].dkr.ecr.us-west-2.amazonaws.com/lightrail-ci-resources-20170717-node-ssh
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: !Sub "${CommonString}-node-ssh"
+      RepositoryPolicyText:
+        Version: 2012-10-17
+        Statement:
+          -
+            Sid: CodeBuildAccess
+            Effect: Allow
+            Principal:
+              AWS:
+                # internal AWS account IDs used by AWS CodeBuild to access Amazon ECR repositories in supported AWS
+                # regions. see: http://docs.aws.amazon.com/codebuild/latest/userguide/sample-ecr.html
+                - "arn:aws:iam::201349592320:root"
+                - "arn:aws:iam::570169269855:root"
+                - "arn:aws:iam::964771811575:root"
+                - "arn:aws:iam::883865855280:root"
+            Action:
+              - "ecr:GetDownloadUrlForLayer"
+              - "ecr:BatchGetImage"
+              - "ecr:BatchCheckLayerAvailability"
+
+  NodeSSHImageRepositoryWriteAccess:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: CodeBuildImageReadWriteAccess
+      Groups: !Split [",", !Ref GroupsToGrantImageReadWriteAccess]
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - ecr:GetAuthorizationToken
+            Resource: "*"
+          -
+            Effect: Allow
+            Action:
+              - ecr:InitiateLayerUpload
+              - ecr:UploadLayerPart
+              - ecr:CompleteLayerUpload
+              - ecr:GetDownloadUrlForLayer
+              - ecr:BatchCheckLayerAvailability
+              - ecr:BatchGetImage
+              - ecr:ListImages
+              - ecr:PutImage
+            Resource:
+              - !Sub "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/${NodeSSHImageRepository}"
+
+Outputs:
+  KeysBucketName:
+    Description: The name of the KeysBucket
+    Value: !Sub "${CommonString}-keys-bucket"
+  KeysAccessRoleArn:
+    Description: The Arn for CiKeysAccessRole
+    Value: !Sub "arn:aws:iam::${DevAccountId}:role/${CommonString}-KeyAccessRole"
+  CodebuildImageNodeSSH:
+    Description: The Codebuild accessible docker image reference
+    Value: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${CommonString}-node-ssh"

@@ -59,13 +59,13 @@ elif [ "$COMMAND" = "deploy" ]; then
         exit 2
     fi
 
-    aws cloudformation package --template-file $SCRIPT_DIR/lightrail-stack.yaml --s3-bucket $BUILD_ARTIFACT_BUCKET --output-template-file /tmp/lightrail-stack.yaml
+    $SCRIPT_DIR/auto.sh package
     if [ $? -ne 0 ]; then
         exit 3
     fi
 
     echo "Executing aws cloudformation deploy..."
-    aws cloudformation deploy --template-file /tmp/lightrail-stack.yaml --stack-name $ACCOUNT --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM ${@:3}
+    aws cloudformation deploy --template-file $SCRIPT_DIR/build/lightrail-stack.yaml --stack-name $ACCOUNT --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM ${@:3}
 
     if [ $? -ne 0 ]; then
         # Print some help on why it failed.
@@ -87,16 +87,45 @@ elif [ "$COMMAND" = "package" ]; then
             echo "Unable to find 'cf-template' bucket. Failing."
             exit 1
         fi
+        echo "BUILD_ARTIFACT_BUCKET=$BUILD_ARTIFACT_BUCKET"
     fi
 
-    rm -r $SCRIPT_DIR/build/*
-    [ -d "$SCRIPT_DIR/build" ] || mkdir $SCRIPT_DIR/build
+    [ -d "$SCRIPT_DIR/tmp" ] || mkdir $SCRIPT_DIR/tmp
+    rm -rf $SCRIPT_DIR/tmp/* > /dev/null 2>&1
 
-    aws cloudformation package --template-file $SCRIPT_DIR/lightrail-stack.yaml --s3-bucket $BUILD_ARTIFACT_BUCKET --output-template-file $SCRIPT_DIR/build/lightrail-stack.yaml
+    # Copy all of the files to a temporary directory, because we're going to dynamically change some things
+    rsync -a --exclude="tmp/" --exclude="build/" $SCRIPT_DIR/* $SCRIPT_DIR/tmp
+
+    # Find all of the references to CloudFormation Templates in GitHub
+    # Then download them, replace github references with the local copy
+    regex="([^:]+):[[:space:]]+TemplateURL:[[:space:]]+(.*)"
+    grep -E -r '^\s+TemplateURL:\s+https://raw.githubusercontent.com/' $SCRIPT_DIR/tmp | while read match; do
+        if [ ! -e "$HOME/.github/token" ]; then
+            echo "No GitHub token was found in '$HOME/.github/token'"
+            exit 2
+        fi
+
+        [[ "$match" =~ $regex ]]
+        file=${BASH_REMATCH[1]}
+        url=${BASH_REMATCH[2]}
+
+        echo "Downloading $url locally, and replacing reference with local copy in $file"
+
+        local_file="$SCRIPT_DIR/tmp/$(uuidgen)"
+        curl -H "Authorization: token $(cat $HOME/.github/token)" $url -o $local_file
+
+        sed -i.bak "s,$url,$local_file,g" $file
+    done
+
+    [ -d "$SCRIPT_DIR/build" ] || mkdir $SCRIPT_DIR/build
+    rm -r $SCRIPT_DIR/build/* > /dev/null 2>&1
+
+    aws cloudformation package --template-file $SCRIPT_DIR/tmp/lightrail-stack.yaml --s3-bucket $BUILD_ARTIFACT_BUCKET --output-template-file $SCRIPT_DIR/build/lightrail-stack.yaml
     if [ $? -ne 0 ]; then
         echo "Failed in packaging lightrail-stack.yaml"
         exit 3
     fi
+    rm -rf $SCRIPT_DIR/tmp > /dev/null 2>&1
 else
     echo "usage:"
     echo -e "\t./auto.sh package"
