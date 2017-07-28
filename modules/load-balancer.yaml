@@ -1,0 +1,150 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Lightrail App Load Balancer"
+
+Parameters:
+  EnvironmentName:
+    Type: String
+    Description: The Name of the Environment
+    AllowedValues:
+      - Dev
+      - Staging
+      - Production
+  VpcId:
+    Type: String
+    Description: The VPC ID to associated this Load Balancer with
+    AllowedPattern: vpc-[0-9a-z]+
+  SecurityGroups:
+    Type: String
+    Description: A list of Security Group IDs to use for the load Balancer
+    AllowedPattern: sg-[0-9a-z]+(,sg-[0-9a-z])*
+  SubnetIds:
+    Type: String
+    Description: A list of Subnet IDs attach the load balancer to
+    AllowedPattern: subnet-[0-9a-z]+(,subnet-[0-9a-z]+)+
+  CertificateArn:
+    Type: String
+    Description: The ACM Certificate Arn to use for this Load Balancer
+
+Conditions:
+  EnvIsDev: !Equals [!Ref EnvironmentName, Dev]
+
+Resources:
+  LoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Scheme: internet-facing
+      SecurityGroups: !Split [",", !Ref SecurityGroups]
+      Subnets: !Split [",", !Ref SubnetIds]
+      LoadBalancerAttributes:
+        -
+          Key: idle_timeout.timeout_seconds
+          Value: 60
+  DefaultTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Port: 80
+      Protocol: HTTP
+      VpcId: !Ref VpcId
+  Listener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref LoadBalancer
+      Port: 443
+      Protocol: HTTPS
+      Certificates:
+        - CertificateArn: !Ref CertificateArn
+      DefaultActions:
+        -
+          Type: forward
+          TargetGroupArn: !Ref DefaultTargetGroup
+
+  ServicesTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Port: 80
+      Protocol: HTTP
+      VpcId: !Ref VpcId
+      HealthCheckPath: /v1/healthCheck
+      HealthyThresholdCount: !If [EnvIsDev, 3, 5]
+      UnhealthyThresholdCount: 3
+      HealthCheckIntervalSeconds: 30
+      TargetGroupAttributes:
+        -
+          Key: deregistration_delay.timeout_seconds
+          Value: !If [EnvIsDev, 15, 60]
+        -
+          Key: stickiness.enabled
+          Value: true
+        -
+          Key: stickiness.type
+          Value: lb_cookie
+      Tags:
+        -
+          Key: Service
+          Value: Services
+  ServicesListenerWildcard:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      Priority: 21
+      ListenerArn: !Ref Listener
+      Actions:
+        -
+          Type: forward
+          TargetGroupArn: !Ref ServicesTargetGroup
+      Conditions:
+        -
+          Field: path-pattern
+          Values:
+            - /v1/*
+  ServicesListenerSlash:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      Priority: 22
+      ListenerArn: !Ref Listener
+      Actions:
+        -
+          Type: forward
+          TargetGroupArn: !Ref ServicesTargetGroup
+      Conditions:
+        -
+          Field: path-pattern
+          Values:
+            - /v1/
+  ServicesListenerBare:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      Priority: 23
+      ListenerArn: !Ref Listener
+      Actions:
+        -
+          Type: forward
+          TargetGroupArn: !Ref ServicesTargetGroup
+      Conditions:
+        -
+          Field: path-pattern
+          Values:
+            - /v1
+
+  EcsLoadBalancingServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - sts:AssumeRole
+            Principal:
+              Service:
+                - ecs.amazonaws.com
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceRole
+
+Outputs:
+  DNSName:
+    Value: !GetAtt LoadBalancer.DNSName
+  ServicesTargetGroupArn:
+    Value: !Ref ServicesTargetGroup
+  EcsLoadBalancingServiceRoleArn:
+    Value: !GetAtt EcsLoadBalancingServiceRole.Arn

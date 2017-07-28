@@ -36,12 +36,9 @@ Parameters:
       the secure buckets to update policies, etc.
 
 Mappings:
-  SecureConfig:
-    Files:
-      JWT: authentication_badge_key.json
-      DataDog: datadog.json
   Dev:
     us-west-2:
+      Combined: Dev-us-west-2
       ReactBuildArtifactBucketOverride: ""
       AppAliases: ""
       ApiAliases: ""
@@ -60,6 +57,7 @@ Mappings:
       CardsSearchElasticSearchMasterInstanceType: none
   Staging:
     us-west-2:
+      Combined: Dev-us-west-2
       ReactBuildArtifactBucketOverride: dev-lightrailreact-1xyn4dsi4a-buildartifactbucket-17n7679jwqtyw
       AppAliases: ""
       ApiAliases: ""
@@ -77,6 +75,7 @@ Mappings:
       CardsSearchElasticSearchMasterInstanceType: none
   Production:
     us-west-2:
+      Combined: Dev-us-west-2
       ReactBuildArtifactBucketOverride: dev-lightrailreact-1xyn4dsi4a-buildartifactbucket-17n7679jwqtyw
       AppAliases: ""
       ApiAliases: ""
@@ -92,6 +91,39 @@ Mappings:
       CardsSearchElasticSearchInstanceCount: 2
       CardsSearchElasticSearchInstanceType: t2.small.elasticsearch
       CardsSearchElasticSearchMasterInstanceType: t2.small.elasticsearch
+  SecureConfig:
+    Files:
+      JWT: authentication_badge_key.json
+      DataDog: datadog.json
+  EcsCluster:
+    Dev-us-west-2:
+      InstanceType: t2.small
+      MinInstances: 1
+      MaxInstances: 3
+      SSHKeyName: LightrailDevECS
+      ScaleUpRecurrence: "0 15 * * MON-FRI"
+      ScaleDownRecurrence: "0 3 * * TUE-SAT"
+    Staging-us-west-2:
+      InstanceType: t2.nano
+      MinInstances: 0
+      MaxInstances: 0
+      SSHKeyName: LightrailStagingECS
+      ScaleUpRecurrence: "0 15 * * MON-FRI"
+      ScaleDownRecurrence: "0 3 * * TUE-SAT"
+    Production-us-west-2:
+      InstanceType: t2.nano
+      MinInstances: 0
+      MaxInstances: 0
+      SSHKeyName: LightrailProductionECS
+      ScaleUpRecurrence: ""
+      ScaleDownRecurrence: ""
+  Services:
+    Dev-us-west-2:
+      RdsSnapshotId: "test-account-20170727"
+    Staging-us-west-2:
+      RdsSnapshotId: ""
+    Production-us-west-2:
+      RdsSnapshotId: ""
 
 Conditions:
   RegionIsUSWest2: !Equals [!Ref "AWS::Region", us-west-2]
@@ -121,7 +153,6 @@ Resources:
       TemplateURL: ./modules/alert-sns.yaml
   LightrailCertificates:
     Type: AWS::CloudFormation::Stack
-    Condition: RegionIsUSEast1
     Properties:
       TemplateURL: ./modules/certificates.yaml
       Parameters:
@@ -209,17 +240,38 @@ Resources:
       TemplateURL: ./modules/ecs-cluster.yaml
       Parameters:
         EnvironmentName: !Ref EnvironmentName
-        ClusterName: lightrail-dev
-        ClusterMinInstances: 1
-        ClusterMaxInstances: 3
-        ClusterInstanceType: t2.nano
-        ClusterSSHKeyName: LightrailDevECS
+        ClusterName: !Sub "Lightrail-${AWS::StackName}"
+        ClusterInstanceType:
+          !FindInMap [EcsCluster, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", Combined], InstanceType]
+        ClusterMinInstances:
+          !FindInMap [EcsCluster, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", Combined], MinInstances]
+        ClusterMaxInstances:
+          !FindInMap [EcsCluster, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", Combined], MaxInstances]
+        ClusterSSHKeyName:
+          !FindInMap [EcsCluster, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", Combined], SSHKeyName]
+        ClusterScaleUpRecurrence:
+          !FindInMap [EcsCluster, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", Combined], ScaleUpRecurrence]
+        ClusterScaleDownRecurrence:
+          !FindInMap [EcsCluster, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", Combined], ScaleDownRecurrence]
         ClusterSecurityGroupIDs: !GetAtt LightrailVPC.Outputs.EcsClusterInstanceSecurityGroupId
-        ClusterScaleUpRecurrence: "0 15 * * MON-FRI"
-        ClusterScaleDownRecurrence: "0 3 * * TUE-SAT"
         VpcId: !GetAtt LightrailVPC.Outputs.VpcId
         VpcPublicSubnetIds: !GetAtt LightrailVPC.Outputs.PrivateSubnetIds
         Ec2SsmPolicyArn: !GetAtt SSM.Outputs.EC2PolicyArn
+        EcrReposToGrantClusterAccess: !Join
+          - ","
+          -
+            - !GetAtt LightrailServices.Outputs.EcrRepoArn
+  LightrailLoadBalancer:
+    Type: AWS::CloudFormation::Stack
+    Condition: EnvIsDevAndRegionIsUSWest2
+    Properties:
+      TemplateURL: ./modules/load-balancer.yaml
+      Parameters:
+        EnvironmentName: !Ref EnvironmentName
+        VpcId: !GetAtt LightrailVPC.Outputs.VpcId
+        SecurityGroups: !GetAtt LightrailVPC.Outputs.AlbSecurityGroupId
+        SubnetIds: !GetAtt LightrailVPC.Outputs.PublicSubnetIds
+        CertificateArn: !GetAtt LightrailCertificates.Outputs.CertificateArn
   LightrailSecureConfig:
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2
@@ -314,11 +366,27 @@ Resources:
         SecureDownloadBucketKeyArn: !GetAtt LightrailSecureDownload.Outputs.EncryptionKeyArn
         SesDomainArns: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", SesDomainArns]
         KinesisStreamArn: !GetAtt LightrailEventStream.Outputs.KinesisStreamArn
-        RemoteECRRepositoryArn: ""
+        AccountsToGrantEcrReadAccess: !Join
+          - ","
+          -
+            - !If
+              - ProductionAccountIdProvided
+              - !Ref ProductionAccountId
+              - !Ref AWS::NoValue
+            - !If
+              - StagingAccountIdProvided
+              - !Ref StagingAccountId
+              - !Ref AWS::NoValue
+            - !If
+              - DevAccountIdProvided
+              - !Ref DevAccountId
+              - !Ref AWS::NoValue
+        GroupsToGrantEcrReadAccess: !GetAtt Groups.Outputs.DevelopersGroupName
         RdsInstanceClass: db.t2.small
         RdsInstanceAllocation: 100
-        RdsMultiAZ: true
-        RdsSnapshotId: ""
+        RdsMultiAZ: false
+        RdsSnapshotId:
+          !FindInMap [Services, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", Combined], RdsSnapshotId]
         VpcRdsSubnetIds: !GetAtt LightrailVPC.Outputs.RdsSubnetIds
         VpcHostedZoneId: !GetAtt LightrailVPC.Outputs.VpcHostedZoneId
         VpcRdsSecurityGroupIds: !GetAtt LightrailVPC.Outputs.RdsSecurityGroupId
