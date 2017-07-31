@@ -114,7 +114,7 @@ elif [ "$COMMAND" = "package" ]; then
         local_file="$SCRIPT_DIR/tmp/$(uuidgen)"
         curl -f -H "Authorization: token $(cat $HOME/.github/token)" $url -o $local_file
         if [ $? -ne 0 ]; then
-            echo "Failed to fetch '$url'. Check the url, and ensure your githut access token is set in $HOME/.github/token"
+            echo "Failed to fetch '$url'. Check the url, and ensure your github access token is set in $HOME/.github/token"
             exit 3
         fi
 
