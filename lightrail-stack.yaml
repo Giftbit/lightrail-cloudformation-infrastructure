@@ -253,7 +253,7 @@ Resources:
         ClusterMaxInstances: !FindInMap
           - EcsCluster
           - !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion]
-          - ScaleUpRecurrence
+          - MaxInstances
         ClusterSSHKeyName:
           !FindInMap [EcsCluster, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], SSHKeyName]
         ClusterScaleUpRecurrence: !FindInMap
