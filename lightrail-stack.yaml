@@ -38,7 +38,7 @@ Parameters:
 Mappings:
   Dev:
     us-west-2:
-      Combined: Dev-us-west-2
+      CombinedEnvRegion: Dev-us-west-2
       ReactBuildArtifactBucketOverride: ""
       AppAliases: ""
       ApiAliases: ""
@@ -57,7 +57,7 @@ Mappings:
       CardsSearchElasticSearchMasterInstanceType: none
   Staging:
     us-west-2:
-      Combined: Dev-us-west-2
+      CombinedEnvRegion: Staging-us-west-2
       ReactBuildArtifactBucketOverride: dev-lightrailreact-1xyn4dsi4a-buildartifactbucket-17n7679jwqtyw
       AppAliases: ""
       ApiAliases: ""
@@ -75,7 +75,7 @@ Mappings:
       CardsSearchElasticSearchMasterInstanceType: none
   Production:
     us-west-2:
-      Combined: Dev-us-west-2
+      CombinedEnvRegion: Production-us-west-2
       ReactBuildArtifactBucketOverride: dev-lightrailreact-1xyn4dsi4a-buildartifactbucket-17n7679jwqtyw
       AppAliases: ""
       ApiAliases: ""
@@ -242,18 +242,28 @@ Resources:
       Parameters:
         EnvironmentName: !Ref EnvironmentName
         ClusterName: !Sub "Lightrail-${AWS::StackName}"
-        ClusterInstanceType:
-          !FindInMap [EcsCluster, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", Combined], InstanceType]
-        ClusterMinInstances:
-          !FindInMap [EcsCluster, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", Combined], MinInstances]
-        ClusterMaxInstances:
-          !FindInMap [EcsCluster, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", Combined], MaxInstances]
+        ClusterInstanceType: !FindInMap
+          - EcsCluster
+          - !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion]
+          - InstanceType
+        ClusterMinInstances: !FindInMap
+          - EcsCluster
+          - !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion]
+          - MinInstances
+        ClusterMaxInstances: !FindInMap
+          - EcsCluster
+          - !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion]
+          - ScaleUpRecurrence
         ClusterSSHKeyName:
-          !FindInMap [EcsCluster, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", Combined], SSHKeyName]
-        ClusterScaleUpRecurrence:
-          !FindInMap [EcsCluster, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", Combined], ScaleUpRecurrence]
-        ClusterScaleDownRecurrence:
-          !FindInMap [EcsCluster, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", Combined], ScaleDownRecurrence]
+          !FindInMap [EcsCluster, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], SSHKeyName]
+        ClusterScaleUpRecurrence: !FindInMap
+          - EcsCluster
+          - !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion]
+          - ScaleUpRecurrence
+        ClusterScaleDownRecurrence: !FindInMap
+          - EcsCluster
+          - !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion]
+          - ScaleDownRecurrence
         ClusterSecurityGroupIDs: !GetAtt LightrailVPC.Outputs.EcsClusterInstanceSecurityGroupId
         VpcId: !GetAtt LightrailVPC.Outputs.VpcId
         VpcPublicSubnetIds: !GetAtt LightrailVPC.Outputs.PrivateSubnetIds
@@ -387,7 +397,7 @@ Resources:
         RdsInstanceAllocation: 100
         RdsMultiAZ: false
         RdsSnapshotId:
-          !FindInMap [Services, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", Combined], RdsSnapshotId]
+          !FindInMap [Services, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RdsSnapshotId]
         VpcRdsSubnetIds: !GetAtt LightrailVPC.Outputs.RdsSubnetIds
         VpcHostedZoneId: !GetAtt LightrailVPC.Outputs.VpcHostedZoneId
         VpcRdsSecurityGroupIds: !GetAtt LightrailVPC.Outputs.RdsSecurityGroupId
