@@ -23,6 +23,13 @@ Parameters:
       (See http://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_variables.html#policy-vars-infotouse)
     Default: ""
     AllowedPattern: (([A-Z0-9]+(:\*)?|\d{12})(,([A-Z0-9]+(:\*)?|\d{12}))*)?
+  UserIdsToGrantReadWriteAccess:
+    Type: String
+    Description: >
+      (Optional) Comma separated list of AWS UserIDs to grant Read Write Access
+      (See http://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_variables.html#policy-vars-infotouse)
+    Default: ""
+    AllowedPattern: (([A-Z0-9]+(:\*)?|\d{12})(,([A-Z0-9]+(:\*)?|\d{12}))*)?
   UserIdsToGrantPolicyAdminAccess:
     Type: String
     Description: >
@@ -34,6 +41,7 @@ Conditions:
   ShouldAllowInfrastructureAdminToPutConfiguration: !Equals [!Ref EnvironmentName, "Dev"]
   ShouldConfigureReadAccess: !Not [!Equals [!Ref UserIdsToGrantReadAccess, ""]]
   ShouldConfigureWriteAccess: !Not [!Equals [!Ref UserIdsToGrantWriteAccess, ""]]
+  ShouldConfigureReadWriteAccess: !Not [!Equals [!Ref UserIdsToGrantReadWriteAccess, ""]]
 
 Resources:
   EncryptionKey:
@@ -148,6 +156,28 @@ Resources:
                 StringLike:
                   aws:userid: !Split [",", !Ref UserIdsToGrantWriteAccess]
             - !Ref AWS::NoValue
+          - !If  # Restrict Writing Roles to specifically Writing actions
+            - ShouldConfigureReadWriteAccess
+            -
+              Effect: "Deny"
+              NotAction:
+                - s3:ListBucket
+                - s3:GetObject
+                - s3:GetObjectAcl
+                - s3:GetObjectVersionAcl
+                - s3:PutObject
+                - s3:PutObjectAcl
+                - s3:PutObjectVersionAcl
+                - s3:GetBucketLocation
+                - s3:GetBucketVersioning
+              Resource:
+                - !Sub "arn:aws:s3:::${Bucket}"
+                - !Sub "arn:aws:s3:::${Bucket}/*"
+              Principal: "*"
+              Condition:
+                StringLike:
+                  aws:userid: !Split [",", !Ref UserIdsToGrantReadWriteAccess]
+            - !Ref AWS::NoValue
           -  # Deny all other accesses
             Effect: Deny
             NotAction:
@@ -175,6 +205,10 @@ Resources:
                         - !Ref UserIdsToGrantReadAccess  # This elements is comma separated, so joining it just works
                         - !Ref AWS::NoValue
                       - !If  # Don't block the Roles we specifically granted with the Restricted Writing roles above
+                        - ShouldConfigureWriteAccess
+                        - !Ref UserIdsToGrantWriteAccess  # This elements is comma separated, so joining it just works
+                        - !Ref AWS::NoValue
+                      - !If  # Don't block the Roles we specifically granted with the Restricted Read/Write roles above
                         - ShouldConfigureWriteAccess
                         - !Ref UserIdsToGrantWriteAccess  # This elements is comma separated, so joining it just works
                         - !Ref AWS::NoValue
