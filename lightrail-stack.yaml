@@ -401,8 +401,8 @@ Resources:
             {
               "SecureConfigBucket": "${LightrailSecureConfig.Outputs.BucketName}",
               "SecureConfigKmsArn": "${LightrailSecureConfig.Outputs.EncryptionKeyArn}",
-              "SecureConfigKeyJwt": "${SecureConfigKeyJwt}",
-              "SecureConfigKeyDataDog": "${SecureConfigKeyDataDog}",
+              "SecureConfigKeyJwt": "${SecureConfigFileNameJwt}",
+              "SecureConfigKeyDataDog": "${SecureConfigFileNameDataDog}",
               "KinesisStreamArn": "${LightrailEventStream.Outputs.KinesisStreamArn}",
               "MessageBucket": "${LightrailEventStream.Outputs.DataBucketName}",
               "MessageBucketKmsArn": "${LightrailEventStream.Outputs.EncryptionKeyArn}",
@@ -411,8 +411,8 @@ Resources:
               "ElasticSearchMasterInstanceType": "${ElasticSearchMasterInstanceType}"
             }
           -
-            SecureConfigKeyJwt: !FindInMap [SecureConfig, Files, JWT]
-            SecureConfigKeyDataDog: !FindInMap [SecureConfig, Files, DataDog]
+            SecureConfigFileNameJwt: !FindInMap [SecureConfig, FileNames, JWT]
+            SecureConfigFileNameDataDog: !FindInMap [SecureConfig, FileNames, DataDog]
             ElasticSearchInstanceCount:
               !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CardsSearchElasticSearchInstanceCount]
             ElasticSearchInstanceType:
