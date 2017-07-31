@@ -73,8 +73,7 @@ Parameters:
     Type: String
     Description: The ECR Repositories to grant access to run on the cluster
     Default: ""
-    AllowedPattern:
-      (arn:aws:ecr:[a-z0-9-]+:\d{12}:repository/[a-z0-9/_-]+(,arn:aws:ecr:[a-z0-9-]+:\d{12}:repository/[a-z0-9/_-]+)*)?
+    AllowedPattern: ((^|,)arn:aws:ecr:[a-z0-9-]+:\d{12}:repository/[a-z0-9/_-]+)*
   EcsInstanceReservedMemoryAmount:
     Type: Number
     Description: >
