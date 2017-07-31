@@ -37,7 +37,7 @@ Parameters:
 
 Mappings:
   SecureConfig:
-    Files:
+    FileNames:
       JWT: authentication_badge_key.json
       DataDog: datadog.json
   Dev:
@@ -363,16 +363,16 @@ Resources:
             {
               "SecureConfigBucket": "${LightrailSecureConfig.Outputs.BucketName}",
               "SecureConfigKmsArn": "${LightrailSecureConfig.Outputs.EncryptionKeyArn}",
-              "SecureConfigKeyJwt": "${SecureConfigKeyJwt}",
-              "SecureConfigKeyDataDog": "${SecureConfigKeyDataDog}",
+              "SecureConfigKeyJwt": "${SecureConfigFileNameJwt}",
+              "SecureConfigKeyDataDog": "${SecureConfigFileNameDataDog}",
               "KinesisStreamArn": "${LightrailEventStream.Outputs.KinesisStreamArn}",
               "MessageBucket": "${LightrailEventStream.Outputs.DataBucketName}",
               "MessageBucketKmsArn": "${LightrailEventStream.Outputs.EncryptionKeyArn}",
               "Capacity": "${Capacity}"
             }
           -
-            SecureConfigKeyJwt: !FindInMap [SecureConfig, Files, JWT]
-            SecureConfigKeyDataDog: !FindInMap [SecureConfig, Files, DataDog]
+            SecureConfigFileNameJwt: !FindInMap [SecureConfig, FileNames, JWT]
+            SecureConfigFileNameDataDog: !FindInMap [SecureConfig, FileNames, DataDog]
             Capacity: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", SimpleRollupCapacity]
         GitHubBranchDest: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", SimpleRollupDestinationBranch]
         GitHubOAuthToken: !Ref GitHubOAuthToken
