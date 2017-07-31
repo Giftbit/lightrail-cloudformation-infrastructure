@@ -45,7 +45,7 @@ Mappings:
       SesDomainArns: ""
       CloudFormationACMCertificateArn:
         arn:aws:acm:us-east-1:757264843183:certificate/5ac83a3b-1f05-4756-bd3a-3a4705846b53
-      CredentialsRoleName: "credentials-env-RestBadgeValidationLambdaRole-1K22JVCC5UH7Q"
+      CredentialsRevocationCheckRoleName: "credentials-env-RestBadgeValidationLambdaRole-1K22JVCC5UH7Q"
       ServicesRoleName: "dev-LightrailServices-1D5YCESAG92B3-Role-1D1RKUNL3XBWH"
       BatchRoleName: "dev-LightrailBatch-15T0OX937Q0EO-Role-1ETHK95KYFQ02"
       CredentialsDestinationBranch: ""
@@ -63,7 +63,7 @@ Mappings:
       ApiAliases: ""
       SesDomainArns: ""
       CloudFormationACMCertificateArn: ""
-      CredentialsRoleName: ""
+      CredentialsRevocationCheckRoleName: ""
       ServicesRoleName: ""
       BatchRoleName: ""
       CredentialsDestinationBranch: ""
@@ -81,7 +81,7 @@ Mappings:
       ApiAliases: ""
       SesDomainArns: ""
       CloudFormationACMCertificateArn: ""
-      CredentialsRoleName: ""
+      CredentialsRevocationCheckRoleName: ""
       ServicesRoleName: ""
       BatchRoleName: ""
       CredentialsDestinationBranch: ""
@@ -92,7 +92,7 @@ Mappings:
       CardsSearchElasticSearchInstanceType: t2.small.elasticsearch
       CardsSearchElasticSearchMasterInstanceType: t2.small.elasticsearch
   SecureConfig:
-    Files:
+    FileNames:
       JWT: authentication_badge_key.json
       DataDog: datadog.json
   EcsCluster:
@@ -135,7 +135,8 @@ Conditions:
   StagingAccountIdProvided: !Not [!Equals [!Ref StagingAccountId, ""]]
   DevAccountIdProvided: !Not [!Equals [!Ref DevAccountId, ""]]
   # yamllint disable-line rule:line-length
-  CredentialsRoleNameSet: !Not [!Equals [!FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CredentialsRoleName], ""]]
+  CredentialsRevocationCheckRoleNameSet:
+    !Not [!Equals [!FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CredentialsRevocationCheckRoleName], ""]]
   ServicesRoleNameSet: !Not [!Equals [!FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", ServicesRoleName], ""]]
   BatchRoleNameSet: !Not [!Equals [!FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", BatchRoleName], ""]]
 Resources:
@@ -283,8 +284,8 @@ Resources:
           - ","
           -
             - !If
-              - CredentialsRoleNameSet
-              - !Sub "${CredentialsRoleId}:*"
+              - CredentialsRevocationCheckRoleNameSet
+              - !Sub "${CredentialsRevocationCheckRoleId}:*"
               - !Ref "AWS::NoValue"
             - !If
               - ServicesRoleNameSet
@@ -316,7 +317,7 @@ Resources:
               - ServicesRoleNameSet
               - !Sub "${ServicesRoleId}:*"
               - !Ref "AWS::NoValue"
-        UserIdsToGrantWriteAccess: !Join
+        UserIdsToGrantReadWriteAccess: !Join
           - ","
           -
             - !If
@@ -440,16 +441,16 @@ Resources:
             {
               "SecureConfigBucket": "${LightrailSecureConfig.Outputs.BucketName}",
               "SecureConfigKmsArn": "${LightrailSecureConfig.Outputs.EncryptionKeyArn}",
-              "SecureConfigKeyJwt": "${SecureConfigKeyJwt}",
-              "SecureConfigKeyDataDog": "${SecureConfigKeyDataDog}",
+              "SecureConfigKeyJwt": "${SecureConfigFileNameJwt}",
+              "SecureConfigKeyDataDog": "${SecureConfigFileNameDataDog}",
               "KinesisStreamArn": "${LightrailEventStream.Outputs.KinesisStreamArn}",
               "MessageBucket": "${LightrailEventStream.Outputs.DataBucketName}",
               "MessageBucketKmsArn": "${LightrailEventStream.Outputs.EncryptionKeyArn}",
               "Capacity": "${Capacity}"
             }
           -
-            SecureConfigKeyJwt: !FindInMap [SecureConfig, Files, JWT]
-            SecureConfigKeyDataDog: !FindInMap [SecureConfig, Files, DataDog]
+            SecureConfigFileNameJwt: !FindInMap [SecureConfig, FileNames, JWT]
+            SecureConfigFileNameDataDog: !FindInMap [SecureConfig, FileNames, DataDog]
             Capacity: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", SimpleRollupCapacity]
         GitHubBranchDest: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", SimpleRollupDestinationBranch]
         GitHubOAuthToken: !Ref GitHubOAuthToken
@@ -468,8 +469,8 @@ Resources:
             {
               "SecureConfigBucket": "${LightrailSecureConfig.Outputs.BucketName}",
               "SecureConfigKmsArn": "${LightrailSecureConfig.Outputs.EncryptionKeyArn}",
-              "SecureConfigKeyJwt": "${SecureConfigKeyJwt}",
-              "SecureConfigKeyDataDog": "${SecureConfigKeyDataDog}",
+              "SecureConfigKeyJwt": "${SecureConfigFileNameJwt}",
+              "SecureConfigKeyDataDog": "${SecureConfigFileNameDataDog}",
               "KinesisStreamArn": "${LightrailEventStream.Outputs.KinesisStreamArn}",
               "MessageBucket": "${LightrailEventStream.Outputs.DataBucketName}",
               "MessageBucketKmsArn": "${LightrailEventStream.Outputs.EncryptionKeyArn}",
@@ -478,8 +479,8 @@ Resources:
               "ElasticSearchMasterInstanceType": "${ElasticSearchMasterInstanceType}"
             }
           -
-            SecureConfigKeyJwt: !FindInMap [SecureConfig, Files, JWT]
-            SecureConfigKeyDataDog: !FindInMap [SecureConfig, Files, DataDog]
+            SecureConfigFileNameJwt: !FindInMap [SecureConfig, FileNames, JWT]
+            SecureConfigFileNameDataDog: !FindInMap [SecureConfig, FileNames, DataDog]
             ElasticSearchInstanceCount:
               !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CardsSearchElasticSearchInstanceCount]
             ElasticSearchInstanceType:
@@ -569,13 +570,13 @@ Resources:
     Properties:
       ServiceToken: !GetAtt RoleLookupLambda.Arn
       RoleName: DevLightrailInfrastructureCI-CloudFormationServiceRole
-  CredentialsRoleId:
+  CredentialsRevocationCheckRoleId:
     Type: AWS::CloudFormation::CustomResource
-    Condition: CredentialsRoleNameSet
+    Condition: CredentialsRevocationCheckRoleNameSet
     Version: 1.0
     Properties:
       ServiceToken: !GetAtt RoleLookupLambda.Arn
-      RoleName: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CredentialsRoleName]
+      RoleName: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CredentialsRevocationCheckRoleName]
   ServicesRoleId:
     Type: AWS::CloudFormation::CustomResource
     Condition: ServicesRoleNameSet
