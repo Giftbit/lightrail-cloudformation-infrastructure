@@ -226,7 +226,7 @@ Resources:
           - ""
   LightrailVPC:
     Type: AWS::CloudFormation::Stack
-    Condition: EnvIsDevAndRegionIsUSWest2
+    Condition: RegionIsUSWest2
     Properties:
       TemplateURL: ./modules/vpc.yaml
       Parameters:
@@ -236,7 +236,7 @@ Resources:
         VPCUniqueNumber: 1
   LightrailECSCluster:
     Type: AWS::CloudFormation::Stack
-    Condition: EnvIsDevAndRegionIsUSWest2
+    Condition: RegionIsUSWest2
     Properties:
       TemplateURL: ./modules/ecs-cluster.yaml
       Parameters:
@@ -264,7 +264,7 @@ Resources:
             - !GetAtt LightrailServices.Outputs.EcrRepoArn
   LightrailLoadBalancer:
     Type: AWS::CloudFormation::Stack
-    Condition: EnvIsDevAndRegionIsUSWest2
+    Condition: RegionIsUSWest2
     Properties:
       TemplateURL: ./modules/load-balancer.yaml
       Parameters:
@@ -305,7 +305,7 @@ Resources:
               - !Ref "AWS::NoValue"
   LightrailSecureDownload:
     Type: AWS::CloudFormation::Stack
-    Condition: EnvIsDevAndRegionIsUSWest2
+    Condition: RegionIsUSWest2
     Properties:
       TemplateURL: ./modules/secure-bucket.yaml
       Parameters:
@@ -356,7 +356,7 @@ Resources:
         EnvironmentName: !Ref EnvironmentName
   LightrailServices:
     Type: AWS::CloudFormation::Stack
-    Condition: EnvIsDevAndRegionIsUSWest2
+    Condition: RegionIsUSWest2
     Properties:
       TemplateURL: ./modules/services-service.yaml
       Parameters:
