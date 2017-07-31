@@ -17,13 +17,13 @@ Parameters:
     Description: The lowest number of instances that should be in the ECS cluster
     Default: 1
     MaxValue: 10
-    MinValue: 1
+    MinValue: 0
   ClusterMaxInstances:
     Type: Number
     Description: The highest number of instances that should be in the ECS cluster
     Default: 3
     MaxValue: 10
-    MinValue: 1
+    MinValue: 0
   ClusterInstanceType:
     Type: String
     Description: The type of the nat instance to use
