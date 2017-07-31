@@ -150,6 +150,8 @@ Resources:
 
   # CodeBuild
   NodeSSHImageRepository:
+    # yamllint disable rule:line-length
+    #
     # Unfortunately, this part isn't CId. You will need to push this image up manually. You can find a copy of it in
     # Any of the Dev accounts.
     # You can do this by doing the following, changing [ACCOUNT_ID] for the id of the account you want to add the
@@ -160,6 +162,8 @@ Resources:
     # 3. run: docker tag 757264843183.dkr.ecr.us-west-2.amazonaws.com/lightrail-ci-resources-20170717-node-ssh [ACCOUNT_ID].dkr.ecr.us-west-2.amazonaws.com/lightrail-ci-resources-20170717-node-ssh
     # 4. Swap in your credentials for the account you want to add the build image to
     # 5. run: eval $(aws ecr get-login) && docker push [ACCOUNT_ID].dkr.ecr.us-west-2.amazonaws.com/lightrail-ci-resources-20170717-node-ssh
+    #
+    # # yamllint enable rule:line-length
     Type: AWS::ECR::Repository
     Properties:
       RepositoryName: !Sub "${CommonString}-node-ssh"

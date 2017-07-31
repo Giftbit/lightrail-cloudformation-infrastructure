@@ -36,6 +36,10 @@ Parameters:
       the secure buckets to update policies, etc.
 
 Mappings:
+  SecureConfig:
+    FileNames:
+      JWT: authentication_badge_key.json
+      DataDog: datadog.json
   Dev:
     us-west-2:
       ReactBuildArtifactBucketOverride: ""
@@ -47,6 +51,9 @@ Mappings:
       CredentialsRevocationCheckRoleName: "credentials-env-RestBadgeValidationLambdaRole-1K22JVCC5UH7Q"
       ServicesRoleName: "dev-LightrailServices-1D5YCESAG92B3-Role-1D1RKUNL3XBWH"
       BatchRoleName: "dev-LightrailBatch-15T0OX937Q0EO-Role-1ETHK95KYFQ02"
+      CredentialsDestinationBranch: ""
+      SimpleRollupDestinationBranch: ""
+      SimpleRollupCapacity: low
   Staging:
     us-west-2:
       ReactBuildArtifactBucketOverride: dev-lightrailreact-1xyn4dsi4a-buildartifactbucket-17n7679jwqtyw
@@ -57,6 +64,9 @@ Mappings:
       CredentialsRevocationCheckRoleName: ""
       ServicesRoleName: ""
       BatchRoleName: ""
+      CredentialsDestinationBranch: ""
+      SimpleRollupDestinationBranch: ""
+      SimpleRollupCapacity: low
   Production:
     us-west-2:
       ReactBuildArtifactBucketOverride: dev-lightrailreact-1xyn4dsi4a-buildartifactbucket-17n7679jwqtyw
@@ -67,6 +77,9 @@ Mappings:
       CredentialsRevocationCheckRoleName: ""
       ServicesRoleName: ""
       BatchRoleName: ""
+      CredentialsDestinationBranch: ""
+      SimpleRollupDestinationBranch: ""
+      SimpleRollupCapacity: high
 
 Conditions:
   RegionIsUSWest2: !Equals [!Ref "AWS::Region", us-west-2]
@@ -257,7 +270,7 @@ Resources:
               - !Ref "AWS::NoValue"
   LightrailEventStream:
     Type: AWS::CloudFormation::Stack
-    Condition: EnvIsDevAndRegionIsUSWest2
+    Condition: RegionIsUSWest2
     Properties:
       TemplateURL: ./modules/event-stream.yaml
       Parameters:
@@ -323,7 +336,6 @@ Resources:
   LightrailCredentials:
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2
-    DependsOn: CIResources
     Properties:
       # yamllint disable-line rule:line-length
       TemplateURL: https://raw.githubusercontent.com/Giftbit/credentials/5b24a34/infrastructure/ci.yaml
@@ -333,11 +345,42 @@ Resources:
             "SecureConfigBucket": "${LightrailSecureConfig.Outputs.BucketName}",
             "SecureConfigKMSArn": "${LightrailSecureConfig.Outputs.EncryptionKeyArn}"
           }
+        GitHubBranchDest: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CredentialsDestinationBranch]
         GitHubOAuthToken: !Ref GitHubOAuthToken
         CodeBuildImageNodeSSH: !GetAtt CIResources.Outputs.CodebuildImageNodeSSH
         CiKeysAccessRoleArn: !GetAtt CIResources.Outputs.KeysAccessRoleArn
         CiKeysBucketName: !GetAtt CIResources.Outputs.KeysBucketName
         ProjectName: !Sub "${AWS::StackName}-Credentials"
+  LightrailSimpleRollup:
+    Type: AWS::CloudFormation::Stack
+    Condition: RegionIsUSWest2
+    Properties:
+      # yamllint disable-line rule:line-length
+      TemplateURL: https://raw.githubusercontent.com/Giftbit/giftbit-simple-rollup/86d30a1/infrastructure/ci.yaml
+      Parameters:
+        ProjectParameterOverrides: !Sub
+          - >
+            {
+              "SecureConfigBucket": "${LightrailSecureConfig.Outputs.BucketName}",
+              "SecureConfigKmsArn": "${LightrailSecureConfig.Outputs.EncryptionKeyArn}",
+              "SecureConfigKeyJwt": "${SecureConfigFileNameJwt}",
+              "SecureConfigKeyDataDog": "${SecureConfigFileNameDataDog}",
+              "KinesisStreamArn": "${LightrailEventStream.Outputs.KinesisStreamArn}",
+              "MessageBucket": "${LightrailEventStream.Outputs.DataBucketName}",
+              "MessageBucketKmsArn": "${LightrailEventStream.Outputs.EncryptionKeyArn}",
+              "Capacity": "${Capacity}"
+            }
+          -
+            SecureConfigFileNameJwt: !FindInMap [SecureConfig, FileNames, JWT]
+            SecureConfigFileNameDataDog: !FindInMap [SecureConfig, FileNames, DataDog]
+            Capacity: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", SimpleRollupCapacity]
+        GitHubBranchDest: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", SimpleRollupDestinationBranch]
+        GitHubOAuthToken: !Ref GitHubOAuthToken
+        CodeBuildImageNodeSSH: !GetAtt CIResources.Outputs.CodebuildImageNodeSSH
+        CiKeysAccessRoleArn: !GetAtt CIResources.Outputs.KeysAccessRoleArn
+        CiKeysBucketName: !GetAtt CIResources.Outputs.KeysBucketName
+        ProjectName: !Sub "${AWS::StackName}-SimpleRollup"
+
   UserAssumableRoles:
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2
