@@ -54,6 +54,10 @@ Mappings:
       CredentialsDestinationBranch: ""
       SimpleRollupDestinationBranch: ""
       SimpleRollupCapacity: low
+      CardsSearchDestinationBranch: ""
+      CardsSearchElasticSearchInstanceCount: 2
+      CardsSearchElasticSearchInstanceType: t2.small.elasticsearch
+      CardsSearchElasticSearchMasterInstanceType: none
   Staging:
     us-west-2:
       ReactBuildArtifactBucketOverride: dev-lightrailreact-1xyn4dsi4a-buildartifactbucket-17n7679jwqtyw
@@ -67,6 +71,10 @@ Mappings:
       CredentialsDestinationBranch: ""
       SimpleRollupDestinationBranch: ""
       SimpleRollupCapacity: low
+      CardsSearchDestinationBranch: ""
+      CardsSearchElasticSearchInstanceCount: 2
+      CardsSearchElasticSearchInstanceType: t2.small.elasticsearch
+      CardsSearchElasticSearchMasterInstanceType: none
   Production:
     us-west-2:
       ReactBuildArtifactBucketOverride: dev-lightrailreact-1xyn4dsi4a-buildartifactbucket-17n7679jwqtyw
@@ -80,6 +88,10 @@ Mappings:
       CredentialsDestinationBranch: ""
       SimpleRollupDestinationBranch: ""
       SimpleRollupCapacity: high
+      CardsSearchDestinationBranch: ""
+      CardsSearchElasticSearchInstanceCount: 2
+      CardsSearchElasticSearchInstanceType: t2.small.elasticsearch
+      CardsSearchElasticSearchMasterInstanceType: t2.small.elasticsearch
 
 Conditions:
   RegionIsUSWest2: !Equals [!Ref "AWS::Region", us-west-2]
@@ -337,7 +349,6 @@ Resources:
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2
     Properties:
-      # yamllint disable-line rule:line-length
       TemplateURL: https://raw.githubusercontent.com/Giftbit/credentials/5b24a34/infrastructure/ci.yaml
       Parameters:
         ProjectParameterOverrides: !Sub >
@@ -355,7 +366,6 @@ Resources:
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2
     Properties:
-      # yamllint disable-line rule:line-length
       TemplateURL: https://raw.githubusercontent.com/Giftbit/giftbit-simple-rollup/86d30a1/infrastructure/ci.yaml
       Parameters:
         ProjectParameterOverrides: !Sub
@@ -380,6 +390,41 @@ Resources:
         CiKeysAccessRoleArn: !GetAtt CIResources.Outputs.KeysAccessRoleArn
         CiKeysBucketName: !GetAtt CIResources.Outputs.KeysBucketName
         ProjectName: !Sub "${AWS::StackName}-SimpleRollup"
+  LightrailCardsSearch:
+    Type: AWS::CloudFormation::Stack
+    Condition: RegionIsUSWest2
+    Properties:
+      TemplateURL: https://raw.githubusercontent.com/Giftbit/giftbit-cards-search/2271464/infrastructure/ci.yaml
+      Parameters:
+        ProjectParameterOverrides: !Sub
+          - >
+            {
+              "SecureConfigBucket": "${LightrailSecureConfig.Outputs.BucketName}",
+              "SecureConfigKmsArn": "${LightrailSecureConfig.Outputs.EncryptionKeyArn}",
+              "SecureConfigKeyJwt": "${SecureConfigFileNameJwt}",
+              "SecureConfigKeyDataDog": "${SecureConfigFileNameDataDog}",
+              "KinesisStreamArn": "${LightrailEventStream.Outputs.KinesisStreamArn}",
+              "MessageBucket": "${LightrailEventStream.Outputs.DataBucketName}",
+              "MessageBucketKmsArn": "${LightrailEventStream.Outputs.EncryptionKeyArn}",
+              "ElasticSearchInstanceCount": "${ElasticSearchInstanceCount}",
+              "ElasticSearchInstanceType": "${ElasticSearchInstanceType}",
+              "ElasticSearchMasterInstanceType": "${ElasticSearchMasterInstanceType}"
+            }
+          -
+            SecureConfigFileNameJwt: !FindInMap [SecureConfig, FileNames, JWT]
+            SecureConfigFileNameDataDog: !FindInMap [SecureConfig, FileNames, DataDog]
+            ElasticSearchInstanceCount:
+              !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CardsSearchElasticSearchInstanceCount]
+            ElasticSearchInstanceType:
+              !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CardsSearchElasticSearchInstanceType]
+            ElasticSearchMasterInstanceType:
+              !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CardsSearchElasticSearchMasterInstanceType]
+        GitHubBranchDest: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CardsSearchDestinationBranch]
+        GitHubOAuthToken: !Ref GitHubOAuthToken
+        CodeBuildImageNodeSSH: !GetAtt CIResources.Outputs.CodebuildImageNodeSSH
+        CiKeysAccessRoleArn: !GetAtt CIResources.Outputs.KeysAccessRoleArn
+        CiKeysBucketName: !GetAtt CIResources.Outputs.KeysBucketName
+        ProjectName: !Sub "${AWS::StackName}-CardsSearch"
 
   UserAssumableRoles:
     Type: AWS::CloudFormation::Stack
