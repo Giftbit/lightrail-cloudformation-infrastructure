@@ -45,7 +45,7 @@ Mappings:
       SesDomainArns: ""
       CloudFormationACMCertificateArn:
         arn:aws:acm:us-east-1:757264843183:certificate/5ac83a3b-1f05-4756-bd3a-3a4705846b53
-      CredentialsRevocationCheckRoleName: "credentials-env-RestBadgeValidationLambdaRole-1K22JVCC5UH7Q"
+      CredentialsRevocationCheckRoleName: "dev-Credentials-RestBadgeValidationLambdaRole-PX6EAOSRMU46"
       ServicesRoleName: "dev-LightrailServices-1D5YCESAG92B3-Role-1D1RKUNL3XBWH"
       BatchRoleName: "dev-LightrailBatch-15T0OX937Q0EO-Role-1ETHK95KYFQ02"
       CredentialsDestinationBranch: ""
