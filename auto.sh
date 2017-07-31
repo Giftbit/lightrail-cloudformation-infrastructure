@@ -112,10 +112,18 @@ elif [ "$COMMAND" = "package" ]; then
         echo "Downloading $url locally, and replacing reference with local copy in $file"
 
         local_file="$SCRIPT_DIR/tmp/$(uuidgen)"
-        curl -H "Authorization: token $(cat $HOME/.github/token)" $url -o $local_file
+        curl -f -H "Authorization: token $(cat $HOME/.github/token)" $url -o $local_file
+        if [ $? -ne 0 ]; then
+            echo "Failed to fetch '$url'. Check the url, and ensure your github access token is set in $HOME/.github/token"
+            exit 3
+        fi
 
         sed -i.bak "s,$url,$local_file,g" $file
     done
+    if [ $? -ne 0 ]; then
+        # If we exit the loop with any non zero exit code, then we had a failure inside it, so pass the exit up
+        exit $?
+    fi
 
     [ -d "$SCRIPT_DIR/build" ] || mkdir $SCRIPT_DIR/build
     rm -r $SCRIPT_DIR/build/* > /dev/null 2>&1
@@ -123,9 +131,9 @@ elif [ "$COMMAND" = "package" ]; then
     aws cloudformation package --template-file $SCRIPT_DIR/tmp/lightrail-stack.yaml --s3-bucket $BUILD_ARTIFACT_BUCKET --output-template-file $SCRIPT_DIR/build/lightrail-stack.yaml
     if [ $? -ne 0 ]; then
         echo "Failed in packaging lightrail-stack.yaml"
-        exit 3
+        exit 4
     fi
-    rm -rf $SCRIPT_DIR/tmp > /dev/null 2>&1
+#    rm -rf $SCRIPT_DIR/tmp > /dev/null 2>&1
 else
     echo "usage:"
     echo -e "\t./auto.sh package"

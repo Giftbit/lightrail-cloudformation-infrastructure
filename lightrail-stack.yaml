@@ -29,6 +29,11 @@ Parameters:
     Description: GitHub OAuth Token. Used for CI Stacks to access GitHub Repos
     Default: "****"
     NoEcho: true
+  CloudFormationServiceRoleName:
+    Type: String
+    Description: >
+      The name of the role that performs the CloudFormationServices, so that we can grant it access to
+      the secure buckets to update policies, etc.
 
 Mappings:
   Dev:
@@ -39,6 +44,9 @@ Mappings:
       SesDomainArns: ""
       CloudFormationACMCertificateArn:
         arn:aws:acm:us-east-1:757264843183:certificate/5ac83a3b-1f05-4756-bd3a-3a4705846b53
+      CredentialsRevocationCheckRoleName: "credentials-env-RestBadgeValidationLambdaRole-1K22JVCC5UH7Q"
+      ServicesRoleName: "dev-LightrailServices-1D5YCESAG92B3-Role-1D1RKUNL3XBWH"
+      BatchRoleName: "dev-LightrailBatch-15T0OX937Q0EO-Role-1ETHK95KYFQ02"
   Staging:
     us-west-2:
       ReactBuildArtifactBucketOverride: dev-lightrailreact-1xyn4dsi4a-buildartifactbucket-17n7679jwqtyw
@@ -46,6 +54,9 @@ Mappings:
       ApiAliases: ""
       SesDomainArns: ""
       CloudFormationACMCertificateArn: ""
+      CredentialsRevocationCheckRoleName: ""
+      ServicesRoleName: ""
+      BatchRoleName: ""
   Production:
     us-west-2:
       ReactBuildArtifactBucketOverride: dev-lightrailreact-1xyn4dsi4a-buildartifactbucket-17n7679jwqtyw
@@ -53,6 +64,9 @@ Mappings:
       ApiAliases: ""
       SesDomainArns: ""
       CloudFormationACMCertificateArn: ""
+      CredentialsRevocationCheckRoleName: ""
+      ServicesRoleName: ""
+      BatchRoleName: ""
 
 Conditions:
   RegionIsUSWest2: !Equals [!Ref "AWS::Region", us-west-2]
@@ -63,6 +77,11 @@ Conditions:
   ProductionAccountIdProvided: !Not [!Equals [!Ref ProductionAccountId, ""]]
   StagingAccountIdProvided: !Not [!Equals [!Ref StagingAccountId, ""]]
   DevAccountIdProvided: !Not [!Equals [!Ref DevAccountId, ""]]
+  # yamllint disable-line rule:line-length
+  CredentialsRevocationCheckRoleNameSet:
+    !Not [!Equals [!FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CredentialsRevocationCheckRoleName], ""]]
+  ServicesRoleNameSet: !Not [!Equals [!FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", ServicesRoleName], ""]]
+  BatchRoleNameSet: !Not [!Equals [!FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", BatchRoleName], ""]]
 Resources:
   Groups:
     Type: AWS::CloudFormation::Stack
@@ -184,6 +203,29 @@ Resources:
       TemplateURL: ./modules/secure-bucket.yaml
       Parameters:
         EnvironmentName: !Ref EnvironmentName
+        UserIdsToGrantReadAccess: !Join
+          - ","
+          -
+            - !If
+              - CredentialsRevocationCheckRoleNameSet
+              - !Sub "${CredentialsRevocationCheckRoleId}:*"
+              - !Ref "AWS::NoValue"
+            - !If
+              - ServicesRoleNameSet
+              - !Sub "${ServicesRoleId}:*"
+              - !Ref "AWS::NoValue"
+            - !If
+              - BatchRoleNameSet
+              - !Sub "${BatchRoleId}:*"
+              - !Ref "AWS::NoValue"
+        UserIdsToGrantPolicyAdminAccess: !Join
+          - ","
+          -
+            - !Sub "${CloudFormationServiceRoleId}:*"
+            - !If
+              - EnvIsDev
+              - !Sub "${DevCloudFormationServiceRoleId}:*"
+              - !Ref "AWS::NoValue"
   LightrailSecureDownload:
     Type: AWS::CloudFormation::Stack
     Condition: EnvIsDevAndRegionIsUSWest2
@@ -191,6 +233,28 @@ Resources:
       TemplateURL: ./modules/secure-bucket.yaml
       Parameters:
         EnvironmentName: !Ref EnvironmentName
+        UserIdsToGrantReadAccess: !Join
+          - ","
+          -
+            - !If
+              - ServicesRoleNameSet
+              - !Sub "${ServicesRoleId}:*"
+              - !Ref "AWS::NoValue"
+        UserIdsToGrantReadWriteAccess: !Join
+          - ","
+          -
+            - !If
+              - BatchRoleNameSet
+              - !Sub "${BatchRoleId}:*"
+              - !Ref "AWS::NoValue"
+        UserIdsToGrantPolicyAdminAccess: !Join
+          - ","
+          -
+            - !Sub "${CloudFormationServiceRoleId}:*"
+            - !If
+              - EnvIsDev
+              - !Sub "${DevCloudFormationServiceRoleId}:*"
+              - !Ref "AWS::NoValue"
   LightrailEventStream:
     Type: AWS::CloudFormation::Stack
     Condition: EnvIsDevAndRegionIsUSWest2
@@ -301,6 +365,77 @@ Resources:
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: ./modules/ssm.yaml
+
+  RoleLookupRole:
+    Type: AWS::IAM::Role
+    Properties:
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - sts:AssumeRole
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+      Policies:
+        -
+          PolicyName: RoleAccess
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              -
+                Effect: Allow
+                Action:
+                  - iam:GetRole
+                Resource: "*"
+  RoleLookupLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      Description: >
+        Backs a CloudFormation Custom Resource for looking up Role Unique IDs (useful in locking down buckets)
+      Role: !GetAtt RoleLookupRole.Arn
+      Handler: index.handler
+      Runtime: nodejs6.10
+      Timeout: 15
+      Code: ../res/role-id-lookup.zip
+  CloudFormationServiceRoleId:
+    Type: AWS::CloudFormation::CustomResource
+    Version: 1.0
+    Properties:
+      ServiceToken: !GetAtt RoleLookupLambda.Arn
+      RoleName: !Ref CloudFormationServiceRoleName
+  DevCloudFormationServiceRoleId:
+    Type: AWS::CloudFormation::CustomResource
+    Condition: EnvIsDev
+    Version: 1.0
+    Properties:
+      ServiceToken: !GetAtt RoleLookupLambda.Arn
+      RoleName: DevLightrailInfrastructureCI-CloudFormationServiceRole
+  CredentialsRevocationCheckRoleId:
+    Type: AWS::CloudFormation::CustomResource
+    Condition: CredentialsRevocationCheckRoleNameSet
+    Version: 1.0
+    Properties:
+      ServiceToken: !GetAtt RoleLookupLambda.Arn
+      RoleName: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CredentialsRevocationCheckRoleName]
+  ServicesRoleId:
+    Type: AWS::CloudFormation::CustomResource
+    Condition: ServicesRoleNameSet
+    Version: 1.0
+    Properties:
+      ServiceToken: !GetAtt RoleLookupLambda.Arn
+      RoleName: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", ServicesRoleName]
+  BatchRoleId:
+    Type: AWS::CloudFormation::CustomResource
+    Condition: BatchRoleNameSet
+    Version: 1.0
+    Properties:
+      ServiceToken: !GetAtt RoleLookupLambda.Arn
+      RoleName: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", BatchRoleName]
+
 
 Outputs:
   WebsiteBucket:
