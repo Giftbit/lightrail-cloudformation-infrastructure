@@ -33,8 +33,7 @@ Resources:
       ManagedPolicyArns:
         - !If
           - EnvironmentIsDevelopment
-          -
-            - arn:aws:iam::aws:policy/PowerUserAccess
+          - arn:aws:iam::aws:policy/PowerUserAccess
           - !Ref "AWS::NoValue"
         - arn:aws:iam::aws:policy/AWSCloudFormationReadOnlyAccess
         - arn:aws:iam::aws:policy/CloudWatchLogsReadOnlyAccess
