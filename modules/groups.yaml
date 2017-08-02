@@ -10,6 +10,13 @@ Parameters:
       - Staging
       - Production
 
+Mappings:
+  EnvNames:
+    Lowercase:
+      Dev: dev
+      Staging: staging
+      Production: production
+
 Conditions:
   EnvironmentIsDevelopment: !Equals [!Ref EnvironmentName, Dev]
 
@@ -23,11 +30,17 @@ Resources:
   DevelopersGroup:
     Type: AWS::IAM::Group
     Properties:
-      ManagedPolicyArns: !If
-        - EnvironmentIsDevelopment
-        -
-          - arn:aws:iam::aws:policy/PowerUserAccess
-        - !Ref AWS::NoValue
+      ManagedPolicyArns:
+        - !If
+          - EnvironmentIsDevelopment
+          -
+            - arn:aws:iam::aws:policy/PowerUserAccess
+          - !Ref "AWS::NoValue"
+        - arn:aws:iam::aws:policy/AWSCloudFormationReadOnlyAccess
+        - arn:aws:iam::aws:policy/CloudWatchLogsReadOnlyAccess
+        - arn:aws:iam::aws:policy/CloudWatchReadOnlyAccess
+        - arn:aws:iam::aws:policy/AWSLambdaReadOnlyAccess
+
       Policies:
         - !If
           - EnvironmentIsDevelopment
@@ -75,6 +88,46 @@ Resources:
             Action:
               - cloudformation:ListExports
               - cloudformation:DescribeStacks
+            Resource: "*"
+          -
+            Effect: Allow
+            Action:
+              - cloudformation:DescribeStackResource
+            Resource:
+              - !Sub
+                - "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${EnvLowercase}/*"
+                -
+                  EnvLowercase: !FindInMap [EnvNames, Lowercase, !Ref EnvironmentName]
+
+  EC2ContainerServiceReadOnly:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: EC2ContainerServiceReadOnly
+      Groups:
+        - !Ref DevelopersGroup
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - ecs:Describe*
+              - ecs:List*
+            Resource: "*"
+
+  ApiGatewayReadOnly:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: ApiGatewayReadOnly
+      Groups:
+        - !Ref DevelopersGroup
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - apigateway:GET
             Resource: "*"
 
   BryanD:
