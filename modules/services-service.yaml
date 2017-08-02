@@ -306,6 +306,7 @@ Resources:
               - cloudformation:UpdateStack
               - cloudformation:DescribeStackEvents
               - cloudformation:DeleteStack
+              - cloudformation:DescribeChangeSet
             Resource:
               - !Sub
                 - "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${EnvNameLowercase}-Services/*"
