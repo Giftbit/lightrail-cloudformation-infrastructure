@@ -393,6 +393,7 @@ Resources:
               - !Ref DevAccountId
               - !Ref AWS::NoValue
         GroupsToGrantEcrReadAccess: !GetAtt Groups.Outputs.DevelopersGroupName
+        GroupsToGrantDeployAccess: !GetAtt Groups.Outputs.DevelopersGroupName
         RdsInstanceClass: db.t2.small
         RdsInstanceAllocation: 100
         RdsMultiAZ: false

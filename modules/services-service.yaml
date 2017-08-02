@@ -43,7 +43,11 @@ Parameters:
   GroupsToGrantEcrReadAccess:
     Type: String
     Description: The name of the groups to grant Services ECR read access
-    AllowedPattern: "([a-zA-Z0-9+=.@_-]+(,[a-zA-Z0-9+=.@_-]+)*)?"
+    AllowedPattern: ((^|,)[a-zA-Z0-9+=.@_-]+)+"
+  GroupsToGrantDeployAccess:
+    Type: String
+    Description: A Comma Separated List of Groups to grant ability to deploy this service
+    AllowedPattern: ((^|,)[a-zA-Z0-9+=.@_-]+)*
   RdsInstanceClass:
     Type: String
     Description: The Instance Type to use for the RDS Instance
@@ -94,10 +98,18 @@ Mappings:
       EcrRepoOverride: "757264843183.dkr.ecr.us-west-2.amazonaws.com/dev-l-ecrre-1flkl8cn2yhjp"
       EcrRepoArnOverride: "arn:aws:ecr:us-west-2:757264843183:repository/dev-l-ecrre-1flkl8cn2yhjp"
 
+  EnvNames:
+    Lowercase:
+      Dev: dev
+      Staging: staging
+      Production: production
+
 Conditions:
   ShouldConfigureSes: !Not [!Equals [!Ref SesDomainArns, ""]]
   ShouldCreateECRRepository: !Equals [!Ref EnvironmentName, Dev]
-  ShouldConfigureECRAccess: !Not [!Equals [!Ref AccountsToGrantEcrReadAccess, ""]]
+  ShouldConfigureAccountECRAccess: !Not [!Equals [!Ref AccountsToGrantEcrReadAccess, ""]]
+  ShouldConfigureGroupEcrReadAccess: !Not [!Equals [!Ref GroupsToGrantEcrReadAccess, ""]]
+  ShouldConfigureDeployAccess: !Not [!Equals [!Ref GroupsToGrantDeployAccess, ""]]
   ShouldCreateDatabaseFromSnapshot: !Not [!Equals [!Ref RdsSnapshotId, ""]]
   ShouldCreateEmptyDatabase: !Equals [!Ref RdsSnapshotId, ""]
 
@@ -107,7 +119,7 @@ Resources:
     Condition: ShouldCreateECRRepository
     Properties:
       RepositoryPolicyText: !If
-        - ShouldConfigureECRAccess
+        - ShouldConfigureAccountECRAccess
         -
           Version: 2012-10-17
           Statement:
@@ -125,6 +137,7 @@ Resources:
         - !Ref AWS::NoValue
   EcrRepoAccessPolicy:
     Type: AWS::IAM::Policy
+    Condition: ShouldConfigureGroupEcrReadAccess
     Properties:
       Groups: !Split [",", !Ref GroupsToGrantEcrReadAccess]
       PolicyName: ServicesECRReadAccess
@@ -277,6 +290,27 @@ Resources:
       ResourceRecords:
         - !GetAtt RdsInstance.Endpoint.Address
 
+  DeploymentPolicy:
+    Type: AWS::IAM::Policy
+    Condition: ShouldConfigureDeployAccess
+    Properties:
+      Groups: !Split
+      PolicyName: ServicesDeployAccess
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - cloudformation:CreateChangeSet
+              - cloudformation:ExecuteChangeSet
+              - cloudformation:UpdateStack
+              - cloudformation:DescribeStackEvents
+            Resource:
+              - !Sub
+                - "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${EnvNameLowercase}-Services/*"
+                -
+                  EnvNameLowercase: !FindInMap [EnvNames, Lowercase, !Ref EnvironmentName]
 Outputs:
   EcrRepo:
     Description: The Codebuild accessible docker image reference
