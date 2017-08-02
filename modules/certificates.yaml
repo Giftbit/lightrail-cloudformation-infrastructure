@@ -22,12 +22,45 @@ Mappings:
       Primary: lightrail.com
       Additional: www.lightrail.com,api.lightrail.com
 
+Conditions:
+  EnvIsDev: !Equals [!Ref EnvironmentName, Dev]
+  EnvIsStaging: !Equals [!Ref EnvironmentName, Staging]
+  EnvIsProduction: !Equals [!Ref EnvironmentName, Production]
+
 Resources:
   Certificate:
     Type: AWS::CertificateManager::Certificate
     Properties:
       DomainName: !FindInMap [CertificateDomains, !Ref EnvironmentName, Primary]
       SubjectAlternativeNames: !Split [",", !FindInMap [CertificateDomains, !Ref EnvironmentName, Additional]]
+      DomainValidationOptions: !If
+        - EnvIsDev
+        -
+          -
+            DomainName: dev.lightrail.com
+            ValidationDomain: lightrail.com
+          -
+            DomainName: devapi.lightrail.com
+            ValidationDomain: lightrail.com
+        - !If
+          - EnvIsStaging
+          -
+            -
+              DomainName: staging.lightrail.com
+              ValidationDomain: lightrail.com
+            -
+              DomainName: stagingapi.lightrail.com
+              ValidationDomain: lightrail.com
+          - !If
+            - EnvIsProduction
+            -
+              -
+                DomainName: www.lightrail.com
+                ValidationDomain: lightrail.com
+              -
+                DomainName: api.lightrail.com
+                ValidationDomain: lightrail.com
+            - !Ref "AWS::NoValue"
 
 Outputs:
   CertificateArn:

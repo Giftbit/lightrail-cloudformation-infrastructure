@@ -36,19 +36,16 @@ Parameters:
       the secure buckets to update policies, etc.
 
 Mappings:
-  SecureConfig:
-    FileNames:
-      JWT: authentication_badge_key.json
-      DataDog: datadog.json
   Dev:
     us-west-2:
+      CombinedEnvRegion: Dev-us-west-2
       ReactBuildArtifactBucketOverride: ""
       AppAliases: ""
       ApiAliases: ""
       SesDomainArns: ""
       CloudFormationACMCertificateArn:
         arn:aws:acm:us-east-1:757264843183:certificate/5ac83a3b-1f05-4756-bd3a-3a4705846b53
-      CredentialsRevocationCheckRoleName: "credentials-env-RestBadgeValidationLambdaRole-1K22JVCC5UH7Q"
+      CredentialsRevocationCheckRoleName: "dev-Credentials-RestBadgeValidationLambdaRole-PX6EAOSRMU46"
       ServicesRoleName: "dev-LightrailServices-1D5YCESAG92B3-Role-1D1RKUNL3XBWH"
       BatchRoleName: "dev-LightrailBatch-15T0OX937Q0EO-Role-1ETHK95KYFQ02"
       CredentialsDestinationBranch: ""
@@ -60,6 +57,7 @@ Mappings:
       CardsSearchElasticSearchMasterInstanceType: none
   Staging:
     us-west-2:
+      CombinedEnvRegion: Staging-us-west-2
       ReactBuildArtifactBucketOverride: dev-lightrailreact-1xyn4dsi4a-buildartifactbucket-17n7679jwqtyw
       AppAliases: ""
       ApiAliases: ""
@@ -77,6 +75,7 @@ Mappings:
       CardsSearchElasticSearchMasterInstanceType: none
   Production:
     us-west-2:
+      CombinedEnvRegion: Production-us-west-2
       ReactBuildArtifactBucketOverride: dev-lightrailreact-1xyn4dsi4a-buildartifactbucket-17n7679jwqtyw
       AppAliases: ""
       ApiAliases: ""
@@ -92,6 +91,39 @@ Mappings:
       CardsSearchElasticSearchInstanceCount: 2
       CardsSearchElasticSearchInstanceType: t2.small.elasticsearch
       CardsSearchElasticSearchMasterInstanceType: t2.small.elasticsearch
+  SecureConfig:
+    FileNames:
+      JWT: authentication_badge_key.json
+      DataDog: datadog.json
+  EcsCluster:
+    Dev-us-west-2:
+      InstanceType: t2.small
+      MinInstances: 1
+      MaxInstances: 3
+      SSHKeyName: LightrailDevECS
+      ScaleUpRecurrence: "0 15 * * MON-FRI"
+      ScaleDownRecurrence: "0 3 * * TUE-SAT"
+    Staging-us-west-2:
+      InstanceType: t2.nano
+      MinInstances: 1
+      MaxInstances: 1
+      SSHKeyName: LightrailStagingECS
+      ScaleUpRecurrence: "0 15 * * MON-FRI"
+      ScaleDownRecurrence: "0 3 * * TUE-SAT"
+    Production-us-west-2:
+      InstanceType: t2.nano
+      MinInstances: 1
+      MaxInstances: 1
+      SSHKeyName: LightrailProductionECS
+      ScaleUpRecurrence: ""
+      ScaleDownRecurrence: ""
+  Services:
+    Dev-us-west-2:
+      RdsSnapshotId: "test-account-20170727"
+    Staging-us-west-2:
+      RdsSnapshotId: ""
+    Production-us-west-2:
+      RdsSnapshotId: ""
 
 Conditions:
   RegionIsUSWest2: !Equals [!Ref "AWS::Region", us-west-2]
@@ -122,7 +154,6 @@ Resources:
       TemplateURL: ./modules/alert-sns.yaml
   LightrailCertificates:
     Type: AWS::CloudFormation::Stack
-    Condition: RegionIsUSEast1
     Properties:
       TemplateURL: ./modules/certificates.yaml
       Parameters:
@@ -195,7 +226,7 @@ Resources:
           - ""
   LightrailVPC:
     Type: AWS::CloudFormation::Stack
-    Condition: EnvIsDevAndRegionIsUSWest2
+    Condition: RegionIsUSWest2
     Properties:
       TemplateURL: ./modules/vpc.yaml
       Parameters:
@@ -205,22 +236,53 @@ Resources:
         VPCUniqueNumber: 1
   LightrailECSCluster:
     Type: AWS::CloudFormation::Stack
-    Condition: EnvIsDevAndRegionIsUSWest2
+    Condition: RegionIsUSWest2
     Properties:
       TemplateURL: ./modules/ecs-cluster.yaml
       Parameters:
         EnvironmentName: !Ref EnvironmentName
-        ClusterName: lightrail-dev
-        ClusterMinInstances: 1
-        ClusterMaxInstances: 3
-        ClusterInstanceType: t2.nano
-        ClusterSSHKeyName: LightrailDevECS
+        ClusterName: !Sub "Lightrail-${AWS::StackName}"
+        ClusterInstanceType: !FindInMap
+          - EcsCluster
+          - !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion]
+          - InstanceType
+        ClusterMinInstances: !FindInMap
+          - EcsCluster
+          - !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion]
+          - MinInstances
+        ClusterMaxInstances: !FindInMap
+          - EcsCluster
+          - !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion]
+          - MaxInstances
+        ClusterSSHKeyName:
+          !FindInMap [EcsCluster, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], SSHKeyName]
+        ClusterScaleUpRecurrence: !FindInMap
+          - EcsCluster
+          - !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion]
+          - ScaleUpRecurrence
+        ClusterScaleDownRecurrence: !FindInMap
+          - EcsCluster
+          - !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion]
+          - ScaleDownRecurrence
         ClusterSecurityGroupIDs: !GetAtt LightrailVPC.Outputs.EcsClusterInstanceSecurityGroupId
-        ClusterScaleUpRecurrence: "0 15 * * MON-FRI"
-        ClusterScaleDownRecurrence: "0 3 * * TUE-SAT"
         VpcId: !GetAtt LightrailVPC.Outputs.VpcId
         VpcPublicSubnetIds: !GetAtt LightrailVPC.Outputs.PrivateSubnetIds
         Ec2SsmPolicyArn: !GetAtt SSM.Outputs.EC2PolicyArn
+        EcrReposToGrantClusterAccess: !Join
+          - ","
+          -
+            - !GetAtt LightrailServices.Outputs.EcrRepoArn
+  LightrailLoadBalancer:
+    Type: AWS::CloudFormation::Stack
+    Condition: RegionIsUSWest2
+    Properties:
+      TemplateURL: ./modules/load-balancer.yaml
+      Parameters:
+        EnvironmentName: !Ref EnvironmentName
+        VpcId: !GetAtt LightrailVPC.Outputs.VpcId
+        SecurityGroups: !GetAtt LightrailVPC.Outputs.AlbSecurityGroupId
+        SubnetIds: !GetAtt LightrailVPC.Outputs.PublicSubnetIds
+        CertificateArn: !GetAtt LightrailCertificates.Outputs.CertificateArn
   LightrailSecureConfig:
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2
@@ -253,7 +315,7 @@ Resources:
               - !Ref "AWS::NoValue"
   LightrailSecureDownload:
     Type: AWS::CloudFormation::Stack
-    Condition: EnvIsDevAndRegionIsUSWest2
+    Condition: RegionIsUSWest2
     Properties:
       TemplateURL: ./modules/secure-bucket.yaml
       Parameters:
@@ -304,7 +366,7 @@ Resources:
         EnvironmentName: !Ref EnvironmentName
   LightrailServices:
     Type: AWS::CloudFormation::Stack
-    Condition: EnvIsDevAndRegionIsUSWest2
+    Condition: RegionIsUSWest2
     Properties:
       TemplateURL: ./modules/services-service.yaml
       Parameters:
@@ -315,11 +377,27 @@ Resources:
         SecureDownloadBucketKeyArn: !GetAtt LightrailSecureDownload.Outputs.EncryptionKeyArn
         SesDomainArns: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", SesDomainArns]
         KinesisStreamArn: !GetAtt LightrailEventStream.Outputs.KinesisStreamArn
-        RemoteECRRepositoryArn: ""
+        AccountsToGrantEcrReadAccess: !Join
+          - ","
+          -
+            - !If
+              - ProductionAccountIdProvided
+              - !Ref ProductionAccountId
+              - !Ref AWS::NoValue
+            - !If
+              - StagingAccountIdProvided
+              - !Ref StagingAccountId
+              - !Ref AWS::NoValue
+            - !If
+              - DevAccountIdProvided
+              - !Ref DevAccountId
+              - !Ref AWS::NoValue
+        GroupsToGrantEcrReadAccess: !GetAtt Groups.Outputs.DevelopersGroupName
         RdsInstanceClass: db.t2.small
         RdsInstanceAllocation: 100
-        RdsMultiAZ: true
-        RdsSnapshotId: ""
+        RdsMultiAZ: false
+        RdsSnapshotId:
+          !FindInMap [Services, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RdsSnapshotId]
         VpcRdsSubnetIds: !GetAtt LightrailVPC.Outputs.RdsSubnetIds
         VpcHostedZoneId: !GetAtt LightrailVPC.Outputs.VpcHostedZoneId
         VpcRdsSecurityGroupIds: !GetAtt LightrailVPC.Outputs.RdsSecurityGroupId

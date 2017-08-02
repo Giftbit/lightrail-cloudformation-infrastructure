@@ -17,13 +17,13 @@ Parameters:
     Description: The lowest number of instances that should be in the ECS cluster
     Default: 1
     MaxValue: 10
-    MinValue: 1
+    MinValue: 0
   ClusterMaxInstances:
     Type: Number
     Description: The highest number of instances that should be in the ECS cluster
     Default: 3
     MaxValue: 10
-    MinValue: 1
+    MinValue: 0
   ClusterInstanceType:
     Type: String
     Description: The type of the nat instance to use
@@ -69,10 +69,22 @@ Parameters:
   Ec2SsmPolicyArn:
     Type: String
     Description: The ARN of the Managed Policy to use for granting SSM Access for EC2 instances
+  EcrReposToGrantClusterAccess:
+    Type: String
+    Description: The ECR Repositories to grant access to run on the cluster
+    Default: ""
+    AllowedPattern: ((^|,)arn:aws:ecr:[a-z0-9-]+:\d{12}:repository/[a-z0-9/_-]+)*
+  EcsInstanceReservedMemoryAmount:
+    Type: Number
+    Description: >
+      The amount of memory that should be reserved on an ECS Instance for the operating system, and to prevent
+      a memory overrun.
+    Default: 256
 
 Conditions:
   ShouldScheduleClusterScaleUp: !Not [!Equals [!Ref ClusterScaleUpRecurrence, ""]]
   ShouldScheduleClusterScaleDown: !Not [!Equals [!Ref ClusterScaleDownRecurrence, ""]]
+  ShouldConfigureECRAccess: !Not [!Equals [!Ref EcrReposToGrantClusterAccess, ""]]
 
 Mappings:
   # aws --region [region-name] ec2 describe-images --owners amazon --filters "Name=root-device-type,Values=ebs" \
@@ -124,6 +136,19 @@ Resources:
           Key: NormalMaxSize
           Value: !Ref ClusterMaxInstances
           PropagateAtLaunch: false
+    CreationPolicy:
+      ResourceSignal:
+        Count: 1
+        Timeout: PT10M
+    UpdatePolicy:
+      AutoScalingRollingUpdate:
+        MaxBatchSize: 1
+        MinInstancesInService: !Ref ClusterMinInstances
+        PauseTime: PT10M
+        SuspendProcesses:
+          - AlarmNotification
+          - ScheduledActions
+        WaitOnResourceSignals: true
   ClusterScaleUpSchedule:
     Type: AWS::AutoScaling::ScheduledAction
     Condition: ShouldScheduleClusterScaleUp
@@ -151,23 +176,31 @@ Resources:
       IamInstanceProfile: !Ref ClusterInstanceProfile
       KeyName: !Ref ClusterSSHKeyName
       SecurityGroups: !Split [",", !Ref ClusterSecurityGroupIDs]
-      UserData: !Base64 |
-        #!/bin/bash
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
 
-        # Update the packages on the machine (to prevent vulnerabilities)
-        yum update -y
+          # Update the packages on the machine (to prevent vulnerabilities)
+          yum update -y
 
-        # Block containers from accessing instance metadata
-        # iptables --insert FORWARD 1 --in-interface docker+ --destination 169.254.169.254/32 --jump DROP
+          # Block containers from accessing instance metadata
+          # iptables --insert FORWARD 1 --in-interface docker+ --destination 169.254.169.254/32 --jump DROP
 
-        # Configure the cluster we want to register into
-        echo ECS_CLUSTER=${aws_ecs_cluster.currency.name} >> /etc/ecs/ecs.config
-        echo ECS_RESERVED_MEMORY=${var.reserved_memory_amount} >> /etc/ecs/ecs.config
+          # Configure the cluster we want to register into
+          echo ECS_CLUSTER=${Cluster} >> /etc/ecs/ecs.config
+          echo ECS_RESERVED_MEMORY=${EcsInstanceReservedMemoryAmount} >> /etc/ecs/ecs.config
 
-        # Install the Amazon EC2 Systems Manager
-        cd /tmp
-        sudo yum install -y \
-          https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm
+          # Install the Amazon EC2 Systems Manager
+          cd /tmp
+          sudo yum install -y \
+            https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm
+
+          # Let the autoscaling group know this instance is live
+          yum install -y aws-cfn-bootstrap
+          /opt/aws/bin/cfn-signal -e 0 \
+            --region ${AWS::Region} \
+            --stack ${AWS::StackName} \
+            --resource ClusterAutoScalingGroup
   ClusterRole:
     Type: AWS::IAM::Role
     Properties:
@@ -194,25 +227,28 @@ Resources:
                   - ecs:Poll
                   - ecs:StartTelemetrySession
                   - ecr:GetAuthorizationToken
+                  - logs:CreateLogGroup
                   - logs:CreateLogStream
                   - logs:PutLogEvents
                   - ecs:DeregisterContainerInstance
                   - ecs:RegisterContainerInstance
                   - ecs:Submit*
                 Resource: "*"
-        -
-          PolicyName: ECRAccess
-          PolicyDocument:
-            Version: 2012-10-17
-            Statement:
-              -
-                Effect: Allow
-                Action:
-                  - es:DescribeElasticSearchdomain
-                  - es:DescribeElasticSearchdomains
-                  - es:ListDomainNames
-                  - es:ListTags
-                Resource: "*"
+        - !If
+          - ShouldConfigureECRAccess
+          -
+            PolicyName: ECRAccess
+            PolicyDocument:
+              Version: 2012-10-17
+              Statement:
+                -
+                  Effect: Allow
+                  Action:
+                    - ecr:BatchCheckLayerAvailability
+                    - ecr:GetDownloadUrlForLayer
+                    - ecr:BatchGetImage
+                  Resource: !Split [",", !Ref EcrReposToGrantClusterAccess]
+          - !Ref "AWS::NoValue"
       ManagedPolicyArns:
         - !Ref Ec2SsmPolicyArn
   ClusterLogCentralizationAccess:
@@ -254,3 +290,8 @@ Resources:
       Path: /
       Roles:
         - !Ref ClusterRole
+
+Outputs:
+  ClusterName:
+    Description: The Name of the ECS Cluster
+    Value: !Ref Cluster
