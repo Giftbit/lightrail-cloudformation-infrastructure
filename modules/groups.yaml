@@ -39,6 +39,8 @@ Resources:
         - arn:aws:iam::aws:policy/CloudWatchLogsReadOnlyAccess
         - arn:aws:iam::aws:policy/CloudWatchReadOnlyAccess
         - arn:aws:iam::aws:policy/AWSLambdaReadOnlyAccess
+        - arn:aws:iam::aws:policy/AWSCodeBuildReadOnlyAccess
+        - arn:aws:iam::aws:policy/AWSCodePipelineApproverAccess
       Policies:
         - !If
           - EnvironmentIsDevelopment
@@ -126,6 +128,23 @@ Resources:
             Effect: Allow
             Action:
               - apigateway:GET
+            Resource: "*"
+
+  CodePipelineDeployRestartAccess:
+    Type: AWS::IAM::Policy
+    Properties:
+      Groups:
+        - !Ref DevelopersGroup
+      PolicyName: CodePipelineDeployRestartAccess
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - codepipeline:RetryStageExecution
+              - codepipeline:StartPipelineExecution
+              - codepipeline:ListPipelineExecutions
             Resource: "*"
 
   BryanD:
