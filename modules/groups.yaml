@@ -39,7 +39,6 @@ Resources:
         - arn:aws:iam::aws:policy/CloudWatchLogsReadOnlyAccess
         - arn:aws:iam::aws:policy/CloudWatchReadOnlyAccess
         - arn:aws:iam::aws:policy/AWSLambdaReadOnlyAccess
-
       Policies:
         - !If
           - EnvironmentIsDevelopment
