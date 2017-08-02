@@ -294,7 +294,7 @@ Resources:
     Type: AWS::IAM::Policy
     Condition: ShouldConfigureDeployAccess
     Properties:
-      Groups: !Split
+      Groups: !Split [",", !Ref GroupsToGrantDeployAccess]
       PolicyName: ServicesDeployAccess
       PolicyDocument:
         Version: 2012-10-17
