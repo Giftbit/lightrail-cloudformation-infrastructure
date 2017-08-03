@@ -147,6 +147,14 @@ Resources:
               - codepipeline:ListPipelineExecutions
             Resource: "*"
 
+  # This is just temporary, and should be removed once we transition to the new fname.initial users
+  AddJamiesToDevelopers:
+    Type: AWS::IAM::UserToGroupAddition
+    Properties:
+      GroupName: !Ref DevelopersGroup
+      Users:
+        - jamies
+
   BryanD:
     Type: AWS::IAM::User
     Properties:

@@ -392,7 +392,6 @@ Resources:
               - DevAccountIdProvided
               - !Ref DevAccountId
               - !Ref AWS::NoValue
-        GroupsToGrantEcrReadAccess: !GetAtt Groups.Outputs.DevelopersGroupName
         GroupsToGrantDeployAccess: !GetAtt Groups.Outputs.DevelopersGroupName
         RdsInstanceClass: db.t2.small
         RdsInstanceAllocation: 100
@@ -402,6 +401,7 @@ Resources:
         VpcRdsSubnetIds: !GetAtt LightrailVPC.Outputs.RdsSubnetIds
         VpcHostedZoneId: !GetAtt LightrailVPC.Outputs.VpcHostedZoneId
         VpcRdsSecurityGroupIds: !GetAtt LightrailVPC.Outputs.RdsSecurityGroupId
+        LoadBalancingServiceRoleArn: !GetAtt LightrailLoadBalancer.Outputs.EcsLoadBalancingServiceRoleArn
       Tags:
         -
           Key: Service
