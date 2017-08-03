@@ -104,14 +104,14 @@ Mappings:
       ScaleUpRecurrence: "0 15 * * MON-FRI"
       ScaleDownRecurrence: "0 3 * * TUE-SAT"
     Staging-us-west-2:
-      InstanceType: t2.nano
+      InstanceType: t2.small
       MinInstances: 1
       MaxInstances: 1
       SSHKeyName: LightrailStagingECS
       ScaleUpRecurrence: "0 15 * * MON-FRI"
       ScaleDownRecurrence: "0 3 * * TUE-SAT"
     Production-us-west-2:
-      InstanceType: t2.nano
+      InstanceType: t2.small
       MinInstances: 1
       MaxInstances: 1
       SSHKeyName: LightrailProductionECS
