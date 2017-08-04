@@ -123,10 +123,6 @@ Resources:
           Value: ECS
           PropagateAtLaunch: true
         -
-          Key: DataDogEnabled
-          Value: true
-          PropagateAtLaunch: true
-        -
           Key: CentralizeLogs
           Value: true
           PropagateAtLaunch: true

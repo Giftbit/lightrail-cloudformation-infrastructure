@@ -272,6 +272,7 @@ Resources:
           - ","
           -
             - !GetAtt LightrailServices.Outputs.EcrRepoArn
+            - !GetAtt LightrailLogstash.Outputs.EcrRepoArn
   LightrailLoadBalancer:
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2
@@ -357,6 +358,14 @@ Resources:
       Parameters:
         EnvironmentName: !Ref EnvironmentName
         NonEmergencyAlertsSnsArn: !GetAtt LightrailAlertChannels.Outputs.NonEmergencySNSArn
+        GroupsToGrantDeployAccess: !GetAtt Groups.Outputs.DevelopersGroupName
+        AccountsToGrantKibanaFullAccess: !If
+          - EnvIsDev
+          - !If
+            - StagingAccountIdProvided
+            - !Ref StagingAccountId
+            - !Ref "AWS::NoValue"
+          - !Ref "AWS::NoValue"
   LightrailDatadog:
     Type: AWS::CloudFormation::Stack
     Condition: EnvIsDevAndRegionIsUSWest2
