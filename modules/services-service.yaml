@@ -375,13 +375,6 @@ Resources:
               - sts:AssumeRole
             Resource:
               - !GetAtt DeploymentRole.Arn
-          -
-            Effect: Allow
-            Action:
-              - iam:ListMFADevices
-            Resource:
-              - !Sub "arn:aws:iam::${AWS::AccountId}:mfa/${!aws:username}"
-              - !Sub "arn:aws:iam::${AWS::AccountId}:user/${!aws:username}"
 
 Outputs:
   EcrRepo:
