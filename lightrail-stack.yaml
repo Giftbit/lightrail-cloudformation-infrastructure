@@ -49,12 +49,16 @@ Mappings:
       ServicesRoleName: "dev-LightrailServices-1D5YCESAG92B3-Role-1D1RKUNL3XBWH"
       BatchRoleName: "dev-LightrailBatch-15T0OX937Q0EO-Role-1ETHK95KYFQ02"
       CredentialsDestinationBranch: ""
-      SimpleRollupDestinationBranch: ""
+      SimpleRollupBranch: ""
+      SimpleRollupBranchDest: ""
       SimpleRollupCapacity: low
-      CardsSearchDestinationBranch: ""
+      CardsSearchBranch: ""
+      CardsSearchBranchDest: ""
       CardsSearchElasticSearchInstanceCount: 2
       CardsSearchElasticSearchInstanceType: t2.small.elasticsearch
       CardsSearchElasticSearchMasterInstanceType: none
+      KvsBranch: ""
+      KvsBranchDest: ""
   Staging:
     us-west-2:
       CombinedEnvRegion: Staging-us-west-2
@@ -67,12 +71,16 @@ Mappings:
       ServicesRoleName: ""
       BatchRoleName: ""
       CredentialsDestinationBranch: ""
-      SimpleRollupDestinationBranch: ""
+      SimpleRollupBranch: ""
+      SimpleRollupBranchDest: ""
       SimpleRollupCapacity: low
-      CardsSearchDestinationBranch: ""
+      CardsSearchBranch: ""
+      CardsSearchBranchDest: ""
       CardsSearchElasticSearchInstanceCount: 2
       CardsSearchElasticSearchInstanceType: t2.small.elasticsearch
       CardsSearchElasticSearchMasterInstanceType: none
+      KvsBranch: staging
+      KvsBranchDest: master
   Production:
     us-west-2:
       CombinedEnvRegion: Production-us-west-2
@@ -85,12 +93,16 @@ Mappings:
       ServicesRoleName: ""
       BatchRoleName: ""
       CredentialsDestinationBranch: ""
-      SimpleRollupDestinationBranch: ""
+      SimpleRollupBranch: ""
+      SimpleRollupBranchDest: ""
       SimpleRollupCapacity: high
-      CardsSearchDestinationBranch: ""
+      CardsSearchBranch: ""
+      CardsSearchBranchDest: ""
       CardsSearchElasticSearchInstanceCount: 2
       CardsSearchElasticSearchInstanceType: t2.small.elasticsearch
       CardsSearchElasticSearchMasterInstanceType: t2.small.elasticsearch
+      KvsBranch: master
+      KvsBranchDest: ""
   SecureConfig:
     FileNames:
       JWT: authentication_badge_key.json
@@ -462,12 +474,17 @@ Resources:
             SecureConfigFileNameJwt: !FindInMap [SecureConfig, FileNames, JWT]
             SecureConfigFileNameDataDog: !FindInMap [SecureConfig, FileNames, DataDog]
             Capacity: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", SimpleRollupCapacity]
-        GitHubBranchDest: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", SimpleRollupDestinationBranch]
+        GitHubBranch: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", SimpleRollupBranch]
+        GitHubBranchDest: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", SimpleRollupBranchDest]
         GitHubOAuthToken: !Ref GitHubOAuthToken
         CodeBuildImageNodeSSH: !GetAtt CIResources.Outputs.CodebuildImageNodeSSH
         CiKeysAccessRoleArn: !GetAtt CIResources.Outputs.KeysAccessRoleArn
         CiKeysBucketName: !GetAtt CIResources.Outputs.KeysBucketName
         ProjectName: !Sub "${AWS::StackName}-SimpleRollup"
+      Tags:
+        -
+          Key: Service
+          Value: SimpleRollup
   LightrailCardsSearch:
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2
@@ -497,12 +514,45 @@ Resources:
               !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CardsSearchElasticSearchInstanceType]
             ElasticSearchMasterInstanceType:
               !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CardsSearchElasticSearchMasterInstanceType]
-        GitHubBranchDest: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CardsSearchDestinationBranch]
+        GitHubBranch: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CardsSearchBranch]
+        GitHubBranchDest: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CardsSearchBranchDest]
         GitHubOAuthToken: !Ref GitHubOAuthToken
         CodeBuildImageNodeSSH: !GetAtt CIResources.Outputs.CodebuildImageNodeSSH
         CiKeysAccessRoleArn: !GetAtt CIResources.Outputs.KeysAccessRoleArn
         CiKeysBucketName: !GetAtt CIResources.Outputs.KeysBucketName
         ProjectName: !Sub "${AWS::StackName}-CardsSearch"
+      Tags:
+        -
+          Key: Service
+          Value: CardsSearch
+  LightrailKvs:
+    Type: AWS::CloudFormation::Stack
+    Condition: RegionIsUSWest2
+    Properties:
+      TemplateURL: https://raw.githubusercontent.com/Giftbit/giftbit-kvs/316d82cbde9fd25fec7c7d2acdea7a7f18e5c81b/infrastructure/ci.yaml
+      Parameters:
+        ProjectParameterOverrides: !Sub
+          - >
+            {
+              "SecureConfigBucket": "${LightrailSecureConfig.Outputs.BucketName}",
+              "SecureConfigKmsArn": "${LightrailSecureConfig.Outputs.EncryptionKeyArn}",
+              "SecureConfigKeyJwt": "${SecureConfigFileNameJwt}",
+              "Capacity": "${Capacity}"
+            }
+          -
+            SecureConfigFileNameJwt: !FindInMap [SecureConfig, FileNames, JWT]
+            Capacity: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", KvsCapacity]
+        GitHubBranch: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", KvsBranch]
+        GitHubBranchDest: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", KvsBranchDest]
+        GitHubOAuthToken: !Ref GitHubOAuthToken
+        CodeBuildImageNodeSSH: !GetAtt CIResources.Outputs.CodebuildImageNodeSSH
+        CiKeysAccessRoleArn: !GetAtt CIResources.Outputs.KeysAccessRoleArn
+        CiKeysBucketName: !GetAtt CIResources.Outputs.KeysBucketName
+        ProjectName: !Sub "${AWS::StackName}-Kvs"
+      Tags:
+        -
+          Key: Service
+          Value: KVS
 
   UserAssumableRoles:
     Type: AWS::CloudFormation::Stack
