@@ -28,8 +28,7 @@ Parameters:
   SesDomainArns:
     Type: String
     Description: Comma Separated list of SES Domain Arns for sending Emails
-    AllowedPattern:
-      "(arn:aws:ses:[a-z0-9-]+:\\d{12}:identity\\/[a-z0-9._-]+(,arn:aws:ses:[a-z0-9-]+:\\d{12}:identity\\/[a-z0-9._-]+)*)?"
+    AllowedPattern: ((^|,)arn:aws:ses:[a-z0-9-]+:\\d{12}:identity\\/[a-z0-9._-]+)*
     Default: ""
   KinesisStreamArn:
     Type: String
@@ -43,11 +42,11 @@ Parameters:
   GroupsToGrantEcrReadAccess:
     Type: String
     Description: The name of the groups to grant Services ECR read access
-    AllowedPattern: "([a-zA-Z0-9+=.@_-]+(,[a-zA-Z0-9+=.@_-]+)*)?"
+    AllowedPattern: ((^|,)[a-zA-Z0-9+=.@_-]+)*
   RdsInstanceClass:
     Type: String
     Description: The Instance Type to use for the RDS Instance
-    Default: "db.t2.medium"
+    Default: db.t2.medium
     AllowedValues:
       - db.t2.small
       - db.t2.medium
