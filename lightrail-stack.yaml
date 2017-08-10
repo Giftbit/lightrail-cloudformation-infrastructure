@@ -49,16 +49,6 @@ Mappings:
       ServicesRoleName: "dev-LightrailServices-1D5YCESAG92B3-Role-1D1RKUNL3XBWH"
       BatchRoleName: "dev-LightrailBatch-15T0OX937Q0EO-Role-1ETHK95KYFQ02"
       CredentialsDestinationBranch: ""
-      SimpleRollupBranch: ""
-      SimpleRollupBranchDest: ""
-      SimpleRollupCapacity: low
-      CardsSearchBranch: ""
-      CardsSearchBranchDest: ""
-      CardsSearchElasticSearchInstanceCount: 2
-      CardsSearchElasticSearchInstanceType: t2.small.elasticsearch
-      CardsSearchElasticSearchMasterInstanceType: none
-      KvsBranch: ""
-      KvsBranchDest: ""
   Staging:
     us-west-2:
       CombinedEnvRegion: Staging-us-west-2
@@ -71,16 +61,6 @@ Mappings:
       ServicesRoleName: ""
       BatchRoleName: ""
       CredentialsDestinationBranch: ""
-      SimpleRollupBranch: ""
-      SimpleRollupBranchDest: ""
-      SimpleRollupCapacity: low
-      CardsSearchBranch: ""
-      CardsSearchBranchDest: ""
-      CardsSearchElasticSearchInstanceCount: 2
-      CardsSearchElasticSearchInstanceType: t2.small.elasticsearch
-      CardsSearchElasticSearchMasterInstanceType: none
-      KvsBranch: staging
-      KvsBranchDest: master
   Production:
     us-west-2:
       CombinedEnvRegion: Production-us-west-2
@@ -93,16 +73,6 @@ Mappings:
       ServicesRoleName: ""
       BatchRoleName: ""
       CredentialsDestinationBranch: ""
-      SimpleRollupBranch: ""
-      SimpleRollupBranchDest: ""
-      SimpleRollupCapacity: high
-      CardsSearchBranch: ""
-      CardsSearchBranchDest: ""
-      CardsSearchElasticSearchInstanceCount: 2
-      CardsSearchElasticSearchInstanceType: t2.small.elasticsearch
-      CardsSearchElasticSearchMasterInstanceType: t2.small.elasticsearch
-      KvsBranch: master
-      KvsBranchDest: ""
   SecureConfig:
     FileNames:
       JWT: authentication_badge_key.json
@@ -136,6 +106,51 @@ Mappings:
       RdsSnapshotId: ""
     Production-us-west-2:
       RdsSnapshotId: ""
+  SimpleRollup:
+    Dev-us-west-2:
+      GitHubBranch: ""
+      GitHubBranchDest: ""
+      Capacity: low
+    Staging-us-west-2:
+      GitHubBranch: ""
+      GitHubBranchDest: ""
+      Capacity: low
+    Production-us-west-2:
+      GitHubBranch: ""
+      GitHubBranchDest: ""
+      Capacity: high
+  CardsSearch:
+    Dev-us-west-2:
+      GitHubBranch: ""
+      GitHubBranchDest: ""
+      ElasticSearchInstanceCount: 2
+      ElasticSearchInstanceType: t2.small.elasticsearch
+      ElasticSearchMasterInstanceType: none
+    Staging-us-west-2:
+      GitHubBranch: ""
+      GitHubBranchDest: ""
+      ElasticSearchInstanceCount: 2
+      ElasticSearchInstanceType: t2.small.elasticsearch
+      ElasticSearchMasterInstanceType: none
+    Production-us-west-2:
+      GitHubBranch: ""
+      GitHubBranchDest: ""
+      ElasticSearchInstanceCount: 2
+      ElasticSearchInstanceType: t2.small.elasticsearch
+      ElasticSearchMasterInstanceType: t2.small.elasticsearch
+  Kvs:
+    Dev-us-west-2:
+      GitHubBranch: ""
+      GitHubBranchDest: ""
+      Capacity: low
+    Staging-us-west-2:
+      GitHubBranch: ""
+      GitHubBranchDest: ""
+      Capacity: low
+    Production-us-west-2:
+      GitHubBranch: ""
+      GitHubBranchDest: ""
+      Capacity: high
 
 Conditions:
   RegionIsUSWest2: !Equals [!Ref "AWS::Region", us-west-2]
@@ -473,9 +488,9 @@ Resources:
           -
             SecureConfigFileNameJwt: !FindInMap [SecureConfig, FileNames, JWT]
             SecureConfigFileNameDataDog: !FindInMap [SecureConfig, FileNames, DataDog]
-            Capacity: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", SimpleRollupCapacity]
-        GitHubBranch: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", SimpleRollupBranch]
-        GitHubBranchDest: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", SimpleRollupBranchDest]
+            Capacity: !FindInMap [SimpleRollup, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], Capacity]
+        GitHubBranch: !FindInMap [SimpleRollup, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], GitHubBranch]
+        GitHubBranchDest: !FindInMap [SimpleRollup, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], GitHubBranchDest]
         GitHubOAuthToken: !Ref GitHubOAuthToken
         CodeBuildImageNodeSSH: !GetAtt CIResources.Outputs.CodebuildImageNodeSSH
         CiKeysAccessRoleArn: !GetAtt CIResources.Outputs.KeysAccessRoleArn
@@ -509,13 +524,13 @@ Resources:
             SecureConfigFileNameJwt: !FindInMap [SecureConfig, FileNames, JWT]
             SecureConfigFileNameDataDog: !FindInMap [SecureConfig, FileNames, DataDog]
             ElasticSearchInstanceCount:
-              !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CardsSearchElasticSearchInstanceCount]
+              !FindInMap [CardsSearch, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], ElasticSearchInstanceCount]
             ElasticSearchInstanceType:
-              !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CardsSearchElasticSearchInstanceType]
+              !FindInMap [CardsSearch, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], ElasticSearchInstanceType]
             ElasticSearchMasterInstanceType:
-              !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CardsSearchElasticSearchMasterInstanceType]
-        GitHubBranch: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CardsSearchBranch]
-        GitHubBranchDest: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CardsSearchBranchDest]
+              !FindInMap [CardsSearch, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], ElasticSearchMasterInstanceType]
+        GitHubBranch: !FindInMap [CardsSearch, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], GitHubBranch]
+        GitHubBranchDest: !FindInMap [CardsSearch, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], GitHubBranchDest]
         GitHubOAuthToken: !Ref GitHubOAuthToken
         CodeBuildImageNodeSSH: !GetAtt CIResources.Outputs.CodebuildImageNodeSSH
         CiKeysAccessRoleArn: !GetAtt CIResources.Outputs.KeysAccessRoleArn
@@ -541,9 +556,9 @@ Resources:
             }
           -
             SecureConfigFileNameJwt: !FindInMap [SecureConfig, FileNames, JWT]
-            Capacity: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", KvsCapacity]
-        GitHubBranch: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", KvsBranch]
-        GitHubBranchDest: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", KvsBranchDest]
+            Capacity: !FindInMap [Kvs, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], Capacity]
+        GitHubBranch: !FindInMap [Kvs, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], GitHubBranch]
+        GitHubBranchDest: !FindInMap [Kvs, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], GitHubBranchDest]
         GitHubOAuthToken: !Ref GitHubOAuthToken
         CodeBuildImageNodeSSH: !GetAtt CIResources.Outputs.CodebuildImageNodeSSH
         CiKeysAccessRoleArn: !GetAtt CIResources.Outputs.KeysAccessRoleArn
