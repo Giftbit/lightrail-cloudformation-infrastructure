@@ -30,29 +30,29 @@ Parameters:
 
 Mappings:
   Dev:
+    EnvName:
+      Lowercase: dev
     us-west-2:
       EcrRepoOverride: ""  # Intentionally left blank, required but should not be used
       EcrRepoArnOverride: ""  # Intentionally left blank, required but should not be used
       KibanaDomainOverride: ""
       KibanaArnOverride: ""
   Staging:
+    EnvName:
+      Lowercase: staging
     us-west-2:
-      EcrRepoOverride: "757264843183.dkr.ecr.us-west-2.amazonaws.com/dev-l-ecrre-l6wmgq7alz3p"
-      EcrRepoArnOverride: "arn:aws:ecr:us-west-2:757264843183:repository/dev-l-ecrre-l6wmgq7alz3p"
+      EcrRepoOverride: "757264843183.dkr.ecr.us-west-2.amazonaws.com/dev-l-ecrre-vo523jmd04zd"
+      EcrRepoArnOverride: "arn:aws:ecr:us-west-2:757264843183:repository/dev-l-ecrre-vo523jmd04zd"
       KibanaDomainOverride: "search-dev-kibana-sjowd4vallqppkmg3vtlhcvij4.us-west-2.es.amazonaws.com"
       KibanaArnOverride: "arn:aws:es:us-west-2:757264843183:domain/dev-kibana"
   Production:
+    EnvName:
+      Lowercase: production
     us-west-2:
-      EcrRepoOverride: ""
-      EcrRepoArnOverride: ""
+      EcrRepoOverride: "757264843183.dkr.ecr.us-west-2.amazonaws.com/dev-l-ecrre-vo523jmd04zd"
+      EcrRepoArnOverride: "arn:aws:ecr:us-west-2:757264843183:repository/dev-l-ecrre-vo523jmd04zd"
       KibanaDomainOverride: ""
       KibanaArnOverride: ""
-
-  EnvNames:
-    Lowercase:
-      Dev: dev
-      Staging: staging
-      Production: production
 
 Conditions:
   ShouldCreateECRRepository: !Equals [!Ref EnvironmentName, Dev]
@@ -70,7 +70,7 @@ Resources:
       # DomainName must be less than 28 Characters and match [a-z][a-z0-9\-]+
       DomainName: !Sub
         - "${EnvironmentNameLowercase}-kibana"
-        - EnvironmentNameLowercase: !FindInMap [EnvNames, Lowercase, !Ref EnvironmentName]
+        - EnvironmentNameLowercase: !FindInMap [!Ref EnvironmentName, EnvName, Lowercase]
       ElasticsearchClusterConfig:
         InstanceCount: 1
         InstanceType: m3.medium.elasticsearch
@@ -88,7 +88,7 @@ Resources:
             Action: es:*
             Resource: !Sub
               - "arn:aws:es:${AWS::Region}:${AWS::AccountId}:domain/${EnvironmentNameLowercase}-kibana/*"
-              - EnvironmentNameLowercase: !FindInMap [EnvNames, Lowercase, !Ref EnvironmentName]
+              - EnvironmentNameLowercase: !FindInMap [!Ref EnvironmentName, EnvName, Lowercase]
             Condition:
               IpAddress:
                 aws:SourceIp:
@@ -104,7 +104,7 @@ Resources:
               Resource:
                 - !Sub
                   - "arn:aws:es:${AWS::Region}:${AWS::AccountId}:domain/${EnvironmentNameLowercase}-kibana/*"
-                  - EnvironmentNameLowercase: !FindInMap [EnvNames, Lowercase, !Ref EnvironmentName]
+                  - EnvironmentNameLowercase: !FindInMap [!Ref EnvironmentName, EnvName, Lowercase]
             - !Ref AWS::NoValue
 
   # Logstash ECR Repository
@@ -205,7 +205,7 @@ Resources:
                   - !Sub
                     - "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${EnvNameLowercase}-Logstash/*"
                     -
-                      EnvNameLowercase: !FindInMap [EnvNames, Lowercase, !Ref EnvironmentName]
+                      EnvNameLowercase: !FindInMap [!Ref EnvironmentName, EnvName, Lowercase]
               -
                 Effect: Allow
                 Action:
@@ -232,7 +232,7 @@ Resources:
                   - !Sub
                     - "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${EnvNameLowercase}/*"
                     -
-                      EnvNameLowercase: !FindInMap [EnvNames, Lowercase, !Ref EnvironmentName]
+                      EnvNameLowercase: !FindInMap [!Ref EnvironmentName, EnvName, Lowercase]
               -
                 Effect: Allow
                 Action:
@@ -243,6 +243,17 @@ Resources:
                   - ecs:UpdateService
                   - ecs:DeleteService
                 Resource: "*"
+              -
+                Effect: Allow
+                Action:
+                  - ecs:ListTasks
+                Resource: "*"
+              -
+                Effect: Allow
+                Action:
+                  - iam:PassRole
+                Resource:
+                  - !GetAtt Role.Arn
 
   DeploymentAccessPolicy:
     Type: AWS::IAM::Policy
