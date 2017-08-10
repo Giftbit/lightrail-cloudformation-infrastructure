@@ -149,7 +149,7 @@ Resources:
         EnvironmentName: !Ref EnvironmentName
   LightrailAlertChannels:
     Type: AWS::CloudFormation::Stack
-    Condition: EnvIsDevAndRegionIsUSWest2
+    Condition: RegionIsUSWest2
     Properties:
       TemplateURL: ./modules/alert-sns.yaml
   LightrailCertificates:
