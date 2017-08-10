@@ -104,16 +104,16 @@ Mappings:
       ScaleUpRecurrence: "0 15 * * MON-FRI"
       ScaleDownRecurrence: "0 3 * * TUE-SAT"
     Staging-us-west-2:
-      InstanceType: t2.nano
+      InstanceType: t2.small
       MinInstances: 1
-      MaxInstances: 1
+      MaxInstances: 2
       SSHKeyName: LightrailStagingECS
       ScaleUpRecurrence: "0 15 * * MON-FRI"
       ScaleDownRecurrence: "0 3 * * TUE-SAT"
     Production-us-west-2:
-      InstanceType: t2.nano
+      InstanceType: t2.small
       MinInstances: 1
-      MaxInstances: 1
+      MaxInstances: 2
       SSHKeyName: LightrailProductionECS
       ScaleUpRecurrence: ""
       ScaleDownRecurrence: ""
@@ -392,7 +392,7 @@ Resources:
               - DevAccountIdProvided
               - !Ref DevAccountId
               - !Ref AWS::NoValue
-        GroupsToGrantEcrReadAccess: !GetAtt Groups.Outputs.DevelopersGroupName
+        GroupsToGrantDeployAccess: !GetAtt Groups.Outputs.DevelopersGroupName
         RdsInstanceClass: db.t2.small
         RdsInstanceAllocation: 100
         RdsMultiAZ: false
@@ -401,6 +401,7 @@ Resources:
         VpcRdsSubnetIds: !GetAtt LightrailVPC.Outputs.RdsSubnetIds
         VpcHostedZoneId: !GetAtt LightrailVPC.Outputs.VpcHostedZoneId
         VpcRdsSecurityGroupIds: !GetAtt LightrailVPC.Outputs.RdsSecurityGroupId
+        LoadBalancingServiceRoleArn: !GetAtt LightrailLoadBalancer.Outputs.EcsLoadBalancingServiceRoleArn
       Tags:
         -
           Key: Service
