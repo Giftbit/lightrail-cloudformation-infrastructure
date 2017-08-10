@@ -366,6 +366,21 @@ Resources:
             - !Ref StagingAccountId
             - !Ref "AWS::NoValue"
           - !Ref "AWS::NoValue"
+        AccountsToGrantEcrReadAccess: !Join
+          - ","
+          -
+            - !If
+              - ProductionAccountIdProvided
+              - !Ref ProductionAccountId
+              - !Ref AWS::NoValue
+            - !If
+              - StagingAccountIdProvided
+              - !Ref StagingAccountId
+              - !Ref AWS::NoValue
+            - !If
+              - DevAccountIdProvided
+              - !Ref DevAccountId
+              - !Ref AWS::NoValue
   LightrailDatadog:
     Type: AWS::CloudFormation::Stack
     Condition: EnvIsDevAndRegionIsUSWest2
