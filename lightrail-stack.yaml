@@ -352,7 +352,7 @@ Resources:
         EnvironmentName: !Ref EnvironmentName
   LightrailLogstash:
     Type: AWS::CloudFormation::Stack
-    Condition: EnvIsDevAndRegionIsUSWest2
+    Condition: RegionIsUSWest2
     Properties:
       TemplateURL: ./modules/logstash.yaml
       Parameters:
