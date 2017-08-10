@@ -85,23 +85,23 @@ Parameters:
 
 Mappings:
   Dev:
+    EnvName:
+      Lowercase: dev
     us-west-2:
       EcrRepoOverride: ""  # Intentionally left blank, required but should not be used
       EcrRepoArnOverride: ""  # Intentionally left blank, required but should not be used
   Staging:
+    EnvName:
+      Lowercase: staging
     us-west-2:
       EcrRepoOverride: "757264843183.dkr.ecr.us-west-2.amazonaws.com/dev-l-ecrre-1flkl8cn2yhjp"
       EcrRepoArnOverride: "arn:aws:ecr:us-west-2:757264843183:repository/dev-l-ecrre-1flkl8cn2yhjp"
   Production:
+    EnvName:
+      Lowercase: production
     us-west-2:
       EcrRepoOverride: "757264843183.dkr.ecr.us-west-2.amazonaws.com/dev-l-ecrre-1flkl8cn2yhjp"
       EcrRepoArnOverride: "arn:aws:ecr:us-west-2:757264843183:repository/dev-l-ecrre-1flkl8cn2yhjp"
-
-  EnvNames:
-    Lowercase:
-      Dev: dev
-      Staging: staging
-      Production: production
 
 Conditions:
   ShouldConfigureSes: !Not [!Equals [!Ref SesDomainArns, ""]]
@@ -308,7 +308,7 @@ Resources:
                   - !Sub
                     - "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${EnvNameLowercase}-Services/*"
                     -
-                      EnvNameLowercase: !FindInMap [EnvNames, Lowercase, !Ref EnvironmentName]
+                      EnvNameLowercase: !FindInMap [!Ref EnvironmentName, EnvName, Lowercase]
               -
                 Effect: Allow
                 Action:
@@ -335,7 +335,7 @@ Resources:
                   - !Sub
                     - "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${EnvNameLowercase}/*"
                     -
-                      EnvNameLowercase: !FindInMap [EnvNames, Lowercase, !Ref EnvironmentName]
+                      EnvNameLowercase: !FindInMap [!Ref EnvironmentName, EnvName, Lowercase]
               -
                 Effect: Allow
                 Action:
