@@ -260,7 +260,7 @@ Resources:
     Condition: ShouldConfigureDeployAccess
     Properties:
       Groups: !Split [",", !Ref GroupsToGrantDeployAccess]
-      PolicyName: ServicesDeployAccess
+      PolicyName: LogstashDeployAccess
       PolicyDocument:
         Version: 2012-10-17
         Statement:
