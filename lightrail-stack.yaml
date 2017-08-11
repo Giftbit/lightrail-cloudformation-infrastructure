@@ -91,7 +91,7 @@ Mappings:
       RdsSnapshotId: test-account-20170727
       RoleName: dev-LightrailServices-1D5YCESAG92B3-Role-1D1RKUNL3XBWH
     Staging-us-west-2:
-      RdsSnapshotId: ""
+      RdsSnapshotId: new-staging-test
       RoleName: staging-LightrailServices-7PYWE3BIY4LC-Role-9KF46YLQSQ30
     Production-us-west-2:
       RdsSnapshotId: ""
