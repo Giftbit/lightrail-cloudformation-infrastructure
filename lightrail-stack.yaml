@@ -43,8 +43,7 @@ Mappings:
       AppAliases: ""
       ApiAliases: ""
       SesDomainArns: ""
-      CloudFormationACMCertificateArn:
-        arn:aws:acm:us-east-1:757264843183:certificate/5ac83a3b-1f05-4756-bd3a-3a4705846b53
+      CloudFormationACMCertificateArn: arn:aws:acm:us-east-1:757264843183:certificate/5ac83a3b-1f05-4756-bd3a-3a4705846b53
       CredentialsRevocationCheckRoleName: "dev-Credentials-RestBadgeValidationLambdaRole-PX6EAOSRMU46"
       ServicesRoleName: "dev-LightrailServices-1D5YCESAG92B3-Role-1D1RKUNL3XBWH"
       BatchRoleName: "dev-LightrailBatch-15T0OX937Q0EO-Role-1ETHK95KYFQ02"
@@ -161,9 +160,7 @@ Conditions:
   ProductionAccountIdProvided: !Not [!Equals [!Ref ProductionAccountId, ""]]
   StagingAccountIdProvided: !Not [!Equals [!Ref StagingAccountId, ""]]
   DevAccountIdProvided: !Not [!Equals [!Ref DevAccountId, ""]]
-  # yamllint disable-line rule:line-length
-  CredentialsRevocationCheckRoleNameSet:
-    !Not [!Equals [!FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CredentialsRevocationCheckRoleName], ""]]
+  CredentialsRevocationCheckRoleNameSet: !Not [!Equals [!FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CredentialsRevocationCheckRoleName], ""]]
   ServicesRoleNameSet: !Not [!Equals [!FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", ServicesRoleName], ""]]
   BatchRoleNameSet: !Not [!Equals [!FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", BatchRoleName], ""]]
 Resources:
@@ -212,7 +209,6 @@ Resources:
           -
             - !GetAtt Groups.Outputs.MarkettingGroupName
             - !GetAtt Groups.Outputs.DevelopersGroupName
-
   LightrailReact:
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2
@@ -220,10 +216,7 @@ Resources:
       TemplateURL: ./modules/react-app.yaml
       Parameters:
         EnvironmentName: !Ref EnvironmentName
-        BuildArtifactBucketOverride: !FindInMap
-          - !Ref EnvironmentName
-          - !Ref "AWS::Region"
-          - ReactBuildArtifactBucketOverride
+        BuildArtifactBucketOverride: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", ReactBuildArtifactBucketOverride]
         GroupsToGrantReactReadWrite: !Join
           - ","
           -
@@ -269,28 +262,12 @@ Resources:
       Parameters:
         EnvironmentName: !Ref EnvironmentName
         ClusterName: !Sub "Lightrail-${AWS::StackName}"
-        ClusterInstanceType: !FindInMap
-          - EcsCluster
-          - !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion]
-          - InstanceType
-        ClusterMinInstances: !FindInMap
-          - EcsCluster
-          - !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion]
-          - MinInstances
-        ClusterMaxInstances: !FindInMap
-          - EcsCluster
-          - !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion]
-          - MaxInstances
-        ClusterSSHKeyName:
-          !FindInMap [EcsCluster, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], SSHKeyName]
-        ClusterScaleUpRecurrence: !FindInMap
-          - EcsCluster
-          - !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion]
-          - ScaleUpRecurrence
-        ClusterScaleDownRecurrence: !FindInMap
-          - EcsCluster
-          - !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion]
-          - ScaleDownRecurrence
+        ClusterInstanceType: !FindInMap [EcsCluster, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], InstanceType]
+        ClusterMinInstances: !FindInMap [EcsCluster, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], MinInstances]
+        ClusterMaxInstances: !FindInMap [EcsCluster, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], MaxInstances]
+        ClusterSSHKeyName: !FindInMap [EcsCluster, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], SSHKeyName]
+        ClusterScaleUpRecurrence: !FindInMap [EcsCluster, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], ScaleUpRecurrence]
+        ClusterScaleDownRecurrence: !FindInMap [EcsCluster, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], ScaleDownRecurrence]
         ClusterSecurityGroupIDs: !GetAtt LightrailVPC.Outputs.EcsClusterInstanceSecurityGroupId
         VpcId: !GetAtt LightrailVPC.Outputs.VpcId
         VpcPublicSubnetIds: !GetAtt LightrailVPC.Outputs.PrivateSubnetIds
@@ -423,8 +400,7 @@ Resources:
         RdsInstanceClass: db.t2.small
         RdsInstanceAllocation: 100
         RdsMultiAZ: false
-        RdsSnapshotId:
-          !FindInMap [Services, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RdsSnapshotId]
+        RdsSnapshotId: !FindInMap [Services, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RdsSnapshotId]
         VpcRdsSubnetIds: !GetAtt LightrailVPC.Outputs.RdsSubnetIds
         VpcHostedZoneId: !GetAtt LightrailVPC.Outputs.VpcHostedZoneId
         VpcRdsSecurityGroupIds: !GetAtt LightrailVPC.Outputs.RdsSecurityGroupId
@@ -524,12 +500,9 @@ Resources:
           -
             SecureConfigFileNameJwt: !FindInMap [SecureConfig, FileNames, JWT]
             SecureConfigFileNameDataDog: !FindInMap [SecureConfig, FileNames, DataDog]
-            ElasticSearchInstanceCount:
-              !FindInMap [CardsSearch, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], ElasticSearchInstanceCount]
-            ElasticSearchInstanceType:
-              !FindInMap [CardsSearch, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], ElasticSearchInstanceType]
-            ElasticSearchMasterInstanceType:
-              !FindInMap [CardsSearch, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], ElasticSearchMasterInstanceType]
+            ElasticSearchInstanceCount: !FindInMap [CardsSearch, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], ElasticSearchInstanceCount]
+            ElasticSearchInstanceType: !FindInMap [CardsSearch, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], ElasticSearchInstanceType]
+            ElasticSearchMasterInstanceType: !FindInMap [CardsSearch, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], ElasticSearchMasterInstanceType]
         GitHubBranch: !FindInMap [CardsSearch, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], GitHubBranch]
         GitHubBranchDest: !FindInMap [CardsSearch, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], GitHubBranchDest]
         GitHubOAuthToken: !Ref GitHubOAuthToken

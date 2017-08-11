@@ -143,7 +143,6 @@ Resources:
               - logs:CreateLogStream
               - logs:PutLogEvents
             Resource:
-              # yamllint disable-line rule:line-length
               - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/kinesisfirehose/${FirehoseStream}:log-stream:*"
   KinesisFirehoseShipper:
     Type: AWS::Lambda::Function

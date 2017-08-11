@@ -46,7 +46,7 @@ Parameters:
   RdsInstanceClass:
     Type: String
     Description: The Instance Type to use for the RDS Instance
-    Default: "db.t2.medium"
+    Default: db.t2.medium
     AllowedValues:
       - db.t2.small
       - db.t2.medium
