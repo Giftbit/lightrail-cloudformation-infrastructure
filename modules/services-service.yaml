@@ -41,11 +41,7 @@ Parameters:
     AllowedPattern: (\d{12}(,\d{12})*)?
   GroupsToGrantDeployAccess:
     Type: String
-<<<<<<< HEAD
-    Description: The name of the groups to grant Services ECR read access
-=======
     Description: A Comma Separated List of Groups to grant ability to deploy this service
->>>>>>> origin/master
     AllowedPattern: ((^|,)[a-zA-Z0-9+=.@_-]+)*
   RdsInstanceClass:
     Type: String
