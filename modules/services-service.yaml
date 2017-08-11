@@ -375,6 +375,15 @@ Resources:
               - sts:AssumeRole
             Resource:
               - !GetAtt DeploymentRole.Arn
+          -
+            Effect: Allow
+            Action:
+              - ecr:ListImages
+            Resource:
+              - !If
+                - ShouldUseEcrRepoOverride
+                - !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", EcrRepoArnOverride]
+                - !Sub "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/${EcrRepo}"
 
 Outputs:
   EcrRepo:
