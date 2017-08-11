@@ -13,22 +13,54 @@ Parameters:
     Type: String
     Description: Comma separated list of AWS Account IDs to grant Read Access
     Default: ""
-    AllowedPattern: (\d{12}(,\d{12})*)?
-  AccountsToGrantECRFullAccess:
+    AllowedPattern: ((^|,)\d{12})*
+  AccountsToGrantEcrReadAccess:
     Type: String
-    Description: Comma separated list of AWS Account IDs to grant Read Access
+    Description: Comma separated list of AWS Account IDs to grant ECR Read Access
     Default: ""
-    AllowedPattern: (\d{12}(,\d{12})*)?
+    AllowedPattern: ((^|,)\d{12})*
+  GroupsToGrantDeployAccess:
+    Type: String
+    Description: A Comma Separated List of Groups to grant ability to deploy this service
+    AllowedPattern: ((^|,)[a-zA-Z0-9+=.@_-]+)*
   NonEmergencyAlertsSnsArn:
     Type: String
     Description: The ARN for the SNS Topic to notify on Non Emergency Events
     AllowedPattern: arn:aws:sns:[a-z0-9-]+:\d{12}:[a-zA-Z0-9_-]+
 
+Mappings:
+  Dev:
+    EnvName:
+      Lowercase: dev
+    us-west-2:
+      EcrRepoOverride: ""  # Intentionally left blank, required but should not be used
+      EcrRepoArnOverride: ""  # Intentionally left blank, required but should not be used
+      KibanaDomainOverride: ""
+      KibanaArnOverride: ""
+  Staging:
+    EnvName:
+      Lowercase: staging
+    us-west-2:
+      EcrRepoOverride: "757264843183.dkr.ecr.us-west-2.amazonaws.com/dev-l-ecrre-vo523jmd04zd"
+      EcrRepoArnOverride: "arn:aws:ecr:us-west-2:757264843183:repository/dev-l-ecrre-vo523jmd04zd"
+      KibanaDomainOverride: "search-dev-kibana-sjowd4vallqppkmg3vtlhcvij4.us-west-2.es.amazonaws.com"
+      KibanaArnOverride: "arn:aws:es:us-west-2:757264843183:domain/dev-kibana"
+  Production:
+    EnvName:
+      Lowercase: production
+    us-west-2:
+      EcrRepoOverride: "757264843183.dkr.ecr.us-west-2.amazonaws.com/dev-l-ecrre-vo523jmd04zd"
+      EcrRepoArnOverride: "arn:aws:ecr:us-west-2:757264843183:repository/dev-l-ecrre-vo523jmd04zd"
+      KibanaDomainOverride: ""
+      KibanaArnOverride: ""
+
 Conditions:
-  ShouldCreateECRRepository: !Equals [!Ref EnvironmentName, Production]
-  ShouldConfigureECRAccess: !Not [!Equals [!Ref AccountsToGrantECRFullAccess, ""]]
+  ShouldCreateECRRepository: !Equals [!Ref EnvironmentName, Dev]
+  ShouldUseEcrRepoOverride: !Not [!Equals [!Ref EnvironmentName, Dev]]
+  ShouldConfigureECRAccess: !Not [!Equals [!Ref AccountsToGrantEcrReadAccess, ""]]
   ShouldConfigureKibanaFullAccess: !Not [!Equals [!Ref AccountsToGrantKibanaFullAccess, ""]]
-  ShouldCreateKibanaInstance: !Not [!Equals [!Ref EnvironmentName, Dev]]
+  ShouldConfigureDeployAccess: !Not [!Equals [!Ref GroupsToGrantDeployAccess, ""]]
+  ShouldCreateKibanaInstance: !Not [!Equals [!Ref EnvironmentName, Staging]]
 
 Resources:
   Kibana:
@@ -36,7 +68,9 @@ Resources:
     Condition: ShouldCreateKibanaInstance
     Properties:
       # DomainName must be less than 28 Characters and match [a-z][a-z0-9\-]+
-      DomainName: "lightrail"
+      DomainName: !Sub
+        - "${EnvironmentNameLowercase}-kibana"
+        - EnvironmentNameLowercase: !FindInMap [!Ref EnvironmentName, EnvName, Lowercase]
       ElasticsearchClusterConfig:
         InstanceCount: 1
         InstanceType: m3.medium.elasticsearch
@@ -52,7 +86,9 @@ Resources:
             Principal:
               AWS: "*"
             Action: es:*
-            Resource: !Sub "arn:aws:es:${AWS::Region}:${AWS::AccountId}:domain/lightrail/*"
+            Resource: !Sub
+              - "arn:aws:es:${AWS::Region}:${AWS::AccountId}:domain/${EnvironmentNameLowercase}-kibana/*"
+              - EnvironmentNameLowercase: !FindInMap [!Ref EnvironmentName, EnvName, Lowercase]
             Condition:
               IpAddress:
                 aws:SourceIp:
@@ -63,10 +99,12 @@ Resources:
               Effect: Allow
               Action:
                 - es:*
-              Principals:
+              Principal:
                 AWS: !Split [",", !Ref AccountsToGrantKibanaFullAccess]
               Resource:
-                - !Sub "arn:aws:es:${AWS::Region}:${AWS::AccountId}:domain/lightrail/*"
+                - !Sub
+                  - "arn:aws:es:${AWS::Region}:${AWS::AccountId}:domain/${EnvironmentNameLowercase}-kibana/*"
+                  - EnvironmentNameLowercase: !FindInMap [!Ref EnvironmentName, EnvName, Lowercase]
             - !Ref AWS::NoValue
 
   # Logstash ECR Repository
@@ -79,21 +117,159 @@ Resources:
         -
           Version: 2012-10-17
           Statement:
-            Effect: Allow
-            Principal:
-              AWS: !Split [",", !Ref AccountsToGrantECRFullAccess]
-            Action:
-              - ecr:GetDownloadUrlForLayer
-              - ecr:BatchGetImage
-              - ecr:BatchCheckLayerAvailability
-              - ecr:PutImage
-              - ecr:InitiateLayerUpload
-              - ecr:UploadLayerPart
-              - ecr:CompleteLayerUpload
-              - ecr:DescribeRepositories
-              - ecr:GetRepositoryPolicy
-              - ecr:ListImages
+            -
+              Effect: Allow
+              Principal:
+                AWS: !Split [",", !Ref AccountsToGrantEcrReadAccess]
+              Action:
+                - ecr:GetDownloadUrlForLayer
+                - ecr:BatchGetImage
+                - ecr:BatchCheckLayerAvailability
+                - ecr:DescribeRepositories
+                - ecr:ListImages
         - !Ref AWS::NoValue
+  Role:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - sts:AssumeRole
+            Principal:
+              Service:
+                - ecs-tasks.amazonaws.com
+      Policies:
+        -
+          PolicyName: KibanaAccess
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              -
+                Effect: Allow
+                Action:
+                  - es:ESHttpGet
+                  - es:ESHttpHead
+                  - es:ESHttpPost
+                  - es:ESHttpPut
+                Resource: !If
+                  - ShouldCreateKibanaInstance
+                  -
+                    - !Sub "${Kibana.DomainArn}"
+                    - !Sub "${Kibana.DomainArn}/*"
+                  -
+                    - !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", KibanaArnOverride]
+                    - !Sub
+                      - "${KibanaDomainArn}/*"
+                      - KibanaDomainArn: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", KibanaArnOverride]
+
+  DeploymentRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: "Allow"
+            Action:
+              - "sts:AssumeRole"
+            Principal:
+              AWS:
+                - !Ref "AWS::AccountId"  # Allow this role to be assumed from the Current Account with MFA
+            Condition:
+              Bool:
+                "aws:MultiFactorAuthPresent": true
+      Policies:
+        -
+          PolicyName: CloudFormationUpdateAccess
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              -
+                Effect: Allow
+                Action:
+                  - ecr:GetAuthorizationToken
+                Resource: "*"
+              -
+                Effect: Allow
+                Action:
+                  - cloudformation:CreateChangeSet
+                  - cloudformation:ExecuteChangeSet
+                  - cloudformation:UpdateStack
+                  - cloudformation:DescribeStackEvents
+                  - cloudformation:DeleteStack
+                  - cloudformation:DescribeChangeSet
+                Resource:
+                  - !Sub
+                    - "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${EnvNameLowercase}-Logstash/*"
+                    -
+                      EnvNameLowercase: !FindInMap [!Ref EnvironmentName, EnvName, Lowercase]
+              -
+                Effect: Allow
+                Action:
+                  - ecr:GetDownloadUrlForLayer
+                  - ecr:BatchGetImage
+                  - ecr:BatchCheckLayerAvailability
+                  - ecr:DescribeRepositories
+                  - ecr:ListImages
+                Resource:
+                  - !If
+                    - ShouldUseEcrRepoOverride
+                    - !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", EcrRepoArnOverride]
+                    - !Sub "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/${EcrRepo}"
+              -
+                Effect: Allow
+                Action:
+                  - cloudformation:DescribeStacks
+                Resource: "*"
+              -
+                Effect: Allow
+                Action:
+                  - cloudformation:DescribeStackResource
+                Resource:
+                  - !Sub
+                    - "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${EnvNameLowercase}/*"
+                    -
+                      EnvNameLowercase: !FindInMap [!Ref EnvironmentName, EnvName, Lowercase]
+              -
+                Effect: Allow
+                Action:
+                  - ecs:RegisterTaskDefinition
+                  - ecs:DeregisterTaskDefinition
+                  - ecs:Describe*
+                  - ecs:CreateService
+                  - ecs:UpdateService
+                  - ecs:DeleteService
+                Resource: "*"
+              -
+                Effect: Allow
+                Action:
+                  - ecs:ListTasks
+                Resource: "*"
+              -
+                Effect: Allow
+                Action:
+                  - iam:PassRole
+                Resource:
+                  - !GetAtt Role.Arn
+
+  DeploymentAccessPolicy:
+    Type: AWS::IAM::Policy
+    Condition: ShouldConfigureDeployAccess
+    Properties:
+      Groups: !Split [",", !Ref GroupsToGrantDeployAccess]
+      PolicyName: ServicesDeployAccess
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - sts:AssumeRole
+            Resource:
+              - !GetAtt DeploymentRole.Arn
 
   LogGroup:
     Type: AWS::Logs::LogGroup
@@ -129,9 +305,34 @@ Resources:
 Outputs:
   KibanaDomain:
     Description: The Domain Endpoint for the Kibana Domain
-    Condition: ShouldCreateKibanaInstance
-    Value: !GetAtt Kibana.DomainEndpoint
+    Value: !If
+      - ShouldCreateECRRepository
+      - !GetAtt Kibana.DomainEndpoint
+      - !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", KibanaDomainOverride]
   KibanaArn:
     Description: The Domain ARN for the Kibana Domain
-    Condition: ShouldCreateKibanaInstance
-    Value: !GetAtt Kibana.DomainArn
+    Value: !If
+      - ShouldCreateECRRepository
+      - !GetAtt Kibana.DomainArn
+      - !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", KibanaArnOverride]
+  TaskRoleArn:
+    Description: The ARN of the Tasks IAM Role
+    Value: !GetAtt Role.Arn
+  EcrRepo:
+    Description: The Codebuild accessible docker image reference
+    Value: !If
+      - ShouldCreateECRRepository
+      - !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${EcrRepo}"
+      - !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", EcrRepoOverride]
+  EcrRepoArn:
+    Description: The Codebuild accessible docker image reference
+    Value: !If
+      - ShouldCreateECRRepository
+      - !Sub "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/${EcrRepo}"
+      - !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", EcrRepoArnOverride]
+  DeploymentRoleArn:
+    Description: The Arn of the Deployment Role
+    Value: !GetAtt DeploymentRole.Arn
+  LogGroupName:
+    Description: The Name of the Log Group for Logstash
+    Value: !Ref LogGroup
