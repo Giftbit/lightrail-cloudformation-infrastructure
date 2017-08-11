@@ -39,9 +39,13 @@ Parameters:
     Description: Comma separated list of AWS Account IDs to grant ECR Read Access
     Default: ""
     AllowedPattern: (\d{12}(,\d{12})*)?
-  GroupsToGrantEcrReadAccess:
+  GroupsToGrantDeployAccess:
     Type: String
+<<<<<<< HEAD
     Description: The name of the groups to grant Services ECR read access
+=======
+    Description: A Comma Separated List of Groups to grant ability to deploy this service
+>>>>>>> origin/master
     AllowedPattern: ((^|,)[a-zA-Z0-9+=.@_-]+)*
   RdsInstanceClass:
     Type: String
@@ -78,17 +82,27 @@ Parameters:
   VpcRdsSecurityGroupIds:
     Type: String
     Description: The comma separated list of Security Group Ids
+  LoadBalancingServiceRoleArn:
+    Type: String
+    Description: The Service Role Arn for load balancing
+    AllowedPattern: arn:aws:iam::\d{12}:role/[A-Za-z0-9._-]+
 
 Mappings:
   Dev:
+    EnvName:
+      Lowercase: dev
     us-west-2:
       EcrRepoOverride: ""  # Intentionally left blank, required but should not be used
       EcrRepoArnOverride: ""  # Intentionally left blank, required but should not be used
   Staging:
+    EnvName:
+      Lowercase: staging
     us-west-2:
       EcrRepoOverride: "757264843183.dkr.ecr.us-west-2.amazonaws.com/dev-l-ecrre-1flkl8cn2yhjp"
       EcrRepoArnOverride: "arn:aws:ecr:us-west-2:757264843183:repository/dev-l-ecrre-1flkl8cn2yhjp"
   Production:
+    EnvName:
+      Lowercase: production
     us-west-2:
       EcrRepoOverride: "757264843183.dkr.ecr.us-west-2.amazonaws.com/dev-l-ecrre-1flkl8cn2yhjp"
       EcrRepoArnOverride: "arn:aws:ecr:us-west-2:757264843183:repository/dev-l-ecrre-1flkl8cn2yhjp"
@@ -96,7 +110,9 @@ Mappings:
 Conditions:
   ShouldConfigureSes: !Not [!Equals [!Ref SesDomainArns, ""]]
   ShouldCreateECRRepository: !Equals [!Ref EnvironmentName, Dev]
-  ShouldConfigureECRAccess: !Not [!Equals [!Ref AccountsToGrantEcrReadAccess, ""]]
+  ShouldUseEcrRepoOverride: !Not [!Equals [!Ref EnvironmentName, Dev]]
+  ShouldConfigureAccountECRAccess: !Not [!Equals [!Ref AccountsToGrantEcrReadAccess, ""]]
+  ShouldConfigureDeployAccess: !Not [!Equals [!Ref GroupsToGrantDeployAccess, ""]]
   ShouldCreateDatabaseFromSnapshot: !Not [!Equals [!Ref RdsSnapshotId, ""]]
   ShouldCreateEmptyDatabase: !Equals [!Ref RdsSnapshotId, ""]
 
@@ -106,7 +122,7 @@ Resources:
     Condition: ShouldCreateECRRepository
     Properties:
       RepositoryPolicyText: !If
-        - ShouldConfigureECRAccess
+        - ShouldConfigureAccountECRAccess
         -
           Version: 2012-10-17
           Statement:
@@ -122,26 +138,6 @@ Resources:
                 - ecr:DescribeRepositories
                 - ecr:ListImages
         - !Ref AWS::NoValue
-  EcrRepoAccessPolicy:
-    Type: AWS::IAM::Policy
-    Properties:
-      Groups: !Split [",", !Ref GroupsToGrantEcrReadAccess]
-      PolicyName: ServicesECRReadAccess
-      PolicyDocument:
-        Version: 2012-10-17
-        Statement:
-          -
-            Effect: Allow
-            Action:
-              - ecr:GetDownloadUrlForLayer
-              - ecr:BatchGetImage
-              - ecr:BatchCheckLayerAvailability
-              - ecr:DescribeRepositories
-              - ecr:ListImages
-            Resource: !If
-              - ShouldCreateECRRepository
-              - !Sub "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/${EcrRepo}"
-              - !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", EcrRepoArnOverride]
   Role:
     Type: AWS::IAM::Role
     Properties:
@@ -276,6 +272,114 @@ Resources:
       ResourceRecords:
         - !GetAtt RdsInstance.Endpoint.Address
 
+  DeploymentRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: "Allow"
+            Action:
+              - "sts:AssumeRole"
+            Principal:
+              AWS:
+                - !Ref "AWS::AccountId"  # Allow this role to be assumed from the Current Account with MFA
+            Condition:
+              Bool:
+                "aws:MultiFactorAuthPresent": true
+      Policies:
+        -
+          PolicyName: CloudFormationUpdateAccess
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              -
+                Effect: Allow
+                Action:
+                  - ecr:GetAuthorizationToken
+                Resource: "*"
+              -
+                Effect: Allow
+                Action:
+                  - cloudformation:CreateChangeSet
+                  - cloudformation:ExecuteChangeSet
+                  - cloudformation:UpdateStack
+                  - cloudformation:DescribeStackEvents
+                  - cloudformation:DeleteStack
+                  - cloudformation:DescribeChangeSet
+                Resource:
+                  - !Sub
+                    - "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${EnvNameLowercase}-Services/*"
+                    -
+                      EnvNameLowercase: !FindInMap [!Ref EnvironmentName, EnvName, Lowercase]
+              -
+                Effect: Allow
+                Action:
+                  - ecr:GetDownloadUrlForLayer
+                  - ecr:BatchGetImage
+                  - ecr:BatchCheckLayerAvailability
+                  - ecr:DescribeRepositories
+                  - ecr:ListImages
+                Resource:
+                  - !If
+                    - ShouldUseEcrRepoOverride
+                    - !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", EcrRepoArnOverride]
+                    - !Sub "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/${EcrRepo}"
+              -
+                Effect: Allow
+                Action:
+                  - cloudformation:DescribeStacks
+                Resource: "*"
+              -
+                Effect: Allow
+                Action:
+                  - cloudformation:DescribeStackResource
+                Resource:
+                  - !Sub
+                    - "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${EnvNameLowercase}/*"
+                    -
+                      EnvNameLowercase: !FindInMap [!Ref EnvironmentName, EnvName, Lowercase]
+              -
+                Effect: Allow
+                Action:
+                  - ecs:RegisterTaskDefinition
+                  - ecs:DeregisterTaskDefinition
+                  - ecs:Describe*
+                  - ecs:CreateService
+                  - ecs:UpdateService
+                  - ecs:DeleteService
+                Resource: "*"
+              -
+                Effect: Allow
+                Action:
+                  - iam:PassRole
+                Resource:
+                  - !GetAtt Role.Arn
+                  - !Ref LoadBalancingServiceRoleArn
+              -
+                Effect: Allow
+                Action:
+                  - rds:DescribeDBInstances
+                Resource:
+                  - !Sub "arn:aws:rds:${AWS::Region}:${AWS::AccountId}:db:${RdsInstance}"
+
+  DeploymentAccessPolicy:
+    Type: AWS::IAM::Policy
+    Condition: ShouldConfigureDeployAccess
+    Properties:
+      Groups: !Split [",", !Ref GroupsToGrantDeployAccess]
+      PolicyName: ServicesDeployAccess
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - sts:AssumeRole
+            Resource:
+              - !GetAtt DeploymentRole.Arn
+
 Outputs:
   EcrRepo:
     Description: The Codebuild accessible docker image reference
@@ -295,3 +399,6 @@ Outputs:
   TaskRoleArn:
     Description: The ARN of the Tasks IAM Role
     Value: !GetAtt Role.Arn
+  DeploymentRoleArn:
+    Description: The Arn of the Deployment Role
+    Value: !GetAtt DeploymentRole.Arn
