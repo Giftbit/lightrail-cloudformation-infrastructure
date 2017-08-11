@@ -123,12 +123,12 @@ Mappings:
       Capacity: low
       RoleName: dev-SimpleRollup-RestFunctionRole-IP96FN2KA091
     Staging-us-west-2:
-      GitHubBranch: dev-ci
+      GitHubBranch: staging
       GitHubBranchDest: ""
       Capacity: low
       RoleName: staging-SimpleRollup-RestFunctionRole-1W56VYVDTDLP1
     Production-us-west-2:
-      GitHubBranch: dev-ci
+      GitHubBranch: master
       GitHubBranchDest: ""
       Capacity: high
       RoleName: production-SimpleRollup-RestFunctionRole-1WHS2OKB6RF1L
@@ -141,14 +141,14 @@ Mappings:
       ElasticSearchMasterInstanceType: none
       RoleName: dev-CardsSearch-RestFunctionRole-1WFJDWKX4AFSD
     Staging-us-west-2:
-      GitHubBranch: dev-ci
+      GitHubBranch: staging
       GitHubBranchDest: ""
       ElasticSearchInstanceCount: 2
       ElasticSearchInstanceType: t2.small.elasticsearch
       ElasticSearchMasterInstanceType: none
       RoleName: staging-CardsSearch-RestFunctionRole-6C20E1OYPWU2
     Production-us-west-2:
-      GitHubBranch: dev-ci
+      GitHubBranch: master
       GitHubBranchDest: ""
       ElasticSearchInstanceCount: 2
       ElasticSearchInstanceType: t2.small.elasticsearch
@@ -161,12 +161,12 @@ Mappings:
       Capacity: low
       RoleName: dev-Kvs-KvsFunctionRole-RLFP80MZ8Z16
     Staging-us-west-2:
-      GitHubBranch: dev-ci
+      GitHubBranch: staging
       GitHubBranchDest: ""
       Capacity: low
       RoleName: ""
     Production-us-west-2:
-      GitHubBranch: dev-ci
+      GitHubBranch: master
       GitHubBranchDest: ""
       Capacity: high
       RoleName: ""
