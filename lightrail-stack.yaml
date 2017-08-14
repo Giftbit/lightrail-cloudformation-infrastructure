@@ -164,12 +164,12 @@ Mappings:
       GitHubBranch: staging
       GitHubBranchDest: ""
       Capacity: low
-      RoleName: ""
+      RoleName: staging-Kvs-KvsFunctionRole-16TX23DYH1DQ
     Production-us-west-2:
       GitHubBranch: master
       GitHubBranchDest: ""
       Capacity: high
-      RoleName: ""
+      RoleName: production-Kvs-KvsFunctionRole-35C9CNH786LQ
 
 Conditions:
   RegionIsUSWest2: !Equals [!Ref "AWS::Region", us-west-2]
