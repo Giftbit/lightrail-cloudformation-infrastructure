@@ -9,6 +9,9 @@ Parameters:
       - Dev
       - Staging
       - Production
+  ParentStackName:
+    Type: String
+    Description: The Name of the parent stack. This is normally dev, staging or production.
   AccountsToGrantEcrReadAccess:
     Type: String
     Description: Comma separated list of AWS Account IDs to grant Read Access
@@ -21,26 +24,27 @@ Parameters:
 
 Mappings:
   Dev:
-    EnvName:
-      Lowercase: dev
+    global:
+      AccessRoleExternalId: 309354d45e754706aebe1c1ca11cdfa6
     us-west-2:
       EcrRepoOverride: ""  # Intentionally left blank, required but should not be used
       EcrRepoArnOverride: ""  # Intentionally left blank, required but should not be used
   Staging:
-    EnvName:
-      Lowercase: staging
+    global:
+      AccessRoleExternalId: 09be61416bb44e658b2dbd5c0841f405
     us-west-2:
-      EcrRepoOverride: ""
-      EcrRepoArnOverride: ""
+      EcrRepoOverride: 757264843183.dkr.ecr.us-west-2.amazonaws.com/dev-l-ecrre-10nol5b818vc4
+      EcrRepoArnOverride: arn:aws:ecr:us-west-2:757264843183:repository/dev-l-ecrre-10nol5b818vc4
   Production:
-    EnvName:
-      Lowercase: production
+    global:
+      AccessRoleExternalId: 89f1fb7bc99747d6ae00a85b06eaa769
     us-west-2:
-      EcrRepoOverride: ""
-      EcrRepoArnOverride: ""
+      EcrRepoOverride: 757264843183.dkr.ecr.us-west-2.amazonaws.com/dev-l-ecrre-10nol5b818vc4
+      EcrRepoArnOverride: arn:aws:ecr:us-west-2:757264843183:repository/dev-l-ecrre-10nol5b818vc4
 
 Conditions:
   ShouldCreateECRRepository: !Equals [!Ref EnvironmentName, Dev]
+  RegionIsUsWest2: !Equals [!Ref "AWS::Region", "us-west-2"]
   ShouldConfigureECRAccess: !Not [!Equals [!Ref AccountsToGrantEcrReadAccess, ""]]
   ShouldConfigureDeployAccess: !Not [!Equals [!Ref GroupsToGrantDeployAccess, ""]]
 
@@ -67,11 +71,85 @@ Resources:
                 - ecr:ListImages
         - !Ref AWS::NoValue
 
+  DataDogAccessRole:
+    Type: AWS::IAM::Role
+    Condition: RegionIsUsWest2
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - sts:AssumeRole
+            Principal:
+              AWS:
+                - arn:aws:iam::464622532012:root
+            Condition:
+              StringEquals:
+                "sts:ExternalId":
+                  !FindInMap [!Ref EnvironmentName, global, AccessRoleExternalId]
+      Policies:
+        -
+          PolicyName: DataDogReadOnlyAccess
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              -
+                Effect: Allow
+                Action:
+                  - autoscaling:Describe*
+                  - budgets:ViewBudget
+                  - cloudtrail:DescribeTrails
+                  - cloudtrail:GetTrailStatus
+                  - cloudwatch:Describe*
+                  - cloudwatch:Get*
+                  - cloudwatch:List*
+                  - codedeploy:List*
+                  - codedeploy:BatchGet*
+                  - dynamodb:list*
+                  - dynamodb:describe*
+                  - ec2:Describe*
+                  - ec2:Get*
+                  - ecs:Describe*
+                  - ecs:List*
+                  - elasticache:Describe*
+                  - elasticache:List*
+                  - elasticfilesystem:DescribeFileSystems
+                  - elasticfilesystem:DescribeTags
+                  - elasticloadbalancing:Describe*
+                  - elasticmapreduce:List*
+                  - elasticmapreduce:Describe*
+                  - es:ListTags
+                  - es:ListDomainNames
+                  - es:DescribeElasticsearchDomains
+                  - kinesis:List*
+                  - kinesis:Describe*
+                  - lambda:List*
+                  - logs:Get*
+                  - logs:Describe*
+                  - logs:FilterLogEvents
+                  - logs:TestMetricFilter
+                  - rds:Describe*
+                  - rds:List*
+                  - route53:List*
+                  - s3:GetBucketTagging
+                  - s3:ListAllMyBuckets
+                  - ses:Get*
+                  - sns:List*
+                  - sns:Publish
+                  - sqs:ListQueues
+                  - support:*
+                  - tag:getResources
+                  - tag:getTagKeys
+                  - tag:getTagValues
+                Resource: "*"
+
   DeploymentRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
-        Version: "2012-10-17"
+        Version: 2012-10-17
         Statement:
           -
             Effect: Allow
@@ -117,10 +195,7 @@ Resources:
                 Action:
                   - cloudformation:DescribeStackResource
                 Resource:
-                  - !Sub
-                    - "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${EnvNameLowercase}/*"
-                    -
-                      EnvNameLowercase: !FindInMap [!Ref EnvironmentName, EnvName, Lowercase]
+                  - !Sub "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${ParentStackName}/*"
               -
                 Effect: Allow
                 Action:

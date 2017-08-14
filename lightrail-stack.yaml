@@ -320,6 +320,7 @@ Resources:
           -
             - !GetAtt LightrailServices.Outputs.EcrRepoArn
             - !GetAtt LightrailLogstash.Outputs.EcrRepoArn
+            - !GetAtt LightrailDatadog.Outputs.EcrRepoArn
   LightrailLoadBalancer:
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2
@@ -447,6 +448,7 @@ Resources:
       TemplateURL: ./modules/datadog.yaml
       Parameters:
         EnvironmentName: !Ref EnvironmentName
+        ParentStackName: !Ref "AWS::StackName"
         GroupsToGrantDeployAccess: !GetAtt Groups.Outputs.DevelopersGroupName
         AccountsToGrantEcrReadAccess: !Join
           - ","
