@@ -31,13 +31,13 @@ Mappings:
       EcrRepoArnOverride: ""  # Intentionally left blank, required but should not be used
   Staging:
     global:
-      AccessRoleExternalId: 09be61416bb44e658b2dbd5c0841f405
+      AccessRoleExternalId: 661edc0984c94b5dbfdecb5845cd999c
     us-west-2:
       EcrRepoOverride: 757264843183.dkr.ecr.us-west-2.amazonaws.com/dev-l-ecrre-10nol5b818vc4
       EcrRepoArnOverride: arn:aws:ecr:us-west-2:757264843183:repository/dev-l-ecrre-10nol5b818vc4
   Production:
     global:
-      AccessRoleExternalId: 89f1fb7bc99747d6ae00a85b06eaa769
+      AccessRoleExternalId: 2948b54ed84046baa527c7a1e6f872b8
     us-west-2:
       EcrRepoOverride: 757264843183.dkr.ecr.us-west-2.amazonaws.com/dev-l-ecrre-10nol5b818vc4
       EcrRepoArnOverride: arn:aws:ecr:us-west-2:757264843183:repository/dev-l-ecrre-10nol5b818vc4
