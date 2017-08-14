@@ -172,9 +172,9 @@ Resources:
         Version: "2012-10-17"
         Statement:
           -
-            Effect: "Allow"
+            Effect: Allow
             Action:
-              - "sts:AssumeRole"
+              - sts:AssumeRole
             Principal:
               AWS:
                 - !Ref "AWS::AccountId"  # Allow this role to be assumed from the Current Account with MFA
