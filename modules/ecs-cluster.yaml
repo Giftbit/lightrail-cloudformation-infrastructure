@@ -127,6 +127,10 @@ Resources:
           Value: true
           PropagateAtLaunch: true
         -
+          Key: IncludeInDataDogMetrics
+          Value: true
+          PropagateAtLaunch: true
+        -
           Key: NormalMinSize
           Value: !Ref ClusterMinInstances
           PropagateAtLaunch: false
