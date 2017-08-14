@@ -9,15 +9,40 @@ Parameters:
       - Dev
       - Staging
       - Production
-  AccountsToGrantECRFullAccess:
+  AccountsToGrantEcrReadAccess:
     Type: String
     Description: Comma separated list of AWS Account IDs to grant Read Access
     Default: ""
     AllowedPattern: (\d{12}(,\d{12})*)?
+  GroupsToGrantDeployAccess:
+    Type: String
+    Description: A Comma Separated List of Groups to grant ability to deploy this service
+    AllowedPattern: ((^|,)[a-zA-Z0-9+=.@_-]+)*
+
+Mappings:
+  Dev:
+    EnvName:
+      Lowercase: dev
+    us-west-2:
+      EcrRepoOverride: ""  # Intentionally left blank, required but should not be used
+      EcrRepoArnOverride: ""  # Intentionally left blank, required but should not be used
+  Staging:
+    EnvName:
+      Lowercase: staging
+    us-west-2:
+      EcrRepoOverride: ""
+      EcrRepoArnOverride: ""
+  Production:
+    EnvName:
+      Lowercase: production
+    us-west-2:
+      EcrRepoOverride: ""
+      EcrRepoArnOverride: ""
 
 Conditions:
-  ShouldCreateECRRepository: !Equals [!Ref EnvironmentName, Production]
-  ShouldConfigureECRAccess: !Not [!Equals [!Ref AccountsToGrantECRFullAccess, ""]]
+  ShouldCreateECRRepository: !Equals [!Ref EnvironmentName, Dev]
+  ShouldConfigureECRAccess: !Not [!Equals [!Ref AccountsToGrantEcrReadAccess, ""]]
+  ShouldConfigureDeployAccess: !Not [!Equals [!Ref GroupsToGrantDeployAccess, ""]]
 
 Resources:
   # DataDog ECR Repository
@@ -31,19 +56,116 @@ Resources:
           Version: 2012-10-17
           Statement:
             -
-              Sid: RepositoryAccess
               Effect: Allow
               Principal:
-                AWS: !Split [",", !Ref AccountsToGrantECRFullAccess]
+                AWS: !Split [",", !Ref AccountsToGrantEcrReadAccess]
               Action:
                 - ecr:GetDownloadUrlForLayer
                 - ecr:BatchGetImage
                 - ecr:BatchCheckLayerAvailability
-                - ecr:PutImage
-                - ecr:InitiateLayerUpload
-                - ecr:UploadLayerPart
-                - ecr:CompleteLayerUpload
                 - ecr:DescribeRepositories
-                - ecr:GetRepositoryPolicy
                 - ecr:ListImages
         - !Ref AWS::NoValue
+
+  DeploymentRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - sts:AssumeRole
+            Principal:
+              AWS:
+                - !Ref "AWS::AccountId"  # Allow this role to be assumed from the Current Account with MFA
+            Condition:
+              Bool:
+                "aws:MultiFactorAuthPresent": true
+      Policies:
+        -
+          PolicyName: CloudFormationUpdateAccess
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              -
+                Effect: Allow
+                Action:
+                  - ecr:GetAuthorizationToken
+                Resource: "*"
+              -
+                Effect: Allow
+                Action:
+                  - ecr:GetDownloadUrlForLayer
+                  - ecr:BatchGetImage
+                  - ecr:BatchCheckLayerAvailability
+                  - ecr:DescribeRepositories
+                  - ecr:ListImages
+                Resource:
+                  - !If
+                    - ShouldCreateECRRepository
+                    - !Sub "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/${EcrRepo}"
+                    - !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", EcrRepoArnOverride]
+              -
+                Effect: Allow
+                Action:
+                  - cloudformation:DescribeStacks
+                Resource: "*"
+              -
+                Effect: Allow
+                Action:
+                  - cloudformation:DescribeStackResource
+                Resource:
+                  - !Sub
+                    - "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${EnvNameLowercase}/*"
+                    -
+                      EnvNameLowercase: !FindInMap [!Ref EnvironmentName, EnvName, Lowercase]
+              -
+                Effect: Allow
+                Action:
+                  - ecs:RegisterTaskDefinition
+                  - ecs:DeregisterTaskDefinition
+                  - ecs:Describe*
+                  - ecs:CreateService
+                  - ecs:UpdateService
+                  - ecs:DeleteService
+                Resource: "*"
+              -
+                Effect: Allow
+                Action:
+                  - ecs:ListTasks
+                Resource: "*"
+
+  DeploymentAccessPolicy:
+    Type: AWS::IAM::Policy
+    Condition: ShouldConfigureDeployAccess
+    Properties:
+      Groups: !Split [",", !Ref GroupsToGrantDeployAccess]
+      PolicyName: LogstashDeployAccess
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - sts:AssumeRole
+            Resource:
+              - !GetAtt DeploymentRole.Arn
+
+Outputs:
+  EcrRepo:
+    Description: The Codebuild accessible docker image reference
+    Value: !If
+      - ShouldCreateECRRepository
+      - !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${EcrRepo}"
+      - !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", EcrRepoOverride]
+  EcrRepoArn:
+    Description: The Codebuild accessible docker image reference
+    Value: !If
+      - ShouldCreateECRRepository
+      - !Sub "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/${EcrRepo}"
+      - !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", EcrRepoArnOverride]
+  DeploymentRoleArn:
+    Description: The Arn of the Deployment Role
+    Value: !GetAtt DeploymentRole.Arn

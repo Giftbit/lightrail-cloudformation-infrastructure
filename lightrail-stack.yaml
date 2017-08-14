@@ -447,6 +447,22 @@ Resources:
       TemplateURL: ./modules/datadog.yaml
       Parameters:
         EnvironmentName: !Ref EnvironmentName
+        GroupsToGrantDeployAccess: !GetAtt Groups.Outputs.DevelopersGroupName
+        AccountsToGrantEcrReadAccess: !Join
+          - ","
+          -
+            - !If
+              - ProductionAccountIdProvided
+              - !Ref ProductionAccountId
+              - !Ref AWS::NoValue
+            - !If
+              - StagingAccountIdProvided
+              - !Ref StagingAccountId
+              - !Ref AWS::NoValue
+            - !If
+              - DevAccountIdProvided
+              - !Ref DevAccountId
+              - !Ref AWS::NoValue
   LightrailServices:
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2
