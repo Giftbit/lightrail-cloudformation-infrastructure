@@ -195,20 +195,6 @@ Resources:
               -
                 Effect: Allow
                 Action:
-                  - cloudformation:CreateChangeSet
-                  - cloudformation:ExecuteChangeSet
-                  - cloudformation:UpdateStack
-                  - cloudformation:DescribeStackEvents
-                  - cloudformation:DeleteStack
-                  - cloudformation:DescribeChangeSet
-                Resource:
-                  - !Sub
-                    - "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${EnvNameLowercase}-Logstash/*"
-                    -
-                      EnvNameLowercase: !FindInMap [!Ref EnvironmentName, EnvName, Lowercase]
-              -
-                Effect: Allow
-                Action:
                   - ecr:GetDownloadUrlForLayer
                   - ecr:BatchGetImage
                   - ecr:BatchCheckLayerAvailability

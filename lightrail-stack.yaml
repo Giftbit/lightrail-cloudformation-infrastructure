@@ -94,7 +94,7 @@ Mappings:
       RdsSnapshotId: new-staging-test
       RoleName: staging-LightrailServices-7PYWE3BIY4LC-Role-9KF46YLQSQ30
     Production-us-west-2:
-      RdsSnapshotId: ""
+      RdsSnapshotId: prod-split-test-20170811
       RoleName: production-LightrailServices-1KFEHOLF9Z0KA-Role-1JZMIQD5B0TTW
   Batch:
     Dev-us-west-2:
