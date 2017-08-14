@@ -443,7 +443,7 @@ Resources:
               - !Ref AWS::NoValue
   LightrailDatadog:
     Type: AWS::CloudFormation::Stack
-    Condition: EnvIsDevAndRegionIsUSWest2
+    Condition: RegionIsUSWest2
     Properties:
       TemplateURL: ./modules/datadog.yaml
       Parameters:
