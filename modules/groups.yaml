@@ -41,6 +41,8 @@ Resources:
         - arn:aws:iam::aws:policy/AWSLambdaReadOnlyAccess
         - arn:aws:iam::aws:policy/AWSCodeBuildReadOnlyAccess
         - arn:aws:iam::aws:policy/AWSCodePipelineApproverAccess
+        - arn:aws:iam::aws:policy/AmazonRDSReadOnlyAccess
+        - arn:aws:iam::aws:policy/AmazonEC2ReadOnlyAccess
       Policies:
         - !If
           - EnvironmentIsDevelopment
