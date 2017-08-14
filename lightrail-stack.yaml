@@ -43,12 +43,7 @@ Mappings:
       AppAliases: ""
       ApiAliases: ""
       SesDomainArns: ""
-      CloudFormationACMCertificateArn:
-        arn:aws:acm:us-east-1:757264843183:certificate/5ac83a3b-1f05-4756-bd3a-3a4705846b53
-      CredentialsRevocationCheckRoleName: "dev-Credentials-RestBadgeValidationLambdaRole-PX6EAOSRMU46"
-      ServicesRoleName: "dev-LightrailServices-1D5YCESAG92B3-Role-1D1RKUNL3XBWH"
-      BatchRoleName: "dev-LightrailBatch-15T0OX937Q0EO-Role-1ETHK95KYFQ02"
-      CredentialsDestinationBranch: ""
+      CloudFormationACMCertificateArn: arn:aws:acm:us-east-1:757264843183:certificate/5ac83a3b-1f05-4756-bd3a-3a4705846b53
   Staging:
     us-west-2:
       CombinedEnvRegion: Staging-us-west-2
@@ -57,10 +52,6 @@ Mappings:
       ApiAliases: ""
       SesDomainArns: ""
       CloudFormationACMCertificateArn: ""
-      CredentialsRevocationCheckRoleName: ""
-      ServicesRoleName: ""
-      BatchRoleName: ""
-      CredentialsDestinationBranch: ""
   Production:
     us-west-2:
       CombinedEnvRegion: Production-us-west-2
@@ -69,10 +60,6 @@ Mappings:
       ApiAliases: ""
       SesDomainArns: ""
       CloudFormationACMCertificateArn: ""
-      CredentialsRevocationCheckRoleName: ""
-      ServicesRoleName: ""
-      BatchRoleName: ""
-      CredentialsDestinationBranch: ""
   SecureConfig:
     FileNames:
       JWT: authentication_badge_key.json
@@ -101,56 +88,88 @@ Mappings:
       ScaleDownRecurrence: ""
   Services:
     Dev-us-west-2:
-      RdsSnapshotId: "test-account-20170727"
+      RdsSnapshotId: test-account-20170727
+      RoleName: dev-LightrailServices-1D5YCESAG92B3-Role-1D1RKUNL3XBWH
     Staging-us-west-2:
-      RdsSnapshotId: ""
+      RdsSnapshotId: new-staging-test
+      RoleName: staging-LightrailServices-7PYWE3BIY4LC-Role-9KF46YLQSQ30
     Production-us-west-2:
-      RdsSnapshotId: ""
+      RdsSnapshotId: prod-split-test-20170811
+      RoleName: production-LightrailServices-1KFEHOLF9Z0KA-Role-1JZMIQD5B0TTW
+  Batch:
+    Dev-us-west-2:
+      RoleName: dev-LightrailBatch-15T0OX937Q0EO-Role-1ETHK95KYFQ02
+    Staging-us-west-2:
+      RoleName: ""
+    Production-us-west-2:
+      RoleName: ""
+  CredentialsRevocation:
+    Dev-us-west-2:
+      GitHubBranch: ""
+      GitHubBranchDest: ""
+      RoleName: dev-Credentials-RestBadgeValidationLambdaRole-PX6EAOSRMU46
+    Staging-us-west-2:
+      GitHubBranch: ""
+      GitHubBranchDest: ""
+      RoleName: staging-Credentials-RestBadgeValidationLambdaRole-Z6A003BX7XJ4
+    Production-us-west-2:
+      GitHubBranch: ""
+      GitHubBranchDest: ""
+      RoleName: production-Credentials-RestBadgeValidationLambdaRo-WESN8D943Y8F
   SimpleRollup:
     Dev-us-west-2:
-      GitHubBranch: ""
+      GitHubBranch: dev-ci
       GitHubBranchDest: ""
       Capacity: low
+      RoleName: dev-SimpleRollup-RestFunctionRole-IP96FN2KA091
     Staging-us-west-2:
-      GitHubBranch: ""
+      GitHubBranch: staging
       GitHubBranchDest: ""
       Capacity: low
+      RoleName: staging-SimpleRollup-RestFunctionRole-1W56VYVDTDLP1
     Production-us-west-2:
-      GitHubBranch: ""
+      GitHubBranch: master
       GitHubBranchDest: ""
       Capacity: high
+      RoleName: production-SimpleRollup-RestFunctionRole-1WHS2OKB6RF1L
   CardsSearch:
     Dev-us-west-2:
-      GitHubBranch: ""
+      GitHubBranch: dev-ci
       GitHubBranchDest: ""
       ElasticSearchInstanceCount: 2
       ElasticSearchInstanceType: t2.small.elasticsearch
       ElasticSearchMasterInstanceType: none
+      RoleName: dev-CardsSearch-RestFunctionRole-1WFJDWKX4AFSD
     Staging-us-west-2:
-      GitHubBranch: ""
+      GitHubBranch: staging
       GitHubBranchDest: ""
       ElasticSearchInstanceCount: 2
       ElasticSearchInstanceType: t2.small.elasticsearch
       ElasticSearchMasterInstanceType: none
+      RoleName: staging-CardsSearch-RestFunctionRole-6C20E1OYPWU2
     Production-us-west-2:
-      GitHubBranch: ""
+      GitHubBranch: master
       GitHubBranchDest: ""
       ElasticSearchInstanceCount: 2
       ElasticSearchInstanceType: t2.small.elasticsearch
       ElasticSearchMasterInstanceType: t2.small.elasticsearch
+      RoleName: production-CardsSearch-RestFunctionRole-42IZL2PQ2ADC
   Kvs:
     Dev-us-west-2:
-      GitHubBranch: ""
+      GitHubBranch: dev-ci
       GitHubBranchDest: ""
       Capacity: low
+      RoleName: dev-Kvs-KvsFunctionRole-RLFP80MZ8Z16
     Staging-us-west-2:
-      GitHubBranch: ""
+      GitHubBranch: staging
       GitHubBranchDest: ""
       Capacity: low
+      RoleName: ""
     Production-us-west-2:
-      GitHubBranch: ""
+      GitHubBranch: master
       GitHubBranchDest: ""
       Capacity: high
+      RoleName: ""
 
 Conditions:
   RegionIsUSWest2: !Equals [!Ref "AWS::Region", us-west-2]
@@ -161,11 +180,12 @@ Conditions:
   ProductionAccountIdProvided: !Not [!Equals [!Ref ProductionAccountId, ""]]
   StagingAccountIdProvided: !Not [!Equals [!Ref StagingAccountId, ""]]
   DevAccountIdProvided: !Not [!Equals [!Ref DevAccountId, ""]]
-  # yamllint disable-line rule:line-length
-  CredentialsRevocationCheckRoleNameSet:
-    !Not [!Equals [!FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CredentialsRevocationCheckRoleName], ""]]
-  ServicesRoleNameSet: !Not [!Equals [!FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", ServicesRoleName], ""]]
-  BatchRoleNameSet: !Not [!Equals [!FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", BatchRoleName], ""]]
+  CredentialsRevocationCheckRoleNameSet: !Not [!Equals [!FindInMap [CredentialsRevocation, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName], ""]]
+  ServicesRoleNameSet: !Not [!Equals [!FindInMap [Services, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName], ""]]
+  BatchRoleNameSet: !Not [!Equals [!FindInMap [Batch, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName], ""]]
+  SimpleRollupRoleNameSet: !Not [!Equals [!FindInMap [SimpleRollup, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName], ""]]
+  CardsSearchRoleNameSet: !Not [!Equals [!FindInMap [CardsSearch, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName], ""]]
+  KvsRoleNameSet: !Not [!Equals [!FindInMap [Kvs, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName], ""]]
 Resources:
   Groups:
     Type: AWS::CloudFormation::Stack
@@ -176,7 +196,7 @@ Resources:
         EnvironmentName: !Ref EnvironmentName
   LightrailAlertChannels:
     Type: AWS::CloudFormation::Stack
-    Condition: EnvIsDevAndRegionIsUSWest2
+    Condition: RegionIsUSWest2
     Properties:
       TemplateURL: ./modules/alert-sns.yaml
   LightrailCertificates:
@@ -299,6 +319,7 @@ Resources:
           - ","
           -
             - !GetAtt LightrailServices.Outputs.EcrRepoArn
+            - !GetAtt LightrailLogstash.Outputs.EcrRepoArn
   LightrailLoadBalancer:
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2
@@ -331,6 +352,18 @@ Resources:
             - !If
               - BatchRoleNameSet
               - !Sub "${BatchRoleId}:*"
+              - !Ref "AWS::NoValue"
+            - !If
+              - SimpleRollupRoleNameSet
+              - !Sub "${SimpleRollupRoleId}:*"
+              - !Ref "AWS::NoValue"
+            - !If
+              - CardsSearchRoleNameSet
+              - !Sub "${CardsSearchRoleId}:*"
+              - !Ref "AWS::NoValue"
+            - !If
+              - KvsRoleNameSet
+              - !Sub "${KvsRoleId}:*"
               - !Ref "AWS::NoValue"
         UserIdsToGrantPolicyAdminAccess: !Join
           - ","
@@ -378,12 +411,35 @@ Resources:
         EnvironmentName: !Ref EnvironmentName
   LightrailLogstash:
     Type: AWS::CloudFormation::Stack
-    Condition: EnvIsDevAndRegionIsUSWest2
+    Condition: RegionIsUSWest2
     Properties:
       TemplateURL: ./modules/logstash.yaml
       Parameters:
         EnvironmentName: !Ref EnvironmentName
         NonEmergencyAlertsSnsArn: !GetAtt LightrailAlertChannels.Outputs.NonEmergencySNSArn
+        GroupsToGrantDeployAccess: !GetAtt Groups.Outputs.DevelopersGroupName
+        AccountsToGrantKibanaFullAccess: !If
+          - EnvIsDev
+          - !If
+            - StagingAccountIdProvided
+            - !Ref StagingAccountId
+            - !Ref "AWS::NoValue"
+          - !Ref "AWS::NoValue"
+        AccountsToGrantEcrReadAccess: !Join
+          - ","
+          -
+            - !If
+              - ProductionAccountIdProvided
+              - !Ref ProductionAccountId
+              - !Ref AWS::NoValue
+            - !If
+              - StagingAccountIdProvided
+              - !Ref StagingAccountId
+              - !Ref AWS::NoValue
+            - !If
+              - DevAccountIdProvided
+              - !Ref DevAccountId
+              - !Ref AWS::NoValue
   LightrailDatadog:
     Type: AWS::CloudFormation::Stack
     Condition: EnvIsDevAndRegionIsUSWest2
@@ -423,8 +479,7 @@ Resources:
         RdsInstanceClass: db.t2.small
         RdsInstanceAllocation: 100
         RdsMultiAZ: false
-        RdsSnapshotId:
-          !FindInMap [Services, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RdsSnapshotId]
+        RdsSnapshotId: !FindInMap [Services, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RdsSnapshotId]
         VpcRdsSubnetIds: !GetAtt LightrailVPC.Outputs.RdsSubnetIds
         VpcHostedZoneId: !GetAtt LightrailVPC.Outputs.VpcHostedZoneId
         VpcRdsSecurityGroupIds: !GetAtt LightrailVPC.Outputs.RdsSecurityGroupId
@@ -462,7 +517,7 @@ Resources:
             "SecureConfigBucket": "${LightrailSecureConfig.Outputs.BucketName}",
             "SecureConfigKMSArn": "${LightrailSecureConfig.Outputs.EncryptionKeyArn}"
           }
-        GitHubBranchDest: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CredentialsDestinationBranch]
+        GitHubBranchDest: !FindInMap [CredentialsRevocation, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], GitHubBranchDest]
         GitHubOAuthToken: !Ref GitHubOAuthToken
         CodeBuildImageNodeSSH: !GetAtt CIResources.Outputs.CodebuildImageNodeSSH
         CiKeysAccessRoleArn: !GetAtt CIResources.Outputs.KeysAccessRoleArn
@@ -470,7 +525,6 @@ Resources:
         ProjectName: !Sub "${AWS::StackName}-Credentials"
   LightrailSimpleRollup:
     Type: AWS::CloudFormation::Stack
-    Condition: RegionIsUSWest2
     Properties:
       TemplateURL: https://raw.githubusercontent.com/Giftbit/giftbit-simple-rollup/86d30a1/infrastructure/ci.yaml
       Parameters:
@@ -503,7 +557,6 @@ Resources:
           Value: SimpleRollup
   LightrailCardsSearch:
     Type: AWS::CloudFormation::Stack
-    Condition: RegionIsUSWest2
     Properties:
       TemplateURL: https://raw.githubusercontent.com/Giftbit/giftbit-cards-search/2271464/infrastructure/ci.yaml
       Parameters:
@@ -543,9 +596,8 @@ Resources:
           Value: CardsSearch
   LightrailKvs:
     Type: AWS::CloudFormation::Stack
-    Condition: RegionIsUSWest2
     Properties:
-      TemplateURL: https://raw.githubusercontent.com/Giftbit/giftbit-kvs/8e5c81b/infrastructure/ci.yaml
+      TemplateURL: https://raw.githubusercontent.com/Giftbit/giftbit-kvs/fcc0c03/infrastructure/ci.yaml
       Parameters:
         ProjectParameterOverrides: !Sub
           - >
@@ -652,21 +704,42 @@ Resources:
     Version: 1.0
     Properties:
       ServiceToken: !GetAtt RoleLookupLambda.Arn
-      RoleName: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CredentialsRevocationCheckRoleName]
+      RoleName: !FindInMap [CredentialsRevocation, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
   ServicesRoleId:
     Type: AWS::CloudFormation::CustomResource
     Condition: ServicesRoleNameSet
     Version: 1.0
     Properties:
       ServiceToken: !GetAtt RoleLookupLambda.Arn
-      RoleName: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", ServicesRoleName]
+      RoleName: !FindInMap [Services, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
   BatchRoleId:
     Type: AWS::CloudFormation::CustomResource
     Condition: BatchRoleNameSet
     Version: 1.0
     Properties:
       ServiceToken: !GetAtt RoleLookupLambda.Arn
-      RoleName: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", BatchRoleName]
+      RoleName: !FindInMap [Batch, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
+  SimpleRollupRoleId:
+    Type: AWS::CloudFormation::CustomResource
+    Condition: SimpleRollupRoleNameSet
+    Version: 1.0
+    Properties:
+      ServiceToken: !GetAtt RoleLookupLambda.Arn
+      RoleName: !FindInMap [SimpleRollup, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
+  CardsSearchRoleId:
+    Type: AWS::CloudFormation::CustomResource
+    Condition: CardsSearchRoleNameSet
+    Version: 1.0
+    Properties:
+      ServiceToken: !GetAtt RoleLookupLambda.Arn
+      RoleName: !FindInMap [CardsSearch, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
+  KvsRoleId:
+    Type: AWS::CloudFormation::CustomResource
+    Condition: KvsRoleNameSet
+    Version: 1.0
+    Properties:
+      ServiceToken: !GetAtt RoleLookupLambda.Arn
+      RoleName: !FindInMap [Kvs, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
 
 
 Outputs:
