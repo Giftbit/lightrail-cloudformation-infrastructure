@@ -9,6 +9,9 @@ Parameters:
       - Dev
       - Staging
       - Production
+  ParentStackName:
+    Type: String
+    Description: The Name of the parent stack. This is normally dev, staging or production.
   ConfigurationBucketArn:
     Type: String
     Description: The ARN of the Configuration Bucket
@@ -84,20 +87,14 @@ Parameters:
 
 Mappings:
   Dev:
-    EnvName:
-      Lowercase: dev
     us-west-2:
       EcrRepoOverride: ""  # Intentionally left blank, required but should not be used
       EcrRepoArnOverride: ""  # Intentionally left blank, required but should not be used
   Staging:
-    EnvName:
-      Lowercase: staging
     us-west-2:
       EcrRepoOverride: "757264843183.dkr.ecr.us-west-2.amazonaws.com/dev-l-ecrre-1flkl8cn2yhjp"
       EcrRepoArnOverride: "arn:aws:ecr:us-west-2:757264843183:repository/dev-l-ecrre-1flkl8cn2yhjp"
   Production:
-    EnvName:
-      Lowercase: production
     us-west-2:
       EcrRepoOverride: "757264843183.dkr.ecr.us-west-2.amazonaws.com/dev-l-ecrre-1flkl8cn2yhjp"
       EcrRepoArnOverride: "arn:aws:ecr:us-west-2:757264843183:repository/dev-l-ecrre-1flkl8cn2yhjp"
@@ -304,10 +301,7 @@ Resources:
                   - cloudformation:DeleteStack
                   - cloudformation:DescribeChangeSet
                 Resource:
-                  - !Sub
-                    - "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${EnvNameLowercase}-Services/*"
-                    -
-                      EnvNameLowercase: !FindInMap [!Ref EnvironmentName, EnvName, Lowercase]
+                  - !Sub "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${ParentStackName}-Services/*"
               -
                 Effect: Allow
                 Action:
@@ -331,10 +325,7 @@ Resources:
                 Action:
                   - cloudformation:DescribeStackResource
                 Resource:
-                  - !Sub
-                    - "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${EnvNameLowercase}/*"
-                    -
-                      EnvNameLowercase: !FindInMap [!Ref EnvironmentName, EnvName, Lowercase]
+                  - !Sub "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${ParentStackName}/*"
               -
                 Effect: Allow
                 Action:

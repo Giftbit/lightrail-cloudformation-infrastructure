@@ -496,6 +496,7 @@ Resources:
       TemplateURL: ./modules/services-service.yaml
       Parameters:
         EnvironmentName: !Ref EnvironmentName
+        ParentStackName: !Ref "AWS::StackName"
         ConfigurationBucketArn: !GetAtt LightrailSecureConfig.Outputs.BucketArn
         ConfigurationBucketKeyArn: !GetAtt LightrailSecureConfig.Outputs.EncryptionKeyArn
         SecureDownloadBucketArn: !GetAtt LightrailSecureDownload.Outputs.BucketArn
@@ -537,13 +538,30 @@ Resources:
       TemplateURL: ./modules/batch-service.yaml
       Parameters:
         EnvironmentName: !Ref EnvironmentName
+        ParentStackName: !Ref "AWS::StackName"
         ConfigurationBucketArn: !GetAtt LightrailSecureConfig.Outputs.BucketArn
         ConfigurationBucketKeyArn: !GetAtt LightrailSecureConfig.Outputs.EncryptionKeyArn
         SecureDownloadBucketArn: !GetAtt LightrailSecureDownload.Outputs.BucketArn
         SecureDownloadBucketKeyArn: !GetAtt LightrailSecureDownload.Outputs.EncryptionKeyArn
-        SesDomainArns: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", SesDomainArns]
+        EmailDomainName: !FindInMap [Common, !Ref EnvironmentName, DomainName]
         KinesisStreamArn: !GetAtt LightrailEventStream.Outputs.KinesisStreamArn
-        RemoteECRRepositoryArn: ""
+        AccountsToGrantEcrReadAccess: !Join
+          - ","
+          -
+            - !If
+              - ProductionAccountIdProvided
+              - !Ref ProductionAccountId
+              - !Ref AWS::NoValue
+            - !If
+              - StagingAccountIdProvided
+              - !Ref StagingAccountId
+              - !Ref AWS::NoValue
+            - !If
+              - DevAccountIdProvided
+              - !Ref DevAccountId
+              - !Ref AWS::NoValue
+        GroupsToGrantDeployAccess: !GetAtt Groups.Outputs.DevelopersGroupName
+        LoadBalancingServiceRoleArn: !GetAtt LightrailLoadBalancer.Outputs.EcsLoadBalancingServiceRoleArn
       Tags:
         -
           Key: Service
