@@ -62,7 +62,7 @@ Mappings:
     Staging:
       DomainName: lightrailstaging.net
     Production:
-      DomainName: lightrail.com
+      DomainName: productiontest.lightrail.com
   CloudFront:
     Dev:
       ACMCertificateArn: arn:aws:acm:us-east-1:757264843183:certificate/47732fe5-490c-4071-bf69-27d87d71ac64
