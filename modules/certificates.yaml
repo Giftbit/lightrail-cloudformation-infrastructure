@@ -2,65 +2,25 @@ AWSTemplateFormatVersion: "2010-09-09"
 Description: "Lightrail Certificates"
 
 Parameters:
-  EnvironmentName:
+  BaseDomain:
     Type: String
-    Description: The Name of the Environment
-    AllowedValues:
-      - Dev
-      - Staging
-      - Production
-
-Mappings:
-  CertificateDomains:
-    Dev:
-      Primary: dev.lightrail.com
-      Additional: devapi.lightrail.com
-    Staging:
-      Primary: staging.lightrail.com
-      Additional: stagingapi.lightrail.com
-    Production:
-      Primary: lightrail.com
-      Additional: www.lightrail.com,api.lightrail.com
-
-Conditions:
-  EnvIsDev: !Equals [!Ref EnvironmentName, Dev]
-  EnvIsStaging: !Equals [!Ref EnvironmentName, Staging]
-  EnvIsProduction: !Equals [!Ref EnvironmentName, Production]
+    Description: The Base Domain Name that you want to use
 
 Resources:
   Certificate:
     Type: AWS::CertificateManager::Certificate
     Properties:
-      DomainName: !FindInMap [CertificateDomains, !Ref EnvironmentName, Primary]
-      SubjectAlternativeNames: !Split [",", !FindInMap [CertificateDomains, !Ref EnvironmentName, Additional]]
-      DomainValidationOptions: !If
-        - EnvIsDev
+      DomainName: !Ref BaseDomain
+      SubjectAlternativeNames:
+        - !Sub "www.${BaseDomain}"
+        - !Sub "api.${BaseDomain}"
+      DomainValidationOptions:
         -
-          -
-            DomainName: dev.lightrail.com
-            ValidationDomain: lightrail.com
-          -
-            DomainName: devapi.lightrail.com
-            ValidationDomain: lightrail.com
-        - !If
-          - EnvIsStaging
-          -
-            -
-              DomainName: staging.lightrail.com
-              ValidationDomain: lightrail.com
-            -
-              DomainName: stagingapi.lightrail.com
-              ValidationDomain: lightrail.com
-          - !If
-            - EnvIsProduction
-            -
-              -
-                DomainName: www.lightrail.com
-                ValidationDomain: lightrail.com
-              -
-                DomainName: api.lightrail.com
-                ValidationDomain: lightrail.com
-            - !Ref "AWS::NoValue"
+          DomainName: !Sub "www.${BaseDomain}"
+          ValidationDomain: !Ref BaseDomain
+        -
+          DomainName: !Sub "api.${BaseDomain}"
+          ValidationDomain: !Ref BaseDomain
 
 Outputs:
   CertificateArn:

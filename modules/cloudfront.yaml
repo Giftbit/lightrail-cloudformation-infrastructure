@@ -12,8 +12,8 @@ Metadata:
         Label:
           default: Domains
         Parameters:
-          - AppAliases
-          - ApiAliases
+          - BaseDomainName
+          - HostedZoneId
       -
         Label:
           default: Price Class
@@ -41,12 +41,14 @@ Parameters:
       - Dev
       - Staging
       - Production
-  AppAliases:
+  BaseDomainName:
     Type: String
-    Description: Enter the App domains that this CloudFront distribution should respond for
-  ApiAliases:
+    Description: Please enter the Base domain that you want the CloudFormation domains to be subdomains of
+    Default: ""
+  HostedZoneId:
     Type: String
-    Description: Enter the API domains that this CloudFront distribution should respond for
+    Description: Please enter the Hosted Zone ID for the base domain.
+    Default: ""
   PriceClass:
     Type: String
     Description: Please Select your Price Class
@@ -79,17 +81,27 @@ Parameters:
     Type: String
     Description: Enter the domain that should handle the Batch requests
 Conditions:
-  AppAliasSet: !Not [!Equals [!Ref AppAliases, ""]]
-  ApiAliasSet: !Not [!Equals [!Ref ApiAliases, ""]]
+  BaseDomainNameSet: !Not [!Equals [!Ref BaseDomainName, ""]]
   ViewerCertificateArnSet: !Not [!Equals [!Ref ViewerCertificateArn, ""]]
   ViewerCertificateArnNotSet: !Equals [!Ref ViewerCertificateArn, ""]
   ReactEndpointSet: !Not [!Equals [!Ref ReactEndpoint, ""]]
 Resources:
+  AppZoneRecord:
+    Type: AWS::Route53::RecordSet
+    Condition: BaseDomainNameSet
+    Properties:
+      HostedZoneId: !Ref HostedZoneId
+      Name: !Sub "www.${BaseDomainName}."
+      Type: CNAME
+      TTL: 300
+      ResourceRecords:
+        - !GetAtt AppDistribution.DomainName
   AppDistribution:
     Type: "AWS::CloudFront::Distribution"
     Properties:
       DistributionConfig:
-        Aliases: !If [AppAliasSet, !Split [",", !Ref AppAliases], !Ref "AWS::NoValue"]
+        Aliases:
+          - !If [BaseDomainNameSet, !Sub "www.${BaseDomainName}", !Ref "AWS::NoValue"]
         Enabled: true
         Comment: !Sub "Managed with CloudFormation Stack ${AWS::StackName}"
         PriceClass: !Ref PriceClass
@@ -459,11 +471,22 @@ Resources:
             QueryString: true
             Cookies:
               Forward: none
+  ApiZoneRecord:
+    Type: AWS::Route53::RecordSet
+    Condition: BaseDomainNameSet
+    Properties:
+      HostedZoneId: !Ref HostedZoneId
+      Name: !Sub "api.${BaseDomainName}."
+      Type: CNAME
+      TTL: 300
+      ResourceRecords:
+        - !GetAtt ApiDistribution.DomainName
   ApiDistribution:
-    Type: "AWS::CloudFront::Distribution"
+    Type: AWS::CloudFront::Distribution
     Properties:
       DistributionConfig:
-        Aliases: !If [ApiAliasSet, !Split [",", !Ref ApiAliases], !Ref "AWS::NoValue"]
+        Aliases:
+          - !If [BaseDomainNameSet, !Sub "api.${BaseDomainName}", !Ref "AWS::NoValue"]
         Enabled: true
         Comment: !Sub "Managed with CloudFormation Stack ${AWS::StackName}"
         PriceClass: !Ref PriceClass

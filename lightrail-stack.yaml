@@ -40,30 +40,36 @@ Mappings:
     us-west-2:
       CombinedEnvRegion: Dev-us-west-2
       ReactBuildArtifactBucketOverride: ""
-      AppAliases: ""
-      ApiAliases: ""
       SesDomainArns: ""
-      CloudFormationACMCertificateArn: arn:aws:acm:us-east-1:757264843183:certificate/5ac83a3b-1f05-4756-bd3a-3a4705846b53
   Staging:
     us-west-2:
       CombinedEnvRegion: Staging-us-west-2
       ReactBuildArtifactBucketOverride: dev-lightrailreact-1xyn4dsi4a-buildartifactbucket-17n7679jwqtyw
-      AppAliases: ""
-      ApiAliases: ""
       SesDomainArns: ""
       CloudFormationACMCertificateArn: ""
   Production:
     us-west-2:
       CombinedEnvRegion: Production-us-west-2
       ReactBuildArtifactBucketOverride: dev-lightrailreact-1xyn4dsi4a-buildartifactbucket-17n7679jwqtyw
-      AppAliases: ""
-      ApiAliases: ""
       SesDomainArns: ""
-      CloudFormationACMCertificateArn: ""
   SecureConfig:
     FileNames:
       JWT: authentication_badge_key.json
       DataDog: datadog.json
+  Common:
+    Dev:
+      DomainName: lightraildev.net
+    Staging:
+      DomainName: lightrailstaging.net
+    Production:
+      DomainName: lightrail.com
+  CloudFront:
+    Dev:
+      ACMCertificateArn: arn:aws:acm:us-east-1:757264843183:certificate/5ac83a3b-1f05-4756-bd3a-3a4705846b53
+    Staging:
+      ACMCertificateArn: arn:aws:acm:us-east-1:939876203001:certificate/85077847-3f38-40be-bfbc-6a05e027a638
+    Production:
+      ACMCertificateArn: arn:aws:acm:us-east-1:212888042843:certificate/1a6c1e31-d5ba-408f-9cf4-c748cbdb12b7
   EcsCluster:
     Dev-us-west-2:
       InstanceType: t2.small
@@ -199,26 +205,34 @@ Resources:
     Condition: RegionIsUSWest2
     Properties:
       TemplateURL: ./modules/alert-sns.yaml
+  LightrailDns:
+    Type: AWS::CloudFormation::Stack
+    Condition: RegionIsUSWest2
+    Properties:
+      TemplateURL: ./modules/dns-zone.yaml
+      Parameters:
+        DomainName: !FindInMap [Common, !Ref EnvironmentName, DomainName]
   LightrailCertificates:
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: ./modules/certificates.yaml
       Parameters:
-        EnvironmentName: !Ref EnvironmentName
+        BaseDomain: !FindInMap [Common, !Ref EnvironmentName, DomainName]
   LightrailCloudfront:
     Type: AWS::CloudFormation::Stack
+    Condition: RegionIsUSWest2
     Properties:
       TemplateURL: ./modules/cloudfront.yaml
       Parameters:
         EnvironmentName: !Ref EnvironmentName
-        AppAliases: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", AppAliases]
-        ApiAliases: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", ApiAliases]
+        BaseDomainName: !FindInMap [Common, !Ref EnvironmentName, DomainName]
+        HostedZoneId: !GetAtt LightrailDns.Outputs.HostedZoneId
         ViewerCertificateArn: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CloudFormationACMCertificateArn]
         WebsiteEndpoint: !GetAtt LightrailWebsite.Outputs.Domain
         ReactEndpoint: !GetAtt LightrailReact.Outputs.ReactDomainName
-        ServicesEndpoint: "preprodhttpservices.giftbit.com"
+        ServicesEndpoint: !GetAtt LightrailLoadBalancer.Outputs.DNSName
         StatsEndpoint: "0dp3zkwhxe.execute-api.us-west-2.amazonaws.com"
-        BatchEndpoint: "preprodbatchservice.giftbit.com"
+        BatchEndpoint: !GetAtt LightrailLoadBalancer.Outputs.DNSName
         CardsSearchEndpoint: "9te30f224k.execute-api.us-west-2.amazonaws.com"
   LightrailWebsite:
     Type: AWS::CloudFormation::Stack
@@ -476,7 +490,7 @@ Resources:
         ConfigurationBucketKeyArn: !GetAtt LightrailSecureConfig.Outputs.EncryptionKeyArn
         SecureDownloadBucketArn: !GetAtt LightrailSecureDownload.Outputs.BucketArn
         SecureDownloadBucketKeyArn: !GetAtt LightrailSecureDownload.Outputs.EncryptionKeyArn
-        SesDomainArns: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", SesDomainArns]
+        EmailDomainName: !FindInMap [Common, !Ref EnvironmentName, DomainName]
         KinesisStreamArn: !GetAtt LightrailEventStream.Outputs.KinesisStreamArn
         AccountsToGrantEcrReadAccess: !Join
           - ","
@@ -543,6 +557,7 @@ Resources:
         ProjectName: !Sub "${AWS::StackName}-Credentials"
   LightrailSimpleRollup:
     Type: AWS::CloudFormation::Stack
+    Condition: RegionIsUSWest2
     Properties:
       TemplateURL: https://raw.githubusercontent.com/Giftbit/giftbit-simple-rollup/86d30a1/infrastructure/ci.yaml
       Parameters:
@@ -575,6 +590,7 @@ Resources:
           Value: SimpleRollup
   LightrailCardsSearch:
     Type: AWS::CloudFormation::Stack
+    Condition: RegionIsUSWest2
     Properties:
       TemplateURL: https://raw.githubusercontent.com/Giftbit/giftbit-cards-search/2271464/infrastructure/ci.yaml
       Parameters:
@@ -614,6 +630,7 @@ Resources:
           Value: CardsSearch
   LightrailKvs:
     Type: AWS::CloudFormation::Stack
+    Condition: RegionIsUSWest2
     Properties:
       TemplateURL: https://raw.githubusercontent.com/Giftbit/giftbit-kvs/fcc0c03/infrastructure/ci.yaml
       Parameters:
@@ -665,6 +682,7 @@ Resources:
         GroupsToGrantImageReadWriteAccess: !GetAtt Groups.Outputs.DevelopersGroupName
   SSM:
     Type: AWS::CloudFormation::Stack
+    Condition: RegionIsUSWest2
     Properties:
       TemplateURL: ./modules/ssm.yaml
 
@@ -763,16 +781,13 @@ Resources:
 Outputs:
   WebsiteBucket:
     Description: The Website bucket for the Lightrail website
+    Condition: RegionIsUSWest2
     Value: !GetAtt LightrailWebsite.Outputs.Bucket
   ReactBucketName:
     Description: The React bucket for the Lightrail React App
+    Condition: RegionIsUSWest2
     Value: !GetAtt LightrailReact.Outputs.ReactBucketName
   ReactArtifactBucketName:
     Description: The Bucket to put the React Build Artifacts
+    Condition: RegionIsUSWest2
     Value: !GetAtt LightrailReact.Outputs.ArtifactBucketName
-  AppDomain:
-    Description: The Domain for the App
-    Value: !GetAtt LightrailCloudfront.Outputs.AppDistributionDomain
-  ApiDomain:
-    Description: The Domain for the API
-    Value: !GetAtt LightrailCloudfront.Outputs.ApiDistributionDomain
