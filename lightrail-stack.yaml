@@ -62,7 +62,7 @@ Mappings:
     Staging:
       DomainName: lightrailstaging.net
     Production:
-      DomainName: lightrail.com
+      DomainName: productiontest.lightrail.com
   CloudFront:
     Dev:
       ACMCertificateArn: arn:aws:acm:us-east-1:757264843183:certificate/47732fe5-490c-4071-bf69-27d87d71ac64
@@ -192,6 +192,7 @@ Conditions:
   EnvIsDev: !Equals [!Ref EnvironmentName, Dev]
   EnvIsDevAndRegionIsUSWest2: !And [{Condition: EnvIsDev}, {Condition: RegionIsUSWest2}]
   EnvIsNotDevAndRegionIsUSWest2: !And [!Not [{Condition: EnvIsDev}], {Condition: RegionIsUSWest2}]
+  ShouldConfigureCloudfrontAliases: !Not [!Equals [!Ref EnvironmentName, Production]]
   ProductionAccountIdProvided: !Not [!Equals [!Ref ProductionAccountId, ""]]
   StagingAccountIdProvided: !Not [!Equals [!Ref StagingAccountId, ""]]
   DevAccountIdProvided: !Not [!Equals [!Ref DevAccountId, ""]]
@@ -234,7 +235,7 @@ Resources:
       TemplateURL: ./modules/cloudfront.yaml
       Parameters:
         EnvironmentName: !Ref EnvironmentName
-        BaseDomainName: !FindInMap [Common, !Ref EnvironmentName, DomainName]
+        BaseDomainName: !If [ShouldConfigureCloudfrontAliases, !FindInMap [Common, !Ref EnvironmentName, DomainName], !Ref "AWS::NoValue"]
         HostedZoneId: !GetAtt LightrailDns.Outputs.HostedZoneId
         ViewerCertificateArn: !FindInMap [CloudFront, !Ref EnvironmentName, ACMCertificateArn]
         WebsiteEndpoint: !GetAtt LightrailWebsite.Outputs.Domain
@@ -256,7 +257,6 @@ Resources:
           -
             - !GetAtt Groups.Outputs.MarkettingGroupName
             - !GetAtt Groups.Outputs.DevelopersGroupName
-
   LightrailReact:
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2
