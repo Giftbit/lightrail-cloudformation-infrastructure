@@ -65,7 +65,7 @@ Mappings:
       DomainName: lightrail.com
   CloudFront:
     Dev:
-      ACMCertificateArn: arn:aws:acm:us-east-1:757264843183:certificate/5ac83a3b-1f05-4756-bd3a-3a4705846b53
+      ACMCertificateArn: arn:aws:acm:us-east-1:757264843183:certificate/47732fe5-490c-4071-bf69-27d87d71ac64
     Staging:
       ACMCertificateArn: arn:aws:acm:us-east-1:939876203001:certificate/85077847-3f38-40be-bfbc-6a05e027a638
     Production:
@@ -227,7 +227,7 @@ Resources:
         EnvironmentName: !Ref EnvironmentName
         BaseDomainName: !FindInMap [Common, !Ref EnvironmentName, DomainName]
         HostedZoneId: !GetAtt LightrailDns.Outputs.HostedZoneId
-        ViewerCertificateArn: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CloudFormationACMCertificateArn]
+        ViewerCertificateArn: !FindInMap [CloudFront, !Ref EnvironmentName, ACMCertificateArn]
         WebsiteEndpoint: !GetAtt LightrailWebsite.Outputs.Domain
         ReactEndpoint: !GetAtt LightrailReact.Outputs.ReactDomainName
         ServicesEndpoint: !GetAtt LightrailLoadBalancer.Outputs.DNSName
