@@ -128,16 +128,19 @@ Mappings:
       GitHubBranchDest: ""
       Capacity: low
       RoleName: dev-SimpleRollup-RestFunctionRole-IP96FN2KA091
+      Endpoint: 9d3hvwx00d.execute-api.us-west-2.amazonaws.com
     Staging-us-west-2:
       GitHubBranch: staging
       GitHubBranchDest: ""
       Capacity: low
       RoleName: staging-SimpleRollup-RestFunctionRole-1W56VYVDTDLP1
+      Endpoint: ksro00e1df.execute-api.us-west-2.amazonaws.com
     Production-us-west-2:
       GitHubBranch: master
       GitHubBranchDest: ""
       Capacity: high
       RoleName: production-SimpleRollup-RestFunctionRole-1WHS2OKB6RF1L
+      Endpoint: cky1xydze9.execute-api.us-west-2.amazonaws.com
   CardsSearch:
     Dev-us-west-2:
       GitHubBranch: dev-ci
@@ -146,6 +149,7 @@ Mappings:
       ElasticSearchInstanceType: t2.small.elasticsearch
       ElasticSearchMasterInstanceType: none
       RoleName: dev-CardsSearch-RestFunctionRole-1WFJDWKX4AFSD
+      Endpoint: hon8eb7zgg.execute-api.us-west-2.amazonaws.com
     Staging-us-west-2:
       GitHubBranch: staging
       GitHubBranchDest: ""
@@ -153,6 +157,7 @@ Mappings:
       ElasticSearchInstanceType: t2.small.elasticsearch
       ElasticSearchMasterInstanceType: none
       RoleName: staging-CardsSearch-RestFunctionRole-6C20E1OYPWU2
+      Endpoint: o6fpy79fe1.execute-api.us-west-2.amazonaws.com
     Production-us-west-2:
       GitHubBranch: master
       GitHubBranchDest: ""
@@ -160,22 +165,26 @@ Mappings:
       ElasticSearchInstanceType: t2.small.elasticsearch
       ElasticSearchMasterInstanceType: t2.small.elasticsearch
       RoleName: production-CardsSearch-RestFunctionRole-42IZL2PQ2ADC
+      Endpoint: o0o62rx9nk.execute-api.us-west-2.amazonaws.com
   Kvs:
     Dev-us-west-2:
       GitHubBranch: dev-ci
       GitHubBranchDest: ""
       Capacity: low
       RoleName: dev-Kvs-KvsFunctionRole-RLFP80MZ8Z16
+      Endpoint: wowqnrwyy0.execute-api.us-west-2.amazonaws.com
     Staging-us-west-2:
       GitHubBranch: staging
       GitHubBranchDest: ""
       Capacity: low
       RoleName: staging-Kvs-KvsFunctionRole-16TX23DYH1DQ
+      Endpoint: 1tnp8xblpd.execute-api.us-west-2.amazonaws.com
     Production-us-west-2:
       GitHubBranch: master
       GitHubBranchDest: ""
       Capacity: high
       RoleName: production-Kvs-KvsFunctionRole-35C9CNH786LQ
+      Endpoint: hl0fjfzg5b.execute-api.us-west-2.amazonaws.com
 
 Conditions:
   RegionIsUSWest2: !Equals [!Ref "AWS::Region", us-west-2]
@@ -231,9 +240,10 @@ Resources:
         WebsiteEndpoint: !GetAtt LightrailWebsite.Outputs.Domain
         ReactEndpoint: !GetAtt LightrailReact.Outputs.ReactDomainName
         ServicesEndpoint: !GetAtt LightrailLoadBalancer.Outputs.DNSName
-        StatsEndpoint: "0dp3zkwhxe.execute-api.us-west-2.amazonaws.com"
+        StatsEndpoint: !FindInMap [SimpleRollup, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], Endpoint]
         BatchEndpoint: !GetAtt LightrailLoadBalancer.Outputs.DNSName
-        CardsSearchEndpoint: "9te30f224k.execute-api.us-west-2.amazonaws.com"
+        CardsSearchEndpoint: !FindInMap [CardsSearch, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], Endpoint]
+        KvsEndpoint: !FindInMap [Kvs, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], Endpoint]
   LightrailWebsite:
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2

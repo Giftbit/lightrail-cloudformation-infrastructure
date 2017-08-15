@@ -77,6 +77,9 @@ Parameters:
   CardsSearchEndpoint:
     Type: String
     Description: Enter the domain that should handle the Cards Search requests
+  KvsEndpoint:
+    Type: String
+    Description: Enter the domain that should handle the KVS requests
   BatchEndpoint:
     Type: String
     Description: Enter the domain that should handle the Batch requests
@@ -169,6 +172,17 @@ Resources:
           -
             DomainName: !Ref CardsSearchEndpoint
             Id: CardsSearchEndpointOrigin
+            OriginPath: /Prod
+            CustomOriginConfig:
+              OriginSSLProtocols:
+                - TLSv1.1
+                - TLSv1.2
+              OriginProtocolPolicy: https-only
+              HTTPSPort: 443
+              HTTPPort: 80
+          -
+            DomainName: !Ref KvsEndpoint
+            Id: KvsEndpointOrigin
             OriginPath: /Prod
             CustomOriginConfig:
               OriginSSLProtocols:
@@ -271,6 +285,66 @@ Resources:
           -
             PathPattern: "/v1/search/contacts/*"
             TargetOriginId: CardsSearchEndpointOrigin
+            ViewerProtocolPolicy: "redirect-to-https"
+            Compress: false
+            MinTTL: 0
+            MaxTTL: 31536000
+            DefaultTTL: 86400
+            AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+              - PUT
+              - POST
+              - PATCH
+              - DELETE
+            CachedMethods:
+              - GET
+              - HEAD
+            ForwardedValues:
+              QueryString: true
+              Headers:
+                - Authorization
+                - Content-Length
+                - Content-Type
+                - Content-MD5
+                - Range
+                - X-Requested-With
+              Cookies:
+                Forward: all
+          -
+            PathPattern: "/v1/storage"
+            TargetOriginId: KvsEndpointOrigin
+            ViewerProtocolPolicy: "redirect-to-https"
+            Compress: false
+            MinTTL: 0
+            MaxTTL: 31536000
+            DefaultTTL: 86400
+            AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+              - PUT
+              - POST
+              - PATCH
+              - DELETE
+            CachedMethods:
+              - GET
+              - HEAD
+            ForwardedValues:
+              QueryString: true
+              Headers:
+                - Authorization
+                - Content-Length
+                - Content-Type
+                - Content-MD5
+                - Range
+                - X-Requested-With
+              Cookies:
+                Forward: all
+          -
+            PathPattern: "/v1/storage/*"
+            TargetOriginId: KvsEndpointOrigin
             ViewerProtocolPolicy: "redirect-to-https"
             Compress: false
             MinTTL: 0
@@ -549,6 +623,17 @@ Resources:
               OriginProtocolPolicy: https-only
               HTTPSPort: 443
               HTTPPort: 80
+          -
+            DomainName: !Ref KvsEndpoint
+            Id: KvsEndpointOrigin
+            OriginPath: /Prod
+            CustomOriginConfig:
+              OriginSSLProtocols:
+                - TLSv1.1
+                - TLSv1.2
+              OriginProtocolPolicy: https-only
+              HTTPSPort: 443
+              HTTPPort: 80
         CacheBehaviors:
           -
             PathPattern: "/v1/search/cards"
@@ -643,6 +728,66 @@ Resources:
           -
             PathPattern: "/v1/search/contacts/*"
             TargetOriginId: CardsSearchEndpointOrigin
+            ViewerProtocolPolicy: "redirect-to-https"
+            Compress: false
+            MinTTL: 0
+            MaxTTL: 31536000
+            DefaultTTL: 86400
+            AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+              - PUT
+              - POST
+              - PATCH
+              - DELETE
+            CachedMethods:
+              - GET
+              - HEAD
+            ForwardedValues:
+              QueryString: true
+              Headers:
+                - Authorization
+                - Content-Length
+                - Content-Type
+                - Content-MD5
+                - Range
+                - X-Requested-With
+              Cookies:
+                Forward: all
+          -
+            PathPattern: "/v1/storage"
+            TargetOriginId: KvsEndpointOrigin
+            ViewerProtocolPolicy: "redirect-to-https"
+            Compress: false
+            MinTTL: 0
+            MaxTTL: 31536000
+            DefaultTTL: 86400
+            AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+              - PUT
+              - POST
+              - PATCH
+              - DELETE
+            CachedMethods:
+              - GET
+              - HEAD
+            ForwardedValues:
+              QueryString: true
+              Headers:
+                - Authorization
+                - Content-Length
+                - Content-Type
+                - Content-MD5
+                - Range
+                - X-Requested-With
+              Cookies:
+                Forward: all
+          -
+            PathPattern: "/v1/storage/*"
+            TargetOriginId: KvsEndpointOrigin
             ViewerProtocolPolicy: "redirect-to-https"
             Compress: false
             MinTTL: 0
