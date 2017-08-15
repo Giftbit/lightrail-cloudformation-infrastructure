@@ -25,14 +25,18 @@ Parameters:
 Mappings:
   Dev:
     global:
+      # This External ID comes from Datadog's AWS Integrations Configuration
+      # https://app.datadoghq.com/account/settings#integrations/amazon_web_services
       AccessRoleExternalId: 309354d45e754706aebe1c1ca11cdfa6
     us-west-2:
-      EcrRepoOverride: ""  # Intentionally left blank, required but should not be used
-      EcrRepoArnOverride: ""  # Intentionally left blank, required but should not be used
+      EcrRepoOverride: ""  # Intentionally left blank, Dev will house the actual ECR repo
+      EcrRepoArnOverride: ""  # Intentionally left blank, Dev will house the actual ECR repo
   Staging:
     global:
       AccessRoleExternalId: 661edc0984c94b5dbfdecb5845cd999c
     us-west-2:
+      # Once you've build in whatever you consider to be the Dev Account, this can be found in the
+      # outputs of the LightrailDataDog substack. Staging And Production pull images from the Dev repo
       EcrRepoOverride: 757264843183.dkr.ecr.us-west-2.amazonaws.com/dev-l-ecrre-10nol5b818vc4
       EcrRepoArnOverride: arn:aws:ecr:us-west-2:757264843183:repository/dev-l-ecrre-10nol5b818vc4
   Production:
