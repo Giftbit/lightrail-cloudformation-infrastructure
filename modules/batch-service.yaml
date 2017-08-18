@@ -57,12 +57,12 @@ Mappings:
       EcrRepoArnOverride: ""  # Intentionally left blank, required but should not be used
   Staging:
     us-west-2:
-      EcrRepoOverride: "757264843183.dkr.ecr.us-west-2.amazonaws.com/dev-l-ecrre-ef88ql72c87t"
-      EcrRepoArnOverride: "arn:aws:ecr:us-west-2:757264843183:repository/dev-l-ecrre-ef88ql72c87t"
+      EcrRepoOverride: 757264843183.dkr.ecr.us-west-2.amazonaws.com/dev-l-ecrre-ef88ql72c87t
+      EcrRepoArnOverride: arn:aws:ecr:us-west-2:757264843183:repository/dev-l-ecrre-ef88ql72c87t
   Production:
     us-west-2:
-      EcrRepoOverride: "757264843183.dkr.ecr.us-west-2.amazonaws.com/dev-l-ecrre-ef88ql72c87t"
-      EcrRepoArnOverride: "arn:aws:ecr:us-west-2:757264843183:repository/dev-l-ecrre-ef88ql72c87t"
+      EcrRepoOverride: 757264843183.dkr.ecr.us-west-2.amazonaws.com/dev-l-ecrre-ef88ql72c87t
+      EcrRepoArnOverride: arn:aws:ecr:us-west-2:757264843183:repository/dev-l-ecrre-ef88ql72c87t
 
 Conditions:
   ShouldConfigureSes: !Not [!Equals [!Ref EmailDomainName, ""]]
@@ -172,7 +172,7 @@ Resources:
                   - dynamodb:PutItem
                   - dynamodb:UpdateItem
                 Resource:
-                  - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${BatchTaskTable}"
+                  - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${TaskTable}"
               -  # Queue Access
                 Effect: Allow
                 Action:
@@ -182,7 +182,7 @@ Resources:
                   - sqs:SendMessage
                 Resource:
                   - !GetAtt Queue.Arn
-  BatchTaskTable:
+  TaskTable:
     Type: AWS::DynamoDB::Table
     Properties:
       ProvisionedThroughput:
@@ -323,3 +323,9 @@ Outputs:
   DeploymentRoleArn:
     Description: The Arn of the Deployment Role
     Value: !GetAtt DeploymentRole.Arn
+  TaskTableName:
+    Description: The Name of the Batch DynamoDB Task Table
+    Value: !Ref TaskTable
+  QueueUrl:
+    Description: The URL for the SQS Queue
+    Value: !Ref Queue

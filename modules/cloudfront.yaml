@@ -948,6 +948,12 @@ Resources:
               Forward: none
 
 Outputs:
+  AppDomain:
+    Description: The FQDN of the App
+    Value: !Ref AppZoneRecord
+  ApiDomain:
+    Description: The FQDN of the Api
+    Value: !Ref ApiZoneRecord
   AppDistributionDomain:
     Description: The Domain for the Lightrail CloudFront Distribution
     Value: !GetAtt AppDistribution.DomainName

@@ -58,6 +58,69 @@ Resources:
           Type: forward
           TargetGroupArn: !Ref DefaultTargetGroup
 
+  # Batch Configuration
+  BatchTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Port: 80
+      Protocol: HTTP
+      VpcId: !Ref VpcId
+      HealthCheckPath: /v1/batch/healthCheck
+      HealthyThresholdCount: !If [EnvIsDev, 3, 5]
+      UnhealthyThresholdCount: 3
+      HealthCheckIntervalSeconds: 30
+      TargetGroupAttributes:
+        -
+          Key: deregistration_delay.timeout_seconds
+          Value: !If [EnvIsDev, 15, 60]
+      Tags:
+        -
+          Key: Service
+          Value: Batch
+  BatchListenerWildcard:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      Priority: 11
+      ListenerArn: !Ref Listener
+      Actions:
+        -
+          Type: forward
+          TargetGroupArn: !Ref BatchTargetGroup
+      Conditions:
+        -
+          Field: path-pattern
+          Values:
+            - /v1/batch/*
+  BatchListenerSlash:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      Priority: 12
+      ListenerArn: !Ref Listener
+      Actions:
+        -
+          Type: forward
+          TargetGroupArn: !Ref BatchTargetGroup
+      Conditions:
+        -
+          Field: path-pattern
+          Values:
+            - /v1/batch/
+  BatchListenerBare:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      Priority: 13
+      ListenerArn: !Ref Listener
+      Actions:
+        -
+          Type: forward
+          TargetGroupArn: !Ref BatchTargetGroup
+      Conditions:
+        -
+          Field: path-pattern
+          Values:
+            - /v1/batch
+
+  # Services Configuration
   ServicesTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
@@ -146,5 +209,7 @@ Outputs:
     Value: !GetAtt LoadBalancer.DNSName
   ServicesTargetGroupArn:
     Value: !Ref ServicesTargetGroup
+  BatchTargetGroupArn:
+    Value: !Ref BatchTargetGroup
   EcsLoadBalancingServiceRoleArn:
     Value: !GetAtt EcsLoadBalancingServiceRole.Arn

@@ -72,23 +72,23 @@ Mappings:
       ACMCertificateArn: arn:aws:acm:us-east-1:212888042843:certificate/1a6c1e31-d5ba-408f-9cf4-c748cbdb12b7
   EcsCluster:
     Dev-us-west-2:
-      InstanceType: t2.small
-      MinInstances: 1
-      MaxInstances: 3
+      InstanceType: t2.medium
+      MinInstances: 2
+      MaxInstances: 4
       SSHKeyName: LightrailDevECS
       ScaleUpRecurrence: "0 15 * * MON-FRI"
       ScaleDownRecurrence: "0 3 * * TUE-SAT"
     Staging-us-west-2:
-      InstanceType: t2.small
-      MinInstances: 1
-      MaxInstances: 2
+      InstanceType: t2.medium
+      MinInstances: 2
+      MaxInstances: 4
       SSHKeyName: LightrailStagingECS
       ScaleUpRecurrence: "0 15 * * MON-FRI"
       ScaleDownRecurrence: "0 3 * * TUE-SAT"
     Production-us-west-2:
-      InstanceType: t2.small
-      MinInstances: 1
-      MaxInstances: 2
+      InstanceType: t2.medium
+      MinInstances: 2
+      MaxInstances: 4
       SSHKeyName: LightrailProductionECS
       ScaleUpRecurrence: ""
       ScaleDownRecurrence: ""
@@ -345,6 +345,7 @@ Resources:
             - !GetAtt LightrailServices.Outputs.EcrRepoArn
             - !GetAtt LightrailLogstash.Outputs.EcrRepoArn
             - !GetAtt LightrailDatadog.Outputs.EcrRepoArn
+            - !GetAtt LightrailBatch.Outputs.EcrRepoArn
   LightrailLoadBalancer:
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2
@@ -805,8 +806,13 @@ Resources:
       ServiceToken: !GetAtt RoleLookupLambda.Arn
       RoleName: !FindInMap [Kvs, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
 
-
 Outputs:
+  AppDomain:
+    Description: The App Domain
+    Value: !GetAtt LightrailCloudfront.Outputs.AppDomain
+  ApiDomain:
+    Description: The API Domain
+    Value: !GetAtt LightrailCloudfront.Outputs.ApiDomain
   WebsiteBucket:
     Description: The Website bucket for the Lightrail website
     Condition: RegionIsUSWest2
