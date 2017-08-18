@@ -25,10 +25,9 @@ Parameters:
     Type: String
     Description: The ARN of the Secure Download Bucket Encryption Key
     AllowedPattern: arn:aws:kms:[a-z0-9-]+:\d{12}:key/[a-z0-9-]+
-  SesDomainArns:
+  EmailDomainName:
     Type: String
-    Description: Comma Separated list of SES Domain Arns for sending Emails
-    AllowedPattern: ((^|,)arn:aws:ses:[a-z0-9-]+:\\d{12}:identity\\/[a-z0-9._-]+)*
+    Description: The Domain name to use for Email. Should be set up with SES already.
     Default: ""
   KinesisStreamArn:
     Type: String
@@ -104,7 +103,7 @@ Mappings:
       EcrRepoArnOverride: "arn:aws:ecr:us-west-2:757264843183:repository/dev-l-ecrre-1flkl8cn2yhjp"
 
 Conditions:
-  ShouldConfigureSes: !Not [!Equals [!Ref SesDomainArns, ""]]
+  ShouldConfigureSes: !Not [!Equals [!Ref EmailDomainName, ""]]
   ShouldCreateECRRepository: !Equals [!Ref EnvironmentName, Dev]
   ShouldUseEcrRepoOverride: !Not [!Equals [!Ref EnvironmentName, Dev]]
   ShouldConfigureAccountECRAccess: !Not [!Equals [!Ref AccountsToGrantEcrReadAccess, ""]]
@@ -149,7 +148,7 @@ Resources:
                 - ecs-tasks.amazonaws.com
       Policies:
         -
-          PolicyName: BatchAccess
+          PolicyName: ServicesAccess
           PolicyDocument:
             Version: 2012-10-17
             Statement:
@@ -178,7 +177,7 @@ Resources:
                   Action:
                     - ses:SendEmail
                     - ses:SendRawEmail
-                  Resource: !Split [",", !Ref SesDomainArns]
+                  Resource: !Sub "arn:aws:ses:${AWS::Region}:${AWS::AccountId}:identity/${EmailDomainName}"
                 - !Ref "AWS::NoValue"
               -  # Kinesis Stream Producer Access
                 Effect: Allow

@@ -1,0 +1,21 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Lightrail DNS"
+
+Parameters:
+  DomainName:
+    Type: String
+    Description: The Domain Name for this Stack
+
+Resources:
+  Zone:
+    Type: AWS::Route53::HostedZone
+    Properties:
+      Name: !Ref DomainName
+      HostedZoneConfig:
+        Comment: !Sub "Hosted Zone for ${DomainName}"
+
+Outputs:
+  HostedZoneId:
+    Value: !Ref Zone
+  NameServers:
+    Value: !Join [",", !GetAtt Zone.NameServers]

@@ -50,18 +50,9 @@ elif [ "$COMMAND" = "deploy" ]; then
         exit 1
     fi
 
-    # You can find the default cf-template bucket using
-    # "aws s3api list-buckets --query 'Buckets[?starts_with(Name,`cf-template`)].Name' --output text"
-    if [ "$ACCOUNT" = "dev" ]; then
-        BUILD_ARTIFACT_BUCKET="cf-templates-hpbjab14shbt-us-west-2"
-    else
-        echo "No artifact bucket has been setup for this account yet."
-        exit 2
-    fi
-
     $SCRIPT_DIR/auto.sh package
     if [ $? -ne 0 ]; then
-        exit 3
+        exit 2
     fi
 
     echo "Executing aws cloudformation deploy..."
@@ -77,15 +68,26 @@ elif [ "$COMMAND" = "deploy" ]; then
     fi
 elif [ "$COMMAND" = "package" ]; then
 
+    REGION=$AWS_DEFAULT_REGION
+    if [ -z "$REGION" ]; then
+        REGION="$(aws configure get region)"
+        if [ -z "$REGION" ]; then
+            echo "We could not determine the region to package the resources into."
+            echo "You can set the region in your config using 'aws configure'"
+            echo "Or by setting the AWS_DEFAULT_REGION"
+            exit 1
+        fi
+    fi
+
     if [ -z "$BUILD_ARTIFACT_BUCKET" ]; then
         echo "The BUILD_ARTIFACT_BUCKET was not set."
         echo "Set it with 'export BUILD_ARTIFACT_BUCKET=\"<bucket_name>\"'"
         echo ""
         echo "Attempting to find a 'cf-template' bucket..."
-        BUILD_ARTIFACT_BUCKET="$(aws s3api list-buckets --query 'Buckets[?starts_with(Name,`cf-template`)].Name' --output text)"
+        BUILD_ARTIFACT_BUCKET="$(aws s3api list-buckets --query "Buckets[?starts_with(Name,\`cf-template\`) && ends_with(Name, \`$REGION\`)].Name" --output text)"
         if [ $? -ne 0 ]; then
             echo "Unable to find 'cf-template' bucket. Failing."
-            exit 1
+            exit 2
         fi
         echo "BUILD_ARTIFACT_BUCKET=$BUILD_ARTIFACT_BUCKET"
     fi
@@ -102,7 +104,7 @@ elif [ "$COMMAND" = "package" ]; then
     grep -E -r '^\s+TemplateURL:\s+https://raw.githubusercontent.com/' $SCRIPT_DIR/tmp | while read match; do
         if [ ! -e "$HOME/.github/token" ]; then
             echo "No GitHub token was found in '$HOME/.github/token'"
-            exit 2
+            exit 3
         fi
 
         [[ "$match" =~ $regex ]]
@@ -115,7 +117,7 @@ elif [ "$COMMAND" = "package" ]; then
         curl -f -H "Authorization: token $(cat $HOME/.github/token)" $url -o $local_file
         if [ $? -ne 0 ]; then
             echo "Failed to fetch '$url'. Check the url, and ensure your github access token is set in $HOME/.github/token"
-            exit 3
+            exit 4
         fi
 
         sed -i.bak "s,$url,$local_file,g" $file
@@ -131,7 +133,7 @@ elif [ "$COMMAND" = "package" ]; then
     aws cloudformation package --template-file $SCRIPT_DIR/tmp/lightrail-stack.yaml --s3-bucket $BUILD_ARTIFACT_BUCKET --output-template-file $SCRIPT_DIR/build/lightrail-stack.yaml
     if [ $? -ne 0 ]; then
         echo "Failed in packaging lightrail-stack.yaml"
-        exit 4
+        exit 5
     fi
     rm -rf $SCRIPT_DIR/tmp > /dev/null 2>&1
 else
