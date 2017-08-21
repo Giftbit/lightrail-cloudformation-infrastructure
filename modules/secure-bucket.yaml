@@ -209,8 +209,8 @@ Resources:
                         - !Ref UserIdsToGrantWriteAccess  # This elements is comma separated, so joining it just works
                         - !Ref AWS::NoValue
                       - !If  # Don't block the Roles we specifically granted with the Restricted Read/Write roles above
-                        - ShouldConfigureWriteAccess
-                        - !Ref UserIdsToGrantWriteAccess  # This elements is comma separated, so joining it just works
+                        - ShouldConfigureReadWriteAccess
+                        - !Ref UserIdsToGrantReadWriteAccess  # This elements is comma separated, so joining it just works
                         - !Ref AWS::NoValue
 
 Outputs:
