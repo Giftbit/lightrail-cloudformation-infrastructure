@@ -534,7 +534,7 @@ Resources:
           Value: Services
   LightrailBatch:
     Type: AWS::CloudFormation::Stack
-    Condition: EnvIsDevAndRegionIsUSWest2
+    Condition: RegionIsUSWest2
     Properties:
       TemplateURL: ./modules/batch-service.yaml
       Parameters:
