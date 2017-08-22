@@ -94,7 +94,7 @@ Mappings:
       ScaleDownRecurrence: ""
   Services:
     Dev-us-west-2:
-      RdsSnapshotId: test-account-20170727
+      RdsSnapshotId: migration-20170822
       RoleName: dev-LightrailServices-1D5YCESAG92B3-Role-1D1RKUNL3XBWH
     Staging-us-west-2:
       RdsSnapshotId: new-staging-test
@@ -114,14 +114,17 @@ Mappings:
       GitHubBranch: ""
       GitHubBranchDest: ""
       RoleName: dev-Credentials-RestBadgeValidationLambdaRole-PX6EAOSRMU46
+      Endpoint: 16wykx9oje.execute-api.us-west-2.amazonaws.com
     Staging-us-west-2:
       GitHubBranch: ""
       GitHubBranchDest: ""
       RoleName: staging-Credentials-RestBadgeValidationLambdaRole-Z6A003BX7XJ4
+      Endpoint: w2ntwbf0cg.execute-api.us-west-2.amazonaws.com
     Production-us-west-2:
       GitHubBranch: ""
       GitHubBranchDest: ""
       RoleName: production-Credentials-RestBadgeValidationLambdaRo-WESN8D943Y8F
+      Endpoint: bklze8sby7.execute-api.us-west-2.amazonaws.com
   SimpleRollup:
     Dev-us-west-2:
       GitHubBranch: dev-ci
@@ -825,3 +828,7 @@ Outputs:
     Description: The Bucket to put the React Build Artifacts
     Condition: RegionIsUSWest2
     Value: !GetAtt LightrailReact.Outputs.ArtifactBucketName
+  CredentialsCheckEndpoint:
+    Description: The Domain for credentials checks
+    Value: !FindInMap [CredentialsRevocation, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], Endpoint]
+

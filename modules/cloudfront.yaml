@@ -903,6 +903,7 @@ Resources:
                 - Content-MD5
                 - Range
                 - X-Requested-With
+                - Host
               Cookies:
                 Forward: all
           -
