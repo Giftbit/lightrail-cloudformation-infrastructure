@@ -950,9 +950,11 @@ Resources:
 Outputs:
   AppDomain:
     Description: The FQDN of the App
+    Condition: BaseDomainNameSet
     Value: !Ref AppZoneRecord
   ApiDomain:
     Description: The FQDN of the Api
+    Condition: BaseDomainNameSet
     Value: !Ref ApiZoneRecord
   AppDistributionDomain:
     Description: The Domain for the Lightrail CloudFront Distribution
