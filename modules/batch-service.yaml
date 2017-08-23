@@ -196,6 +196,18 @@ Resources:
         -
           AttributeName: taskId
           AttributeType: S
+  TaskTableAutoscaling:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://s3.amazonaws.com/cloudformationresources-bucket-euele1wm0rzv/dynamodb-autoscaling/cloudformation.yaml
+      Parameters:
+        DynamoDbTable: !Ref TaskTable
+        TargetWriteUtilization: 70.0
+        MinWriteCapacity: 1
+        MaxWriteCapacity: 30
+        TargetReadUtilization: 70.0
+        MinReadCapacity: 1
+        MaxReadCapacity: 30
   Queue:
     Type: AWS::SQS::Queue
 
