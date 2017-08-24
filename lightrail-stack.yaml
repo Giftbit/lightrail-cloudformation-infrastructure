@@ -130,8 +130,8 @@ Mappings:
       GitHubBranch: dev-ci
       GitHubBranchDest: ""
       Capacity: low
-      RoleName: dev-SimpleRollup-RestFunctionRole-IP96FN2KA091
-      Endpoint: 9d3hvwx00d.execute-api.us-west-2.amazonaws.com
+      RoleName: dev-SimpleRollup-RestFunctionRole-UY3YFU4XT00Q
+      Endpoint: s6tkfuiyga.execute-api.us-west-2.amazonaws.com
     Staging-us-west-2:
       GitHubBranch: staging
       GitHubBranchDest: ""
@@ -688,6 +688,11 @@ Resources:
         -
           Key: Service
           Value: KVS
+  LightrailDevArtifacts:
+    Type: AWS::CloudFormation::Stack
+    Condition: EnvIsDevAndRegionIsUSWest2
+    Properties:
+      TemplateURL: ./modules/dev-artifacts.yaml
 
   UserAssumableRoles:
     Type: AWS::CloudFormation::Stack
