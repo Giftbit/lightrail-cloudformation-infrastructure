@@ -836,4 +836,3 @@ Outputs:
   CredentialsCheckEndpoint:
     Description: The Domain for credentials checks
     Value: !FindInMap [CredentialsRevocation, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], Endpoint]
-
