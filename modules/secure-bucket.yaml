@@ -106,6 +106,7 @@ Resources:
                 - s3:PutObject
                 - s3:PutObjectAcl
                 - s3:PutObjectVersionAcl
+                - s3:PutObjectTagging
                 - s3:GetBucketLocation
                 - s3:GetBucketVersioning
                 - s3:PutBucketPolicy
@@ -128,6 +129,7 @@ Resources:
                 - s3:GetObject
                 - s3:GetObjectAcl
                 - s3:GetObjectVersionAcl
+                - s3:GetObjectTagging
                 - s3:GetBucketLocation
               Resource:
                 - !Sub "arn:aws:s3:::${Bucket}"
@@ -146,6 +148,7 @@ Resources:
                 - s3:PutObject
                 - s3:PutObjectAcl
                 - s3:PutObjectVersionAcl
+                - s3:PutObjectTagging
                 - s3:GetBucketLocation
                 - s3:GetBucketVersioning
               Resource:
@@ -165,9 +168,11 @@ Resources:
                 - s3:GetObject
                 - s3:GetObjectAcl
                 - s3:GetObjectVersionAcl
+                - s3:GetObjectTagging
                 - s3:PutObject
                 - s3:PutObjectAcl
                 - s3:PutObjectVersionAcl
+                - s3:PutObjectTagging
                 - s3:GetBucketLocation
                 - s3:GetBucketVersioning
               Resource:
