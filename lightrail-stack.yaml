@@ -106,9 +106,9 @@ Mappings:
     Dev-us-west-2:
       RoleName: dev-LightrailBatch-15T0OX937Q0EO-Role-1ETHK95KYFQ02
     Staging-us-west-2:
-      RoleName: ""
+      RoleName: staging-LightrailBatch-OJQUGW7YFE0C-Role-1MTHRQ2IDPSUB
     Production-us-west-2:
-      RoleName: ""
+      RoleName: production-LightrailBatch-QTEEMRIED9WI-Role-OZEW1353U10G
   CredentialsRevocation:
     Dev-us-west-2:
       GitHubBranch: ""
