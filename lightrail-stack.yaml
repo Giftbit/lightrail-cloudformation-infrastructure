@@ -238,7 +238,8 @@ Resources:
       TemplateURL: ./modules/cloudfront.yaml
       Parameters:
         EnvironmentName: !Ref EnvironmentName
-        BaseDomainName: !If [ShouldConfigureCloudfrontAliases, !FindInMap [Common, !Ref EnvironmentName, DomainName], !Ref "AWS::NoValue"]
+        ConfigureAliases: !If [ShouldConfigureCloudfrontAliases, "yes", "no"]
+        BaseDomainName: !FindInMap [Common, !Ref EnvironmentName, DomainName]
         HostedZoneId: !GetAtt LightrailDns.Outputs.HostedZoneId
         ViewerCertificateArn: !FindInMap [CloudFront, !Ref EnvironmentName, ACMCertificateArn]
         WebsiteEndpoint: !GetAtt LightrailWebsite.Outputs.Domain
