@@ -43,6 +43,7 @@ Resources:
         - arn:aws:iam::aws:policy/AWSCodePipelineApproverAccess
         - arn:aws:iam::aws:policy/AmazonRDSReadOnlyAccess
         - arn:aws:iam::aws:policy/AmazonEC2ReadOnlyAccess
+        - arn:aws:iam::aws:policy/CloudFrontReadOnlyAccess
       Policies:
         - !If
           - EnvironmentIsDevelopment
