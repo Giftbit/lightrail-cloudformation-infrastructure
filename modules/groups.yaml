@@ -149,6 +149,21 @@ Resources:
               - codepipeline:StartPipelineExecution
               - codepipeline:ListPipelineExecutions
             Resource: "*"
+  ElasticsearchServiceReadOnly:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: ElasticsearchServiceReadOnly
+      Groups:
+        - !Ref DevelopersGroup
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - es:Describe*
+              - es:List*
+            Resource: "*"
 
   BryanD:
     Type: AWS::IAM::User
