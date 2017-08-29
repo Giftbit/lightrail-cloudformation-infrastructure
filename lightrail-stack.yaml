@@ -102,7 +102,7 @@ Mappings:
       RdsSnapshotId: new-account-20170828
       RoleName: staging-LightrailServices-7PYWE3BIY4LC-Role-9KF46YLQSQ30
     Production-us-west-2:
-      RdsSnapshotId: prod-split-test-20170811
+      RdsSnapshotId: production-new-account-20170829
       RoleName: production-LightrailServices-1KFEHOLF9Z0KA-Role-1JZMIQD5B0TTW
   Batch:
     Dev-us-west-2:
