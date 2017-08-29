@@ -9,6 +9,9 @@ Parameters:
       - Dev
       - Staging
       - Production
+  ParentStackName:
+    Type: String
+    Description: The Name of the parent stack. This is normally dev, staging or production.
   ConfigurationBucketArn:
     Type: String
     Description: The ARN of the Configuration Bucket
@@ -25,33 +28,48 @@ Parameters:
     Type: String
     Description: The ARN of the Secure Download Bucket Encryption Key
     AllowedPattern: arn:aws:kms:[a-z0-9-]+:\d{12}:key/[a-z0-9-]+
-  SesDomainArns:
+  EmailDomainName:
     Type: String
-    Description: Comma Separated list of SES Domain Arns for sending Emails
-    AllowedPattern:
-      "(arn:aws:ses:[a-z0-9-]+:\\d{12}:identity\\/[a-z0-9._-]+(,arn:aws:ses:[a-z0-9-]+:\\d{12}:identity\\/[a-z0-9._-]+)*)?"
+    Description: The Domain name to use for Email. Should be set up with SES already.
     Default: ""
   KinesisStreamArn:
     Type: String
     Description: The ARN of the Event Kinesis Stream
     AllowedPattern: arn:aws:kinesis:[a-z0-9-]+:\d{12}:stream/[A-Za-z0-9._-]+
-  RemoteECRRepositoryArn:
+  AccountsToGrantEcrReadAccess:
     Type: String
-    Description: (Optional) The ECR Repo to get Batch Docker images from
-    Default: ""
-    AllowedPattern: (arn:aws:ecr:[a-z0-9-]+:\d{12}:repository/[a-z0-9/_-]+)?
-  AccountsToGrantECRFullAccess:
-    Type: String
-    Description: Comma separated list of AWS Account IDs to grant ECR Full Access
+    Description: Comma separated list of AWS Account IDs to grant ECR Read Access
     Default: ""
     AllowedPattern: (\d{12}(,\d{12})*)?
+  GroupsToGrantDeployAccess:
+    Type: String
+    Description: A Comma Separated List of Groups to grant ability to deploy this service
+    AllowedPattern: ((^|,)[a-zA-Z0-9+=.@_-]+)*
+  LoadBalancingServiceRoleArn:
+    Type: String
+    Description: The Service Role Arn for load balancing
+    AllowedPattern: arn:aws:iam::\d{12}:role/[A-Za-z0-9._-]+
+
+Mappings:
+  Dev:
+    us-west-2:
+      EcrRepoOverride: ""  # Intentionally left blank, required but should not be used
+      EcrRepoArnOverride: ""  # Intentionally left blank, required but should not be used
+  Staging:
+    us-west-2:
+      EcrRepoOverride: 757264843183.dkr.ecr.us-west-2.amazonaws.com/dev-l-ecrre-ef88ql72c87t
+      EcrRepoArnOverride: arn:aws:ecr:us-west-2:757264843183:repository/dev-l-ecrre-ef88ql72c87t
+  Production:
+    us-west-2:
+      EcrRepoOverride: 757264843183.dkr.ecr.us-west-2.amazonaws.com/dev-l-ecrre-ef88ql72c87t
+      EcrRepoArnOverride: arn:aws:ecr:us-west-2:757264843183:repository/dev-l-ecrre-ef88ql72c87t
 
 Conditions:
-  ShouldConfigureSes: !Not [!Equals [!Ref SesDomainArns, ""]]
-  ShouldCreateECRRepository: !Equals [!Ref EnvironmentName, Production]
-  ShouldConfigureECRAccess: !Not [!Equals [!Ref AccountsToGrantECRFullAccess, ""]]
-  ShouldUseRemoteECRRepo: !Not [!Equals [!Ref RemoteECRRepositoryArn, ""]]
-  ShouldConfigureRoleECRAccess: !Or [{Condition: ShouldCreateECRRepository}, {Condition: ShouldUseRemoteECRRepo}]
+  ShouldConfigureSes: !Not [!Equals [!Ref EmailDomainName, ""]]
+  ShouldCreateECRRepository: !Equals [!Ref EnvironmentName, Dev]
+  ShouldUseEcrRepoOverride: !Not [!Equals [!Ref EnvironmentName, Dev]]
+  ShouldConfigureAccountECRAccess: !Not [!Equals [!Ref AccountsToGrantEcrReadAccess, ""]]
+  ShouldConfigureDeployAccess: !Not [!Equals [!Ref GroupsToGrantDeployAccess, ""]]
 
 Resources:
   EcrRepo:
@@ -59,7 +77,7 @@ Resources:
     Condition: ShouldCreateECRRepository
     Properties:
       RepositoryPolicyText: !If
-        - ShouldConfigureECRAccess
+        - ShouldConfigureAccountECRAccess
         -
           Version: 2012-10-17
           Statement:
@@ -67,17 +85,12 @@ Resources:
               Sid: RepositoryAccess
               Effect: Allow
               Principal:
-                AWS: !Split [",", !Ref AccountsToGrantECRFullAccess]
+                AWS: !Split [",", !Ref AccountsToGrantEcrReadAccess]
               Action:
                 - ecr:GetDownloadUrlForLayer
                 - ecr:BatchGetImage
                 - ecr:BatchCheckLayerAvailability
-                - ecr:PutImage
-                - ecr:InitiateLayerUpload
-                - ecr:UploadLayerPart
-                - ecr:CompleteLayerUpload
                 - ecr:DescribeRepositories
-                - ecr:GetRepositoryPolicy
                 - ecr:ListImages
         - !Ref AWS::NoValue
   Role:
@@ -124,8 +137,8 @@ Resources:
                   Action:
                     - ses:SendEmail
                     - ses:SendRawEmail
-                  Resource: !Split [",", !Ref SesDomainArns]
-                - !Ref AWS::NoValue
+                  Resource: !Sub "arn:aws:ses:${AWS::Region}:${AWS::AccountId}:identity/${EmailDomainName}"
+                - !Ref "AWS::NoValue"
               -  # Kinesis Stream Producer Access
                 Effect: Allow
                 Action:
@@ -159,7 +172,7 @@ Resources:
                   - dynamodb:PutItem
                   - dynamodb:UpdateItem
                 Resource:
-                  - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${BatchTaskTable}"
+                  - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${TaskTable}"
               -  # Queue Access
                 Effect: Allow
                 Action:
@@ -169,7 +182,7 @@ Resources:
                   - sqs:SendMessage
                 Resource:
                   - !GetAtt Queue.Arn
-  BatchTaskTable:
+  TaskTable:
     Type: AWS::DynamoDB::Table
     Properties:
       ProvisionedThroughput:
@@ -183,5 +196,148 @@ Resources:
         -
           AttributeName: taskId
           AttributeType: S
+  TaskTableAutoscaling:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://s3.amazonaws.com/cloudformationresources-bucket-euele1wm0rzv/dynamodb-autoscaling/cloudformation.yaml
+      Parameters:
+        DynamoDbTable: !Ref TaskTable
+        TargetWriteUtilization: 70.0
+        MinWriteCapacity: 1
+        MaxWriteCapacity: 30
+        TargetReadUtilization: 70.0
+        MinReadCapacity: 1
+        MaxReadCapacity: 30
   Queue:
     Type: AWS::SQS::Queue
+
+  DeploymentRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - sts:AssumeRole
+            Principal:
+              AWS:
+                - !Ref "AWS::AccountId"  # Allow this role to be assumed from the Current Account with MFA
+            Condition:
+              Bool:
+                "aws:MultiFactorAuthPresent": true
+      Policies:
+        -
+          PolicyName: CloudFormationUpdateAccess
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              -
+                Effect: Allow
+                Action:
+                  - ecr:GetAuthorizationToken
+                Resource: "*"
+              -
+                Effect: Allow
+                Action:
+                  - cloudformation:CreateChangeSet
+                  - cloudformation:ExecuteChangeSet
+                  - cloudformation:UpdateStack
+                  - cloudformation:DescribeStackEvents
+                  - cloudformation:DeleteStack
+                  - cloudformation:DescribeChangeSet
+                Resource:
+                  - !Sub "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${ParentStackName}-Batch/*"
+              -
+                Effect: Allow
+                Action:
+                  - ecr:GetDownloadUrlForLayer
+                  - ecr:BatchGetImage
+                  - ecr:BatchCheckLayerAvailability
+                  - ecr:DescribeRepositories
+                  - ecr:ListImages
+                Resource:
+                  - !If
+                    - ShouldUseEcrRepoOverride
+                    - !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", EcrRepoArnOverride]
+                    - !Sub "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/${EcrRepo}"
+              -
+                Effect: Allow
+                Action:
+                  - cloudformation:DescribeStacks
+                Resource: "*"
+              -
+                Effect: Allow
+                Action:
+                  - cloudformation:DescribeStackResource
+                Resource:
+                  - !Sub "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${ParentStackName}/*"
+              -
+                Effect: Allow
+                Action:
+                  - ecs:RegisterTaskDefinition
+                  - ecs:DeregisterTaskDefinition
+                  - ecs:Describe*
+                  - ecs:CreateService
+                  - ecs:UpdateService
+                  - ecs:DeleteService
+                Resource: "*"
+              -
+                Effect: Allow
+                Action:
+                  - iam:PassRole
+                Resource:
+                  - !GetAtt Role.Arn
+                  - !Ref LoadBalancingServiceRoleArn
+
+  DeploymentAccessPolicy:
+    Type: AWS::IAM::Policy
+    Condition: ShouldConfigureDeployAccess
+    Properties:
+      Groups: !Split [",", !Ref GroupsToGrantDeployAccess]
+      PolicyName: ServicesDeployAccess
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - sts:AssumeRole
+            Resource:
+              - !GetAtt DeploymentRole.Arn
+          -
+            Effect: Allow
+            Action:
+              - ecr:ListImages
+            Resource:
+              - !If
+                - ShouldUseEcrRepoOverride
+                - !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", EcrRepoArnOverride]
+                - !Sub "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/${EcrRepo}"
+
+Outputs:
+  EcrRepo:
+    Description: The Codebuild accessible docker image reference
+    Value: !If
+      - ShouldCreateECRRepository
+      - !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${EcrRepo}"
+      - !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", EcrRepoOverride]
+  EcrRepoArn:
+    Description: The Codebuild accessible docker image reference
+    Value: !If
+      - ShouldCreateECRRepository
+      - !Sub "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/${EcrRepo}"
+      - !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", EcrRepoArnOverride]
+  TaskRoleArn:
+    Description: The ARN of the Tasks IAM Role
+    Value: !GetAtt Role.Arn
+  DeploymentRoleArn:
+    Description: The Arn of the Deployment Role
+    Value: !GetAtt DeploymentRole.Arn
+  TaskTableName:
+    Description: The Name of the Batch DynamoDB Task Table
+    Value: !Ref TaskTable
+  QueueUrl:
+    Description: The URL for the SQS Queue
+    Value: !Ref Queue

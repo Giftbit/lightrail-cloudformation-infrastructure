@@ -74,23 +74,23 @@ Mappings:
       ACMCertificateArn: arn:aws:acm:us-east-1:212888042843:certificate/1a6c1e31-d5ba-408f-9cf4-c748cbdb12b7
   EcsCluster:
     Dev-us-west-2:
-      InstanceType: t2.small
-      MinInstances: 1
-      MaxInstances: 3
+      InstanceType: t2.medium
+      MinInstances: 2
+      MaxInstances: 4
       SSHKeyName: LightrailDevECS
       ScaleUpRecurrence: "0 15 * * MON-FRI"
       ScaleDownRecurrence: "0 3 * * TUE-SAT"
     Staging-us-west-2:
-      InstanceType: t2.small
-      MinInstances: 1
-      MaxInstances: 2
+      InstanceType: t2.medium
+      MinInstances: 2
+      MaxInstances: 4
       SSHKeyName: LightrailStagingECS
       ScaleUpRecurrence: "0 15 * * MON-FRI"
       ScaleDownRecurrence: "0 3 * * TUE-SAT"
     Production-us-west-2:
-      InstanceType: t2.small
-      MinInstances: 1
-      MaxInstances: 2
+      InstanceType: t2.medium
+      MinInstances: 2
+      MaxInstances: 4
       SSHKeyName: LightrailProductionECS
       ScaleUpRecurrence: ""
       ScaleDownRecurrence: ""
@@ -130,16 +130,19 @@ Mappings:
       GitHubBranchDest: ""
       Capacity: low
       RoleName: dev-SimpleRollup-RestFunctionRole-IP96FN2KA091
+      Endpoint: 9d3hvwx00d.execute-api.us-west-2.amazonaws.com
     Staging-us-west-2:
       GitHubBranch: staging
       GitHubBranchDest: ""
       Capacity: low
       RoleName: staging-SimpleRollup-RestFunctionRole-1W56VYVDTDLP1
+      Endpoint: ksro00e1df.execute-api.us-west-2.amazonaws.com
     Production-us-west-2:
       GitHubBranch: master
       GitHubBranchDest: ""
       Capacity: high
       RoleName: production-SimpleRollup-RestFunctionRole-1WHS2OKB6RF1L
+      Endpoint: cky1xydze9.execute-api.us-west-2.amazonaws.com
   CardsSearch:
     Dev-us-west-2:
       GitHubBranch: dev-ci
@@ -148,6 +151,7 @@ Mappings:
       ElasticSearchInstanceType: t2.small.elasticsearch
       ElasticSearchMasterInstanceType: none
       RoleName: dev-CardsSearch-RestFunctionRole-1WFJDWKX4AFSD
+      Endpoint: hon8eb7zgg.execute-api.us-west-2.amazonaws.com
     Staging-us-west-2:
       GitHubBranch: staging
       GitHubBranchDest: ""
@@ -155,6 +159,7 @@ Mappings:
       ElasticSearchInstanceType: t2.small.elasticsearch
       ElasticSearchMasterInstanceType: none
       RoleName: staging-CardsSearch-RestFunctionRole-6C20E1OYPWU2
+      Endpoint: o6fpy79fe1.execute-api.us-west-2.amazonaws.com
     Production-us-west-2:
       GitHubBranch: master
       GitHubBranchDest: ""
@@ -162,22 +167,26 @@ Mappings:
       ElasticSearchInstanceType: t2.small.elasticsearch
       ElasticSearchMasterInstanceType: t2.small.elasticsearch
       RoleName: production-CardsSearch-RestFunctionRole-42IZL2PQ2ADC
+      Endpoint: o0o62rx9nk.execute-api.us-west-2.amazonaws.com
   Kvs:
     Dev-us-west-2:
       GitHubBranch: dev-ci
       GitHubBranchDest: ""
       Capacity: low
       RoleName: dev-Kvs-KvsFunctionRole-RLFP80MZ8Z16
+      Endpoint: wowqnrwyy0.execute-api.us-west-2.amazonaws.com
     Staging-us-west-2:
       GitHubBranch: staging
       GitHubBranchDest: ""
       Capacity: low
       RoleName: staging-Kvs-KvsFunctionRole-16TX23DYH1DQ
+      Endpoint: 1tnp8xblpd.execute-api.us-west-2.amazonaws.com
     Production-us-west-2:
       GitHubBranch: master
       GitHubBranchDest: ""
       Capacity: high
       RoleName: production-Kvs-KvsFunctionRole-35C9CNH786LQ
+      Endpoint: hl0fjfzg5b.execute-api.us-west-2.amazonaws.com
 
 Conditions:
   RegionIsUSWest2: !Equals [!Ref "AWS::Region", us-west-2]
@@ -237,9 +246,10 @@ Resources:
         WebsiteEndpoint: !GetAtt LightrailWebsite.Outputs.Domain
         ReactEndpoint: !GetAtt LightrailReact.Outputs.ReactDomainName
         ServicesEndpoint: !GetAtt LightrailLoadBalancer.Outputs.DNSName
-        StatsEndpoint: "0dp3zkwhxe.execute-api.us-west-2.amazonaws.com"
+        StatsEndpoint: !FindInMap [SimpleRollup, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], Endpoint]
         BatchEndpoint: !GetAtt LightrailLoadBalancer.Outputs.DNSName
-        CardsSearchEndpoint: "9te30f224k.execute-api.us-west-2.amazonaws.com"
+        CardsSearchEndpoint: !FindInMap [CardsSearch, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], Endpoint]
+        KvsEndpoint: !FindInMap [Kvs, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], Endpoint]
   LightrailWebsite:
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2
@@ -340,6 +350,7 @@ Resources:
             - !GetAtt LightrailServices.Outputs.EcrRepoArn
             - !GetAtt LightrailLogstash.Outputs.EcrRepoArn
             - !GetAtt LightrailDatadog.Outputs.EcrRepoArn
+            - !GetAtt LightrailBatch.Outputs.EcrRepoArn
   LightrailLoadBalancer:
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2
@@ -491,6 +502,7 @@ Resources:
       TemplateURL: ./modules/services-service.yaml
       Parameters:
         EnvironmentName: !Ref EnvironmentName
+        ParentStackName: !Ref "AWS::StackName"
         ConfigurationBucketArn: !GetAtt LightrailSecureConfig.Outputs.BucketArn
         ConfigurationBucketKeyArn: !GetAtt LightrailSecureConfig.Outputs.EncryptionKeyArn
         SecureDownloadBucketArn: !GetAtt LightrailSecureDownload.Outputs.BucketArn
@@ -527,18 +539,35 @@ Resources:
           Value: Services
   LightrailBatch:
     Type: AWS::CloudFormation::Stack
-    Condition: EnvIsDevAndRegionIsUSWest2
+    Condition: RegionIsUSWest2
     Properties:
       TemplateURL: ./modules/batch-service.yaml
       Parameters:
         EnvironmentName: !Ref EnvironmentName
+        ParentStackName: !Ref "AWS::StackName"
         ConfigurationBucketArn: !GetAtt LightrailSecureConfig.Outputs.BucketArn
         ConfigurationBucketKeyArn: !GetAtt LightrailSecureConfig.Outputs.EncryptionKeyArn
         SecureDownloadBucketArn: !GetAtt LightrailSecureDownload.Outputs.BucketArn
         SecureDownloadBucketKeyArn: !GetAtt LightrailSecureDownload.Outputs.EncryptionKeyArn
-        SesDomainArns: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", SesDomainArns]
+        EmailDomainName: !FindInMap [Common, !Ref EnvironmentName, DomainName]
         KinesisStreamArn: !GetAtt LightrailEventStream.Outputs.KinesisStreamArn
-        RemoteECRRepositoryArn: ""
+        AccountsToGrantEcrReadAccess: !Join
+          - ","
+          -
+            - !If
+              - ProductionAccountIdProvided
+              - !Ref ProductionAccountId
+              - !Ref AWS::NoValue
+            - !If
+              - StagingAccountIdProvided
+              - !Ref StagingAccountId
+              - !Ref AWS::NoValue
+            - !If
+              - DevAccountIdProvided
+              - !Ref DevAccountId
+              - !Ref AWS::NoValue
+        GroupsToGrantDeployAccess: !GetAtt Groups.Outputs.DevelopersGroupName
+        LoadBalancingServiceRoleArn: !GetAtt LightrailLoadBalancer.Outputs.EcsLoadBalancingServiceRoleArn
       Tags:
         -
           Key: Service
@@ -782,8 +811,13 @@ Resources:
       ServiceToken: !GetAtt RoleLookupLambda.Arn
       RoleName: !FindInMap [Kvs, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
 
-
 Outputs:
+  AppDomain:
+    Description: The App Domain
+    Value: !GetAtt LightrailCloudfront.Outputs.AppDomain
+  ApiDomain:
+    Description: The API Domain
+    Value: !GetAtt LightrailCloudfront.Outputs.ApiDomain
   WebsiteBucket:
     Description: The Website bucket for the Lightrail website
     Condition: RegionIsUSWest2
