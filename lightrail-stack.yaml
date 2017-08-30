@@ -71,7 +71,7 @@ Mappings:
     Staging:
       ACMCertificateArn: arn:aws:acm:us-east-1:939876203001:certificate/85077847-3f38-40be-bfbc-6a05e027a638
     Production:
-      ACMCertificateArn: arn:aws:acm:us-east-1:212888042843:certificate/1a6c1e31-d5ba-408f-9cf4-c748cbdb12b7
+      ACMCertificateArn: arn:aws:acm:us-east-1:212888042843:certificate/081c443f-4427-4404-a744-e55e6000a698  # <- Is for test.lightrail.net   lightrail.com -> arn:aws:acm:us-east-1:212888042843:certificate/1a6c1e31-d5ba-408f-9cf4-c748cbdb12b7
   EcsCluster:
     Dev-us-west-2:
       InstanceType: t2.medium
