@@ -26,6 +26,7 @@ Resources:
     Properties:
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/IAMUserChangePassword
+        - arn:aws:iam::aws:policy/IAMUserSSHKeys
 
   DevelopersGroup:
     Type: AWS::IAM::Group
