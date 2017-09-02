@@ -117,26 +117,27 @@ Resources:
             Condition:
               Bool:
                 aws:MultiFactorAuthPresent: true
-      Policies:
-        -
-          PolicyName: RestrictIAMAccess
-          PolicyDocument:
-            Version: 2012-10-17
-            Statement:
-              -
-                Effect: Deny
-                NotAction:
-                  - iam:ListRolePolicies
-                  - iam:ListInstanceProfilesForRole
-                Resource:
-                  - !GetAtt InfrastructureAdminRole.Arn
-              -
-                Effect: Deny
-                Action:
-                  - iam:*User*
-                  - iam:*Group*
-                  - cloudtrail:*
-                Resource: *
+  InfrastructureAdminRestrictionPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: RestrictIAMAccess
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Deny
+            NotAction:
+              - iam:ListRolePolicies
+              - iam:ListInstanceProfilesForRole
+            Resource:
+              - !GetAtt InfrastructureAdminRole.Arn
+          -
+            Effect: Deny
+            Action:
+              - iam:*User*
+              - iam:*Group*
+              - cloudtrail:*
+            Resource: "*"
   InfrastructureAdminGroup:
     Type: "AWS::IAM::Group"
     Properties:
