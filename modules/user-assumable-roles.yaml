@@ -95,3 +95,70 @@ Resources:
             Condition:
               Bool:
                 "aws:MultiFactorAuthPresent": true
+
+  InfrastructureAdminRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: InfrastructureAdmin
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/IAMFullAccess
+        - arn:aws:iam::aws:policy/PowerUserAccess
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - sts:AssumeRole
+            Principal:
+              AWS:
+                -
+                  !Sub "arn:aws:iam::${AWS::AccountId}:root"
+            Condition:
+              Bool:
+                aws:MultiFactorAuthPresent: true
+      Policies:
+        -
+          PolicyName: RestrictIAMAccess
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              -
+                Effect: Deny
+                NotAction:
+                  - iam:ListRolePolicies
+                  - iam:ListInstanceProfilesForRole
+                Resource:
+                  - !GetAtt InfrastructureAdminRole.Arn
+              -
+                Effect: Deny
+                Action:
+                  - iam:*User*
+                  - iam:*Group*
+                  - cloudtrail:*
+                Resource: *
+  InfrastructureAdminGroup:
+    Type: "AWS::IAM::Group"
+    Properties:
+      Policies:
+        -
+          PolicyName: AssumeInfrastructureAdmin
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              -
+                Effect: Allow
+                Action:
+                  - sts:AssumeRole
+                Resource:
+                  - !GetAtt InfrastructureAdminRole.Arn
+                Condition:
+                  Bool:
+                    aws:MultiFactorAuthPresent: true
+  TemporaryInfrastructureAdminAccess:
+    Type: AWS::IAM::UserToGroupAddition
+    Properties:
+      GroupName: !Ref InfrastructureAdminGroup
+      Users:
+        - jamie.s
+        - jeff.g
