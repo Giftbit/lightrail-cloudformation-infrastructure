@@ -26,14 +26,21 @@ Parameters:
     AllowedPattern: (\d{12})?
   GroupsToGrantCodePipelineApproverAccess:
     Type: String
-    Description: The name of the groups to grant React read/write access
+    Description: The name of the groups to grant Ability to approve CodePipeline across accounts
+    Default: ""
+    AllowedPattern: "([a-zA-Z0-9+=,.@_-]+(,[a-zA-Z0-9+=,.@_-]+)*)?"
+  GroupsToGrantInfrastructureAdminAccess:
+    Type: String
+    Description: The name of the groups to grant Infrastructure Admin Assume
     Default: ""
     AllowedPattern: "([a-zA-Z0-9+=,.@_-]+(,[a-zA-Z0-9+=,.@_-]+)*)?"
 
 Conditions:
   ShouldGenerateCodePipelineApproverAssumePolicy: !Not [!Equals [!Ref GroupsToGrantCodePipelineApproverAccess, ""]]
+  ShouldGrantInfrastructureAdminAssume: !Not [!Equals [!Ref GroupsToGrantInfrastructureAdminAccess, ""]]
   ProductionAccountIsEnabled: !Not [!Equals [!Ref ProductionAccountId, ""]]
   StagingAccountIsEnabled: !Not [!Equals [!Ref StagingAccountId, ""]]
+
 
 Resources:
   CodePipelineApprover:
@@ -120,6 +127,8 @@ Resources:
   InfrastructureAdminRestrictionPolicy:
     Type: AWS::IAM::Policy
     Properties:
+      Roles:
+        - !Ref InfrastructureAdminRole
       PolicyName: RestrictIAMAccess
       PolicyDocument:
         Version: 2012-10-17
@@ -139,23 +148,33 @@ Resources:
               - cloudtrail:*
             Resource: "*"
   InfrastructureAdminGroup:
-    Type: "AWS::IAM::Group"
+    Type: AWS::IAM::Group
+  InfrastructureAdminAssumePolicy:
+    Type: AWS::IAM::Policy
     Properties:
-      Policies:
-        -
-          PolicyName: AssumeInfrastructureAdmin
-          PolicyDocument:
-            Version: 2012-10-17
-            Statement:
-              -
-                Effect: Allow
-                Action:
-                  - sts:AssumeRole
-                Resource:
-                  - !GetAtt InfrastructureAdminRole.Arn
-                Condition:
-                  Bool:
-                    aws:MultiFactorAuthPresent: true
+      Groups: !Split
+        - ","
+        - !Join
+          - ","
+          -
+            - !Ref InfrastructureAdminGroup
+            - !If
+              - ShouldGrantInfrastructureAdminAssume
+              - !Ref GroupsToGrantInfrastructureAdminAccess
+              - !Ref AWS::NoValue
+      PolicyName: AssumeInfrastructureAdmin
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - sts:AssumeRole
+            Resource:
+              - !GetAtt InfrastructureAdminRole.Arn
+            Condition:
+              Bool:
+                aws:MultiFactorAuthPresent: true
   TemporaryInfrastructureAdminAccess:
     Type: AWS::IAM::UserToGroupAddition
     Properties:
