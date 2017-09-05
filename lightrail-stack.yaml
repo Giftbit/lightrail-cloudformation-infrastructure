@@ -714,6 +714,7 @@ Resources:
         StagingAccountId: !Ref StagingAccountId
         DevAccountId: !Ref DevAccountId
         GroupsToGrantCodePipelineApproverAccess: !GetAtt Groups.Outputs.DevelopersGroupName
+        GroupsToGrantInfrastructureAdminAccess: !If [EnvIsDevAndRegionIsUSWest2, !GetAtt Groups.Outputs.DevelopersGroupName, !Ref "AWS::NoValue"]
 
   CIResources:
     Type: AWS::CloudFormation::Stack
