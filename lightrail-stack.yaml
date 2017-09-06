@@ -756,7 +756,7 @@ Resources:
           - !Ref CloudFormationServiceRoleName
           - !If
             - EnvIsDev
-            - !Ref DevCloudFormationServiceRoleName
+            - DevLightrailInfrastructureCI-CloudFormationServiceRole
             - !Ref "AWS::NoValue"
   LightrailSecureDownloadReadAccessRoleIdGrants:
     Type: AWS::CloudFormation::CustomResource
@@ -787,7 +787,7 @@ Resources:
           - !Ref CloudFormationServiceRoleName
           - !If
             - EnvIsDev
-            - !Ref DevCloudFormationServiceRoleName
+            - DevLightrailInfrastructureCI-CloudFormationServiceRole
             - !Ref "AWS::NoValue"
 
 Outputs:
