@@ -766,7 +766,7 @@ Resources:
       RoleNames: !Join
         - ","
         -
-          - !Ref ServicesRoleName
+          - !FindInMap [Services, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
   LightrailSecureDownloadReadWriteAccessRoleIdGrants:
     Type: AWS::CloudFormation::CustomResource
     Version: 1.0
@@ -775,7 +775,7 @@ Resources:
       RoleNames: !Join
         - ","
         -
-          - !Ref BatchRoleName
+          - !Ref !FindInMap [Batch, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
   LightrailSecureDownloadPolicyAdminAccessRoleIdGrants:
     Type: AWS::CloudFormation::CustomResource
     Version: 1.0
