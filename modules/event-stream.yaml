@@ -129,6 +129,10 @@ Resources:
                   - !GetAtt FirehoseLogGroup.Arn
   FirehoseLogGroup:
     Type: AWS::Logs::LogGroup
+  FirehoseLogStream:
+    Type: AWS::Logs::LogStream
+    Properties:
+      LogGroupName: !Ref FirehoseLogGroup
   FirehoseStream:
     Type: AWS::KinesisFirehose::DeliveryStream
     Properties:
@@ -139,7 +143,7 @@ Resources:
         CloudWatchLoggingOptions:
           Enabled: true
           LogGroupName: !Ref FirehoseLogGroup
-          LogStreamName: S3Delivery
+          LogStreamName: !Ref FirehoseLogStream
         EncryptionConfiguration:
           KMSEncryptionConfig:
             AWSKMSKeyARN: !GetAtt FirehoseEncryptionKey.Arn
