@@ -125,7 +125,6 @@ Resources:
                   - logs:CreateLogStream
                   - logs:PutLogEvents
                 Resource:
-                  # yamllint disable-line rule:line-length
                   - !GetAtt FirehoseLogGroup.Arn
   FirehoseLogGroup:
     Type: AWS::Logs::LogGroup
