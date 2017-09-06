@@ -279,13 +279,13 @@ Resources:
       GroupDescription: !Sub "Lightrail ${EnvironmentName} Bastion Host for VPC ${VPC}"
       VpcId: !Ref VPC
       SecurityGroupIngress:
-        -
+        -  # Incoming Access to the Office
           FromPort: 22
           ToPort: 22
           IpProtocol: tcp
           CidrIp: 184.69.186.114/32
       SecurityGroupEgress:
-        -
+        -  # Outgoing TCP Internet Access
           FromPort: 0
           ToPort: 65535
           IpProtocol: tcp
@@ -339,6 +339,11 @@ Resources:
           FromPort: 0
           ToPort: 65535
           IpProtocol: tcp
+          CidrIp: 0.0.0.0/0
+        -  # Outgoing NTP Access
+          FromPort: 123
+          ToPort: 123
+          IpProtocol: udp
           CidrIp: 0.0.0.0/0
       Tags:
         -

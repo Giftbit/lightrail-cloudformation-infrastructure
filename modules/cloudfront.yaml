@@ -44,7 +44,6 @@ Parameters:
   BaseDomainName:
     Type: String
     Description: Please enter the Base domain that you want the CloudFormation domains to be subdomains of
-    Default: ""
   HostedZoneId:
     Type: String
     Description: Please enter the Hosted Zone ID for the base domain.
@@ -83,15 +82,20 @@ Parameters:
   BatchEndpoint:
     Type: String
     Description: Enter the domain that should handle the Batch requests
+  ConfigureAliases:
+    Type: String
+    AllowedValues:
+      - "yes"
+      - "no"
+    Default: "yes"
 Conditions:
-  BaseDomainNameSet: !Not [!Equals [!Ref BaseDomainName, ""]]
+  ShouldConfigureAliases: !Equals [!Ref ConfigureAliases, "yes"]  # This will be removed once we have the production account go live, but can be overridden quickly in cloudformation
   ViewerCertificateArnSet: !Not [!Equals [!Ref ViewerCertificateArn, ""]]
   ViewerCertificateArnNotSet: !Equals [!Ref ViewerCertificateArn, ""]
   ReactEndpointSet: !Not [!Equals [!Ref ReactEndpoint, ""]]
 Resources:
   AppZoneRecord:
     Type: AWS::Route53::RecordSet
-    Condition: BaseDomainNameSet
     Properties:
       HostedZoneId: !Ref HostedZoneId
       Name: !Sub "www.${BaseDomainName}."
@@ -104,7 +108,7 @@ Resources:
     Properties:
       DistributionConfig:
         Aliases:
-          - !If [BaseDomainNameSet, !Sub "www.${BaseDomainName}", !Ref "AWS::NoValue"]
+          - !If [ShouldConfigureAliases, !Sub "www.${BaseDomainName}", !Ref "AWS::NoValue"]
         Enabled: true
         Comment: !Sub "Managed with CloudFormation Stack ${AWS::StackName}"
         PriceClass: !Ref PriceClass
@@ -460,6 +464,7 @@ Resources:
                 - Content-MD5
                 - Range
                 - X-Requested-With
+                - Host
               Cookies:
                 Forward: all
           -
@@ -547,7 +552,6 @@ Resources:
               Forward: none
   ApiZoneRecord:
     Type: AWS::Route53::RecordSet
-    Condition: BaseDomainNameSet
     Properties:
       HostedZoneId: !Ref HostedZoneId
       Name: !Sub "api.${BaseDomainName}."
@@ -560,7 +564,7 @@ Resources:
     Properties:
       DistributionConfig:
         Aliases:
-          - !If [BaseDomainNameSet, !Sub "api.${BaseDomainName}", !Ref "AWS::NoValue"]
+          - !If [ShouldConfigureAliases, !Sub "api.${BaseDomainName}", !Ref "AWS::NoValue"]
         Enabled: true
         Comment: !Sub "Managed with CloudFormation Stack ${AWS::StackName}"
         PriceClass: !Ref PriceClass
@@ -903,6 +907,7 @@ Resources:
                 - Content-MD5
                 - Range
                 - X-Requested-With
+                - Host
               Cookies:
                 Forward: all
           -
@@ -950,11 +955,9 @@ Resources:
 Outputs:
   AppDomain:
     Description: The FQDN of the App
-    Condition: BaseDomainNameSet
     Value: !Ref AppZoneRecord
   ApiDomain:
     Description: The FQDN of the Api
-    Condition: BaseDomainNameSet
     Value: !Ref ApiZoneRecord
   AppDistributionDomain:
     Description: The Domain for the Lightrail CloudFront Distribution
