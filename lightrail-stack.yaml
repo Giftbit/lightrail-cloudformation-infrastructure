@@ -187,6 +187,16 @@ Mappings:
       Capacity: high
       RoleName: production-Kvs-KvsFunctionRole-35C9CNH786LQ
       Endpoint: hl0fjfzg5b.execute-api.us-west-2.amazonaws.com
+  Reactions:
+    Dev-us-west-2:
+      RoleNames: dev-Reactions-IngressFunctionRole-7MU0VX1GHW9O,dev-Reactions-ReactionsRestFunctionRole-19WM63XU0BYE0
+      Endpoint: vsq1f3h973.execute-api.us-west-2.amazonaws.com
+    Staging-us-west-2:
+      RoleNames: ""
+      Endpoint: ""
+    Production-us-west-2:
+      RoleNames: ""
+      Endpoint: ""
 
 Conditions:
   RegionIsUSWest2: !Equals [!Ref "AWS::Region", us-west-2]
@@ -207,6 +217,7 @@ Conditions:
   SimpleRollupRoleNameSet: !Not [!Equals [!FindInMap [SimpleRollup, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName], ""]]
   CardsSearchRoleNameSet: !Not [!Equals [!FindInMap [CardsSearch, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName], ""]]
   KvsRoleNameSet: !Not [!Equals [!FindInMap [Kvs, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName], ""]]
+  ReactionsRoleNamesSet: !Not [!Equals [!FindInMap [Reactions, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleNames], ""]]
 Resources:
   Groups:
     Type: AWS::CloudFormation::Stack
@@ -250,6 +261,7 @@ Resources:
         BatchEndpoint: !GetAtt LightrailLoadBalancer.Outputs.DNSName
         CardsSearchEndpoint: !FindInMap [CardsSearch, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], Endpoint]
         KvsEndpoint: !FindInMap [Kvs, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], Endpoint]
+        ReactionsEndpoint: !FindInMap [Reactions, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], Endpoint]
   LightrailWebsite:
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2
@@ -374,35 +386,39 @@ Resources:
           -
             - !If
               - CredentialsRevocationCheckRoleNameSet
-              - !Sub "${CredentialsRevocationCheckRoleId}:*"
+              - !Ref CredentialsRevocationCheckRoleIdGrant
               - !Ref "AWS::NoValue"
             - !If
               - ServicesRoleNameSet
-              - !Sub "${ServicesRoleId}:*"
+              - !Ref ServicesRoleIdGrant
               - !Ref "AWS::NoValue"
             - !If
               - BatchRoleNameSet
-              - !Sub "${BatchRoleId}:*"
+              - !Ref BatchRoleIdGrant
               - !Ref "AWS::NoValue"
             - !If
               - SimpleRollupRoleNameSet
-              - !Sub "${SimpleRollupRoleId}:*"
+              - !Ref SimpleRollupRoleIdGrant
               - !Ref "AWS::NoValue"
             - !If
               - CardsSearchRoleNameSet
-              - !Sub "${CardsSearchRoleId}:*"
+              - !Ref CardsSearchRoleIdGrant
               - !Ref "AWS::NoValue"
             - !If
               - KvsRoleNameSet
-              - !Sub "${KvsRoleId}:*"
+              - !Ref KvsRoleIdGrant
+              - !Ref "AWS::NoValue"
+            - !If
+              - ReactionsRoleNamesSet
+              - !Ref ReactionsIdGrants
               - !Ref "AWS::NoValue"
         UserIdsToGrantPolicyAdminAccess: !Join
           - ","
           -
-            - !Sub "${CloudFormationServiceRoleId}:*"
+            - !Ref CloudFormationServiceRoleIdGrant
             - !If
               - EnvIsDev
-              - !Sub "${DevCloudFormationServiceRoleId}:*"
+              - !Ref DevCloudFormationServiceRoleIdGrant
               - !Ref "AWS::NoValue"
   LightrailSecureDownload:
     Type: AWS::CloudFormation::Stack
@@ -416,22 +432,22 @@ Resources:
           -
             - !If
               - ServicesRoleNameSet
-              - !Sub "${ServicesRoleId}:*"
+              - !Ref ServicesRoleIdGrant
               - !Ref "AWS::NoValue"
         UserIdsToGrantReadWriteAccess: !Join
           - ","
           -
             - !If
               - BatchRoleNameSet
-              - !Sub "${BatchRoleId}:*"
+              - !Ref BatchRoleIdGrant
               - !Ref "AWS::NoValue"
         UserIdsToGrantPolicyAdminAccess: !Join
           - ","
           -
-            - !Sub "${CloudFormationServiceRoleId}:*"
+            - !Ref CloudFormationServiceRoleIdGrant
             - !If
               - EnvIsDev
-              - !Sub "${DevCloudFormationServiceRoleId}:*"
+              - !Ref DevCloudFormationServiceRoleIdGrant
               - !Ref "AWS::NoValue"
   LightrailEventStream:
     Type: AWS::CloudFormation::Stack
@@ -755,61 +771,68 @@ Resources:
       Runtime: nodejs6.10
       Timeout: 15
       Code: ../res/role-id-lookup.zip
-  CloudFormationServiceRoleId:
+  CloudFormationServiceRoleIdGrant:
     Type: AWS::CloudFormation::CustomResource
     Version: 1.0
     Properties:
       ServiceToken: !GetAtt RoleLookupLambda.Arn
       RoleName: !Ref CloudFormationServiceRoleName
-  DevCloudFormationServiceRoleId:
+  DevCloudFormationServiceRoleIdGrant:
     Type: AWS::CloudFormation::CustomResource
     Condition: EnvIsDev
     Version: 1.0
     Properties:
       ServiceToken: !GetAtt RoleLookupLambda.Arn
       RoleName: DevLightrailInfrastructureCI-CloudFormationServiceRole
-  CredentialsRevocationCheckRoleId:
+  CredentialsRevocationCheckRoleIdGrant:
     Type: AWS::CloudFormation::CustomResource
     Condition: CredentialsRevocationCheckRoleNameSet
     Version: 1.0
     Properties:
       ServiceToken: !GetAtt RoleLookupLambda.Arn
       RoleName: !FindInMap [CredentialsRevocation, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
-  ServicesRoleId:
+  ServicesRoleIdGrant:
     Type: AWS::CloudFormation::CustomResource
     Condition: ServicesRoleNameSet
     Version: 1.0
     Properties:
       ServiceToken: !GetAtt RoleLookupLambda.Arn
       RoleName: !FindInMap [Services, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
-  BatchRoleId:
+  BatchRoleIdGrant:
     Type: AWS::CloudFormation::CustomResource
     Condition: BatchRoleNameSet
     Version: 1.0
     Properties:
       ServiceToken: !GetAtt RoleLookupLambda.Arn
       RoleName: !FindInMap [Batch, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
-  SimpleRollupRoleId:
+  SimpleRollupRoleIdGrant:
     Type: AWS::CloudFormation::CustomResource
     Condition: SimpleRollupRoleNameSet
     Version: 1.0
     Properties:
       ServiceToken: !GetAtt RoleLookupLambda.Arn
       RoleName: !FindInMap [SimpleRollup, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
-  CardsSearchRoleId:
+  CardsSearchRoleIdGrant:
     Type: AWS::CloudFormation::CustomResource
     Condition: CardsSearchRoleNameSet
     Version: 1.0
     Properties:
       ServiceToken: !GetAtt RoleLookupLambda.Arn
       RoleName: !FindInMap [CardsSearch, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
-  KvsRoleId:
+  KvsRoleIdGrant:
     Type: AWS::CloudFormation::CustomResource
     Condition: KvsRoleNameSet
     Version: 1.0
     Properties:
       ServiceToken: !GetAtt RoleLookupLambda.Arn
       RoleName: !FindInMap [Kvs, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
+  ReactionsIdGrants:
+    Type: AWS::CloudFormation::CustomResource
+    Condition: ReactionsRoleNamesSet
+    Version: 1.0
+    Properties:
+      ServiceToken: !GetAtt RoleLookupLambda.Arn
+      RoleNames: !FindInMap [Reactions, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleNames]
 
 Outputs:
   AppDomain:
