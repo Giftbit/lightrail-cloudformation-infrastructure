@@ -381,15 +381,38 @@ Resources:
       TemplateURL: ./modules/secure-bucket.yaml
       Parameters:
         EnvironmentName: !Ref EnvironmentName
-        UserIdsToGrantReadAccess: !Ref ReadAccessRoleIdGrants
-        UserIdsToGrantPolicyAdminAccess: !Join
-          - ","
-          -
-            - !Ref CloudFormationServiceRoleIdGrant
-            - !If
-              - EnvIsDev
-              - !Ref DevCloudFormationServiceRoleIdGrant
-              - !Ref "AWS::NoValue"
+        UserIdsToGrantReadAccess: !Ref LightrailSecureConfigReadAccessRoleIdGrants
+        UserIdsToGrantPolicyAdminAccess: !Ref LightrailSecureConfigPolicyAdminAccessRoleIdGrants
+  LightrailSecureConfigReadAccessRoleIdGrants:
+    Type: AWS::CloudFormation::CustomResource
+    Version: 1.0
+    Properties:
+      ServiceToken: !GetAtt RoleLookupLambda.Arn
+      RoleNames: !Join
+        - ","
+        -
+          - !Ref CloudFormationServiceRoleName
+          - DevLightrailInfrastructureCI-CloudFormationServiceRole
+          - !FindInMap [CredentialsRevocation, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
+          - !FindInMap [Services, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
+          - !FindInMap [Batch, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
+          - !FindInMap [SimpleRollup, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
+          - !FindInMap [CardsSearch, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
+          - !FindInMap [Kvs, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
+          - !FindInMap [Reactions, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleNames]
+  LightrailSecureConfigPolicyAdminAccessRoleIdGrants:
+    Type: AWS::CloudFormation::CustomResource
+    Version: 1.0
+    Properties:
+      ServiceToken: !GetAtt RoleLookupLambda.Arn
+      RoleNames: !Join
+        - ","
+        -
+          - !Ref CloudFormationServiceRoleName
+          - !If
+            - EnvIsDev
+            - DevLightrailInfrastructureCI-CloudFormationServiceRole
+            - !Ref "AWS::NoValue"
   LightrailSecureDownload:
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2
@@ -400,6 +423,37 @@ Resources:
         UserIdsToGrantReadAccess: !Ref LightrailSecureDownloadReadAccessRoleIdGrants
         UserIdsToGrantReadWriteAccess: !Ref LightrailSecureDownloadReadWriteAccessRoleIdGrants
         UserIdsToGrantPolicyAdminAccess: !Ref LightrailSecureDownloadPolicyAdminAccessRoleIdGrants
+  LightrailSecureDownloadReadAccessRoleIdGrants:
+    Type: AWS::CloudFormation::CustomResource
+    Version: 1.0
+    Properties:
+      ServiceToken: !GetAtt RoleLookupLambda.Arn
+      RoleNames: !Join
+        - ","
+        -
+          - !FindInMap [Services, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
+  LightrailSecureDownloadReadWriteAccessRoleIdGrants:
+    Type: AWS::CloudFormation::CustomResource
+    Version: 1.0
+    Properties:
+      ServiceToken: !GetAtt RoleLookupLambda.Arn
+      RoleNames: !Join
+        - ","
+        -
+          - !FindInMap [Batch, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
+  LightrailSecureDownloadPolicyAdminAccessRoleIdGrants:
+    Type: AWS::CloudFormation::CustomResource
+    Version: 1.0
+    Properties:
+      ServiceToken: !GetAtt RoleLookupLambda.Arn
+      RoleNames: !Join
+        - ","
+        -
+          - !Ref CloudFormationServiceRoleName
+          - !If
+            - EnvIsDev
+            - DevLightrailInfrastructureCI-CloudFormationServiceRole
+            - !Ref "AWS::NoValue"
   LightrailEventStream:
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2
@@ -728,67 +782,6 @@ Resources:
       Runtime: nodejs6.10
       Timeout: 15
       Code: ../res/role-id-lookup.zip
-  LightrailSecureConfigReadAccessRoleIdGrants:
-    Type: AWS::CloudFormation::CustomResource
-    Version: 1.0
-    Properties:
-      ServiceToken: !GetAtt RoleLookupLambda.Arn
-      RoleNames: !Join
-        - ","
-        -
-          - !Ref CloudFormationServiceRoleName
-          - DevLightrailInfrastructureCI-CloudFormationServiceRole
-          - !FindInMap [CredentialsRevocation, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
-          - !FindInMap [Services, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
-          - !FindInMap [Batch, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
-          - !FindInMap [SimpleRollup, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
-          - !FindInMap [CardsSearch, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
-          - !FindInMap [Kvs, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
-          - !FindInMap [Reactions, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleNames]
-  LightrailSecureConfigWriteAccessRoleIdGrants:
-    Type: AWS::CloudFormation::CustomResource
-    Version: 1.0
-    Properties:
-      ServiceToken: !GetAtt RoleLookupLambda.Arn
-      RoleNames: !Join
-        - ","
-        -
-          - !Ref CloudFormationServiceRoleName
-          - !If
-            - EnvIsDev
-            - DevLightrailInfrastructureCI-CloudFormationServiceRole
-            - !Ref "AWS::NoValue"
-  LightrailSecureDownloadReadAccessRoleIdGrants:
-    Type: AWS::CloudFormation::CustomResource
-    Version: 1.0
-    Properties:
-      ServiceToken: !GetAtt RoleLookupLambda.Arn
-      RoleNames: !Join
-        - ","
-        -
-          - !FindInMap [Services, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
-  LightrailSecureDownloadReadWriteAccessRoleIdGrants:
-    Type: AWS::CloudFormation::CustomResource
-    Version: 1.0
-    Properties:
-      ServiceToken: !GetAtt RoleLookupLambda.Arn
-      RoleNames: !Join
-        - ","
-        -
-          - !FindInMap [Batch, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
-  LightrailSecureDownloadPolicyAdminAccessRoleIdGrants:
-    Type: AWS::CloudFormation::CustomResource
-    Version: 1.0
-    Properties:
-      ServiceToken: !GetAtt RoleLookupLambda.Arn
-      RoleNames: !Join
-        - ","
-        -
-          - !Ref CloudFormationServiceRoleName
-          - !If
-            - EnvIsDev
-            - DevLightrailInfrastructureCI-CloudFormationServiceRole
-            - !Ref "AWS::NoValue"
 
 Outputs:
   AppDomain:
