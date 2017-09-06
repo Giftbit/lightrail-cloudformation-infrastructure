@@ -99,7 +99,7 @@ Mappings:
       ScaleDownRecurrence: ""
   Services:
     Dev-us-west-2:
-      RdsSnapshotId: migration-20170822
+      RdsSnapshotId: preprod-migration-20170906
       RoleName: dev-LightrailServices-1D5YCESAG92B3-Role-1D1RKUNL3XBWH
     Staging-us-west-2:
       RdsSnapshotId: new-account-20170828
