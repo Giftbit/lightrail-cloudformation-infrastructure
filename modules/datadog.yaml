@@ -221,7 +221,7 @@ Resources:
     Condition: ShouldConfigureDeployAccess
     Properties:
       Groups: !Split [",", !Ref GroupsToGrantDeployAccess]
-      PolicyName: LogstashDeployAccess
+      PolicyName: DatadogDeployAccess
       PolicyDocument:
         Version: 2012-10-17
         Statement:

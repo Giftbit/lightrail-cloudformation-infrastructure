@@ -26,6 +26,7 @@ Resources:
     Properties:
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/IAMUserChangePassword
+        - arn:aws:iam::aws:policy/IAMUserSSHKeys
 
   DevelopersGroup:
     Type: AWS::IAM::Group
@@ -43,6 +44,7 @@ Resources:
         - arn:aws:iam::aws:policy/AWSCodePipelineApproverAccess
         - arn:aws:iam::aws:policy/AmazonRDSReadOnlyAccess
         - arn:aws:iam::aws:policy/AmazonEC2ReadOnlyAccess
+        - arn:aws:iam::aws:policy/CloudFrontReadOnlyAccess
       Policies:
         - !If
           - EnvironmentIsDevelopment
@@ -57,9 +59,7 @@ Resources:
                     - iam:GetRole
                     - iam:PassRole
                     - iam:ListRoles
-                  NotResource:
-                    -
-                      !ImportValue InfrastructureAdminRoleArn
+                  Resource: "*"
           - !Ref AWS::NoValue
         -
           PolicyName: NoCloudtrail
@@ -148,15 +148,21 @@ Resources:
               - codepipeline:StartPipelineExecution
               - codepipeline:ListPipelineExecutions
             Resource: "*"
-
-  # This is just temporary, and should be removed once we transition to the new fname.initial users
-  AddJamiesToDevelopers:
-    Type: AWS::IAM::UserToGroupAddition
-    Condition: EnvironmentIsDevelopment
+  ElasticsearchServiceReadOnly:
+    Type: AWS::IAM::Policy
     Properties:
-      GroupName: !Ref DevelopersGroup
-      Users:
-        - jamies
+      PolicyName: ElasticsearchServiceReadOnly
+      Groups:
+        - !Ref DevelopersGroup
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - es:Describe*
+              - es:List*
+            Resource: "*"
 
   BryanD:
     Type: AWS::IAM::User
