@@ -199,17 +199,20 @@ Resources:
               OriginProtocolPolicy: https-only
               HTTPSPort: 443
               HTTPPort: 80
-          -
-            DomainName: !Ref KvsEndpoint
-            Id: KvsEndpointOrigin
-            OriginPath: /Prod
-            CustomOriginConfig:
-              OriginSSLProtocols:
-                - TLSv1.1
-                - TLSv1.2
-              OriginProtocolPolicy: https-only
-              HTTPSPort: 443
-              HTTPPort: 80
+          - !If
+            - ReactionsEndpointSet
+            -
+              DomainName: !Ref ReactionsEndpoint
+              Id: ReactionsEndpointOrigin
+              OriginPath: /Prod
+              CustomOriginConfig:
+                OriginSSLProtocols:
+                  - TLSv1.1
+                  - TLSv1.2
+                OriginProtocolPolicy: http-only
+                HTTPSPort: 443
+                HTTPPort: 80
+            - !Ref AWS::NoValue
         CacheBehaviors:
           -
             PathPattern: "/v1/search/cards"
@@ -716,17 +719,20 @@ Resources:
               OriginProtocolPolicy: https-only
               HTTPSPort: 443
               HTTPPort: 80
-          -
-            DomainName: !Ref KvsEndpoint
-            Id: KvsEndpointOrigin
-            OriginPath: /Prod
-            CustomOriginConfig:
-              OriginSSLProtocols:
-                - TLSv1.1
-                - TLSv1.2
-              OriginProtocolPolicy: https-only
-              HTTPSPort: 443
-              HTTPPort: 80
+          - !If
+            - ReactionsEndpointSet
+            -
+              DomainName: !Ref ReactionsEndpoint
+              Id: ReactionsEndpointOrigin
+              OriginPath: /Prod
+              CustomOriginConfig:
+                OriginSSLProtocols:
+                  - TLSv1.1
+                  - TLSv1.2
+                OriginProtocolPolicy: http-only
+                HTTPSPort: 443
+                HTTPPort: 80
+            - !Ref AWS::NoValue
         CacheBehaviors:
           -
             PathPattern: "/v1/search/cards"
