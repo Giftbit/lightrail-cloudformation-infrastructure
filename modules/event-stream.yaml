@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: "Lightrail Services"
+Description: "Lightrail Events Stream"
 
 Parameters:
   EnvironmentName:
@@ -9,6 +9,16 @@ Parameters:
       - Dev
       - Staging
       - Production
+  DisableDataProtection:
+    Type: String
+    Description: Protect the contents of the Data Bucket from deletion
+    AllowedValues:
+      - true
+      - false  # We specifically want this to overwrite test data when synchronizing existing data over
+    Default: false
+
+Conditions:
+  ShouldProtectDataFromDeletion: !Equals [!Ref DisableDataProtection, false]
 
 Resources:
   KinesisStream:
@@ -37,16 +47,19 @@ Resources:
       Bucket: !Ref DataBucket
       PolicyDocument:
         Statement:
-          -  # Since these objects are the last chance restore, make sure this never gets deleted
-            Effect: Deny
-            Action:
-              - s3:DeleteBucket
-              - s3:DeleteObject
-              - s3:DeleteObjectVersion
-            Resource:
-              - !Sub "arn:aws:s3:::${DataBucket}"
-              - !Sub "arn:aws:s3:::${DataBucket}/*"
-            Principal: "*"
+          - !If  # Since these objects are the last chance restore, make sure this never gets deleted
+            - ShouldProtectDataFromDeletion
+            -
+              Effect: Deny
+              Action:
+                - s3:DeleteBucket
+                - s3:DeleteObject
+                - s3:DeleteObjectVersion
+              Resource:
+                - !Sub "arn:aws:s3:::${DataBucket}"
+                - !Sub "arn:aws:s3:::${DataBucket}/*"
+              Principal: "*"
+            - !Ref AWS::NoValue
 
   FirehoseEncryptionKey:
     Type: AWS::KMS::Key
