@@ -391,11 +391,6 @@ Resources:
       RoleNames: !Join
         - ","
         -
-          - !Ref CloudFormationServiceRoleName
-          - !If
-            - EnvIsDev
-            - DevLightrailInfrastructureCI-CloudFormationServiceRole
-            - !Ref "AWS::NoValue"
           - !FindInMap [CredentialsRevocation, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
           - !FindInMap [Services, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
           - !FindInMap [Batch, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
