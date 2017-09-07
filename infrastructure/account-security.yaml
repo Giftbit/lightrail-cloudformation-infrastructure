@@ -79,7 +79,7 @@ Resources:
         LogGroupName: !Ref CloudTrailCloudWatchLogsGroup
         EmergencyWebhookUrl: !Ref PagerDutyEmergencyWebhookUrl
         NonEmergencyWebhookUrl: !Ref PagerDutyNonEmergencyWebhookUrl
-        AlertCloudTrail: No
+        AlertCloudTrail: Yes
         AlertLargeEC2s: Yes
         AlertAuthFailures: No
         AlertConsoleSignin: No
