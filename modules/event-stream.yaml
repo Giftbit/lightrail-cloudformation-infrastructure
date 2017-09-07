@@ -9,16 +9,16 @@ Parameters:
       - Dev
       - Staging
       - Production
-  ProtectDataFromDeletion:
+  DisableDataProtection:
     Type: String
     Description: Protect the contents of the Data Bucket from deletion
     AllowedValues:
       - true
       - false  # We specifically want this to overwrite test data when synchronizing existing data over
-    Default: true
+    Default: false
 
 Conditions:
-  ShouldProtectDataFromDeletion: !Equals [!Ref ProtectDataFromDeletion, true]
+  ShouldProtectDataFromDeletion: !Equals [!Ref DisableDataProtection, false]
 
 Resources:
   KinesisStream:
