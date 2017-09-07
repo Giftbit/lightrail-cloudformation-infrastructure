@@ -71,6 +71,17 @@ Resources:
                 Action:
                   - "cloudtrail:*"
                 Resource: "*"
+        -
+          PolicyName: NoAccountSecurityChanges
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              -
+                Effect: Deny
+                NotAction:
+                  - cloudformation:Describe*
+                  - cloudformation:List*
+                Resource: !Sub "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/AccountSecurity/*"
 
   MarkettingGroup:
     Type: AWS::IAM::Group

@@ -1,0 +1,101 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Lightrail Account Security
+# This template is manually applied using Root, because it touches CloudTrail, which no one has access to by design
+
+Parameters:
+  CloudTrailBucketName:
+    Type: String
+    Default: giftbit-cloudtrail-logs
+    Description: Enter the S3 bucket you would like the CloudTrail logs
+    AllowedPattern: "[a-z0-9.-]+"
+  CloudTrailKmsKeyArn:
+    Type: String
+    Description: Enter the KMS Arn that you would like CloudTrail to use to encrypt the logs
+    Default: arn:aws:kms:us-west-2:131941013619:key/88612fbb-89ac-494b-8126-6446bc5d0038
+    AllowedPattern: arn:aws:kms:[a-z0-9-]+:\d{12}:key/[a-z0-9-]+
+  PagerDutyEmergencyWebhookUrl:
+    Type: String
+    Description: Enter the pagerduty webhook url to send Emergency events
+    Default: https://events.pagerduty.com/integration/99690b020f54481e8efa4c27a75b69cd/enqueue
+    AllowedPattern: https:\/\/events.pagerduty.com/integration/[a-z0-9]+/enqueue
+  PagerDutyNonEmergencyWebhookUrl:
+    Type: String
+    Description: Enter the pagerduty webhook url to send Non-Emergency events
+    Default: https://events.pagerduty.com/integration/81eb80e50d8f4eed9d31d34f779d7bf6/enqueue
+    AllowedPattern: https:\/\/events.pagerduty.com/integration/[a-z0-9]+/enqueue
+  SlackWebhookUrl:
+    Type: String
+    Description: Enter the Slack webhook url
+    NoEcho: true
+
+Resources:
+  # CloudTrail Logs
+  CloudTrail:
+    Type: AWS::CloudTrail::Trail
+    Properties:
+      S3BucketName: !Ref CloudTrailBucketName
+      CloudWatchLogsLogGroupArn: !GetAtt CloudTrailCloudWatchLogsGroup.Arn
+      CloudWatchLogsRoleArn: !GetAtt CloudTrailCloudWatchLogsRole.Arn
+      KMSKeyId: !Ref CloudTrailKmsKeyArn
+      EnableLogFileValidation: true
+      IsMultiRegionTrail: true
+      IsLogging: true
+      IncludeGlobalServiceEvents: true
+
+  CloudTrailCloudWatchLogsGroup:
+    Type: AWS::Logs::LogGroup
+  CloudTrailCloudWatchLogsRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - sts:AssumeRole
+            Principal:
+              Service:
+                - cloudtrail.amazonaws.com
+      Policies:
+        -
+          PolicyName: CloudWatchLogs
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              -
+                Effect: Allow
+                Action:
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:${CloudTrailCloudWatchLogsGroup}:log-stream:${AWS::AccountId}_CloudTrail_${AWS::Region}*"
+
+  CloudTrailAlarms:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: CloudTrail
+    Properties:
+      TemplateURL: https://s3.amazonaws.com/giftbit-public-resources/cloudformation/cloudtrail-alarms/cloudtrail_alarms.yaml
+      Parameters:
+        LogGroupName: !Ref CloudTrailCloudWatchLogsGroup
+        EmergencyWebhookUrl: !Ref PagerDutyEmergencyWebhookUrl
+        NonEmergencyWebhookUrl: !Ref PagerDutyNonEmergencyWebhookUrl
+        AlertCloudTrail: No
+        AlertLargeEC2s: Yes
+        AlertAuthFailures: No
+        AlertConsoleSignin: No
+        AlertEC2s: No
+        AlertGateways: No
+        AlertIAMPolicies: No
+        AlertNetworkACLs: No
+        AlertSecurityGroups: No
+        AlertVPCs: No
+
+  ActivityAware:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: CloudTrail
+    Properties:
+      TemplateURL: https://activity-aware-ids-aws.s3.amazonaws.com/cloudformation/20170317-1323.yaml
+      Parameters:
+        CloudTrailCloudWatchLogsFilterPattern: '{ ($.errorCode = "*UnauthorizedOperation") || ($.errorCode = "AccessDenied*") || ($.eventSource = "iam.amazonaws.com" && ( $.eventName = "Put*" || $.eventName = "Create*" || $.eventName = "Attach*") ) }'
+        CloudTrailCloudWatchLogsGroupName: !Ref CloudTrailCloudWatchLogsGroup
+        SlackWebhookURL: !Ref SlackWebhookUrl
