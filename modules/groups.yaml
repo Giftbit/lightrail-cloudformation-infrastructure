@@ -81,7 +81,9 @@ Resources:
                 NotAction:
                   - cloudformation:Describe*
                   - cloudformation:List*
-                Resource: !Sub "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/AccountSecurity/*"
+                Resource:
+                  - !Sub "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/AccountSecurity/*"
+                  - !Sub "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/AccountSecurity-*/*"
 
   MarkettingGroup:
     Type: AWS::IAM::Group
