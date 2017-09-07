@@ -79,6 +79,9 @@ Parameters:
   KvsEndpoint:
     Type: String
     Description: Enter the domain that should handle the KVS requests
+  ReactionsEndpoint:
+    Type: String
+    Description: Enter the domain that should handle the KVS requests
   BatchEndpoint:
     Type: String
     Description: Enter the domain that should handle the Batch requests
@@ -93,6 +96,7 @@ Conditions:
   ViewerCertificateArnSet: !Not [!Equals [!Ref ViewerCertificateArn, ""]]
   ViewerCertificateArnNotSet: !Equals [!Ref ViewerCertificateArn, ""]
   ReactEndpointSet: !Not [!Equals [!Ref ReactEndpoint, ""]]
+  ReactionsEndpointSet: !Not [!Equals [!Ref ReactionsEndpoint, ""]]
 Resources:
   AppZoneRecord:
     Type: AWS::Route53::RecordSet
@@ -195,6 +199,20 @@ Resources:
               OriginProtocolPolicy: https-only
               HTTPSPort: 443
               HTTPPort: 80
+          - !If
+            - ReactionsEndpointSet
+            -
+              DomainName: !Ref ReactionsEndpoint
+              Id: ReactionsEndpointOrigin
+              OriginPath: /Prod
+              CustomOriginConfig:
+                OriginSSLProtocols:
+                  - TLSv1.1
+                  - TLSv1.2
+                OriginProtocolPolicy: http-only
+                HTTPSPort: 443
+                HTTPPort: 80
+            - !Ref AWS::NoValue
         CacheBehaviors:
           -
             PathPattern: "/v1/search/cards"
@@ -467,6 +485,69 @@ Resources:
                 - Host
               Cookies:
                 Forward: all
+          - !If
+            - ReactionsEndpointSet
+            -
+              PathPattern: "/v1/reactionwebhook"
+              TargetOriginId: ReactionsEndpointOrigin
+              ViewerProtocolPolicy: "redirect-to-https"
+              Compress: false
+              MinTTL: 0
+              MaxTTL: 300
+              DefaultTTL: 60
+              AllowedMethods:
+                - GET
+                - HEAD
+              CachedMethods:
+                - GET
+                - HEAD
+              ForwardedValues:
+                QueryString: true
+                Cookies:
+                  Forward: none
+            - !Ref AWS::NoValue
+          - !If
+            - ReactionsEndpointSet
+            -
+              PathPattern: "/v1/reactions"
+              TargetOriginId: ReactionsEndpointOrigin
+              ViewerProtocolPolicy: "redirect-to-https"
+              Compress: false
+              MinTTL: 0
+              MaxTTL: 300
+              DefaultTTL: 60
+              AllowedMethods:
+                - GET
+                - HEAD
+              CachedMethods:
+                - GET
+                - HEAD
+              ForwardedValues:
+                QueryString: true
+                Cookies:
+                  Forward: none
+            - !Ref AWS::NoValue
+          - !If
+            - ReactionsEndpointSet
+            -
+              PathPattern: "/v1/reactions/*"
+              TargetOriginId: ReactionsEndpointOrigin
+              ViewerProtocolPolicy: "redirect-to-https"
+              Compress: false
+              MinTTL: 0
+              MaxTTL: 300
+              DefaultTTL: 60
+              AllowedMethods:
+                - GET
+                - HEAD
+              CachedMethods:
+                - GET
+                - HEAD
+              ForwardedValues:
+                QueryString: true
+                Cookies:
+                  Forward: none
+            - !Ref AWS::NoValue
           -
             PathPattern: "/v1/*"
             TargetOriginId: ServicesEndpointOrigin
@@ -638,6 +719,20 @@ Resources:
               OriginProtocolPolicy: https-only
               HTTPSPort: 443
               HTTPPort: 80
+          - !If
+            - ReactionsEndpointSet
+            -
+              DomainName: !Ref ReactionsEndpoint
+              Id: ReactionsEndpointOrigin
+              OriginPath: /Prod
+              CustomOriginConfig:
+                OriginSSLProtocols:
+                  - TLSv1.1
+                  - TLSv1.2
+                OriginProtocolPolicy: http-only
+                HTTPSPort: 443
+                HTTPPort: 80
+            - !Ref AWS::NoValue
         CacheBehaviors:
           -
             PathPattern: "/v1/search/cards"
@@ -910,6 +1005,69 @@ Resources:
                 - Host
               Cookies:
                 Forward: all
+          - !If
+            - ReactionsEndpointSet
+            -
+              PathPattern: "/v1/reactionwebhook"
+              TargetOriginId: ReactionsEndpointOrigin
+              ViewerProtocolPolicy: "redirect-to-https"
+              Compress: false
+              MinTTL: 0
+              MaxTTL: 300
+              DefaultTTL: 60
+              AllowedMethods:
+                - GET
+                - HEAD
+              CachedMethods:
+                - GET
+                - HEAD
+              ForwardedValues:
+                QueryString: true
+                Cookies:
+                  Forward: none
+            - !Ref AWS::NoValue
+          - !If
+            - ReactionsEndpointSet
+            -
+              PathPattern: "/v1/reactions"
+              TargetOriginId: ReactionsEndpointOrigin
+              ViewerProtocolPolicy: "redirect-to-https"
+              Compress: false
+              MinTTL: 0
+              MaxTTL: 300
+              DefaultTTL: 60
+              AllowedMethods:
+                - GET
+                - HEAD
+              CachedMethods:
+                - GET
+                - HEAD
+              ForwardedValues:
+                QueryString: true
+                Cookies:
+                  Forward: none
+            - !Ref AWS::NoValue
+          - !If
+            - ReactionsEndpointSet
+            -
+              PathPattern: "/v1/reactions/*"
+              TargetOriginId: ReactionsEndpointOrigin
+              ViewerProtocolPolicy: "redirect-to-https"
+              Compress: false
+              MinTTL: 0
+              MaxTTL: 300
+              DefaultTTL: 60
+              AllowedMethods:
+                - GET
+                - HEAD
+              CachedMethods:
+                - GET
+                - HEAD
+              ForwardedValues:
+                QueryString: true
+                Cookies:
+                  Forward: none
+            - !Ref AWS::NoValue
           -
             PathPattern: "/v1/*"
             TargetOriginId: ServicesEndpointOrigin
