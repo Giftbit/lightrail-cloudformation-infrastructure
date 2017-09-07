@@ -113,6 +113,23 @@ Resources:
                 Resource:
                   - !Sub "arn:aws:s3:::${DataBucket}"
                   - !Sub "arn:aws:s3:::${DataBucket}/*"
+        -
+          PolicyName: WriteLogs
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              -
+                Effect: Allow
+                Action:
+                  - logs:PutLogEvents
+                Resource:
+                  - !GetAtt FirehoseLogGroup.Arn
+  FirehoseLogGroup:
+    Type: AWS::Logs::LogGroup
+  FirehoseLogStream:
+    Type: AWS::Logs::LogStream
+    Properties:
+      LogGroupName: !Ref FirehoseLogGroup
   FirehoseStream:
     Type: AWS::KinesisFirehose::DeliveryStream
     Properties:
@@ -120,6 +137,10 @@ Resources:
         RoleARN: !GetAtt FirehoseRole.Arn
         BucketARN: !Sub "arn:aws:s3:::${DataBucket}"
         CompressionFormat: GZIP
+        CloudWatchLoggingOptions:
+          Enabled: true
+          LogGroupName: !Ref FirehoseLogGroup
+          LogStreamName: !Ref FirehoseLogStream
         EncryptionConfiguration:
           KMSEncryptionConfig:
             AWSKMSKeyARN: !GetAtt FirehoseEncryptionKey.Arn
@@ -127,31 +148,13 @@ Resources:
         BufferingHints:
           IntervalInSeconds: 300
           SizeInMBs: 5
-  FirehoseRoleLogPolicy:
-    Type: AWS::IAM::Policy
-    Properties:
-      PolicyName: WriteLogs
-      Roles:
-        - !Ref FirehoseRole
-      PolicyDocument:
-        Version: 2012-10-17
-        Statement:
-          -
-            Effect: Allow
-            Action:
-              - logs:CreateLogGroup
-              - logs:CreateLogStream
-              - logs:PutLogEvents
-            Resource:
-              # yamllint disable-line rule:line-length
-              - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/kinesisfirehose/${FirehoseStream}:log-stream:*"
   KinesisFirehoseShipper:
     Type: AWS::Lambda::Function
     Properties:
-      Code: ../res/kinesis-firehose-shipper-0.1.0.zip
+      Code: ../res/kinesis-firehose-shipper.zip
       Role: !GetAtt KinesisFirehoseShipperRole.Arn
-      Handler: index.default
-      Runtime: nodejs6.10
+      Handler: _apex_index.handle
+      Runtime: nodejs4.3
       Timeout: 120
   KinesisFirehoseShipperRole:
     Type: AWS::IAM::Role
