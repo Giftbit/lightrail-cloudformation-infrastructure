@@ -101,12 +101,18 @@ Mappings:
     Dev-us-west-2:
       RdsSnapshotId: preprod-migration-20170906
       RoleName: dev-LightrailServices-1D5YCESAG92B3-Role-1D1RKUNL3XBWH
+      RdsInstanceClass: db.t2.small
+      RdsMultiAZ: false
     Staging-us-west-2:
       RdsSnapshotId: migration-testbed-20170907
       RoleName: staging-LightrailServices-7PYWE3BIY4LC-Role-9KF46YLQSQ30
+      RdsInstanceClass: db.t2.small
+      RdsMultiAZ: false
     Production-us-west-2:
       RdsSnapshotId: production-new-account-20170829
       RoleName: production-LightrailServices-1KFEHOLF9Z0KA-Role-1JZMIQD5B0TTW
+      RdsInstanceClass: db.m3.medium
+      RdsMultiAZ: true
   Batch:
     Dev-us-west-2:
       RoleName: dev-LightrailBatch-15T0OX937Q0EO-Role-1ETHK95KYFQ02
@@ -544,9 +550,9 @@ Resources:
               - !Ref DevAccountId
               - !Ref AWS::NoValue
         GroupsToGrantDeployAccess: !GetAtt Groups.Outputs.DevelopersGroupName
-        RdsInstanceClass: db.t2.small
+        RdsInstanceClass: !FindInMap [Services, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RdsInstanceClass]
         RdsInstanceAllocation: 100
-        RdsMultiAZ: false
+        RdsMultiAZ: !FindInMap [Services, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RdsMultiAZ]
         RdsSnapshotId: !FindInMap [Services, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RdsSnapshotId]
         VpcRdsSubnetIds: !GetAtt LightrailVPC.Outputs.RdsSubnetIds
         VpcHostedZoneId: !GetAtt LightrailVPC.Outputs.VpcHostedZoneId
