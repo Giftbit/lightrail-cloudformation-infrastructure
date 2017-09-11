@@ -493,7 +493,7 @@ Resources:
               Compress: false
               MinTTL: 0
               MaxTTL: 300
-              DefaultTTL: 60
+              DefaultTTL: 0
               AllowedMethods:
                 - GET
                 - HEAD
@@ -514,7 +514,7 @@ Resources:
               Compress: false
               MinTTL: 0
               MaxTTL: 300
-              DefaultTTL: 60
+              DefaultTTL: 0
               AllowedMethods:
                 - GET
                 - HEAD
@@ -535,7 +535,7 @@ Resources:
               Compress: false
               MinTTL: 0
               MaxTTL: 300
-              DefaultTTL: 60
+              DefaultTTL: 0
               AllowedMethods:
                 - GET
                 - HEAD
@@ -1015,7 +1015,7 @@ Resources:
               Compress: false
               MinTTL: 0
               MaxTTL: 300
-              DefaultTTL: 60
+              DefaultTTL: 0
               AllowedMethods:
                 - GET
                 - HEAD
@@ -1036,7 +1036,7 @@ Resources:
               Compress: false
               MinTTL: 0
               MaxTTL: 300
-              DefaultTTL: 60
+              DefaultTTL: 0
               AllowedMethods:
                 - GET
                 - HEAD
@@ -1057,7 +1057,7 @@ Resources:
               Compress: false
               MinTTL: 0
               MaxTTL: 300
-              DefaultTTL: 60
+              DefaultTTL: 0
               AllowedMethods:
                 - GET
                 - HEAD
