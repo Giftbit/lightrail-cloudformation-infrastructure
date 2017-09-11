@@ -221,7 +221,7 @@ Resources:
             Compress: false
             MinTTL: 0
             MaxTTL: 31536000
-            DefaultTTL: 86400
+            DefaultTTL: 0
             AllowedMethods:
               - GET
               - HEAD
@@ -251,7 +251,7 @@ Resources:
             Compress: false
             MinTTL: 0
             MaxTTL: 31536000
-            DefaultTTL: 86400
+            DefaultTTL: 0
             AllowedMethods:
               - GET
               - HEAD
@@ -281,7 +281,7 @@ Resources:
             Compress: false
             MinTTL: 0
             MaxTTL: 31536000
-            DefaultTTL: 86400
+            DefaultTTL: 0
             AllowedMethods:
               - GET
               - HEAD
@@ -311,7 +311,7 @@ Resources:
             Compress: false
             MinTTL: 0
             MaxTTL: 31536000
-            DefaultTTL: 86400
+            DefaultTTL: 0
             AllowedMethods:
               - GET
               - HEAD
@@ -341,7 +341,7 @@ Resources:
             Compress: false
             MinTTL: 0
             MaxTTL: 31536000
-            DefaultTTL: 86400
+            DefaultTTL: 0
             AllowedMethods:
               - GET
               - HEAD
@@ -371,7 +371,7 @@ Resources:
             Compress: false
             MinTTL: 0
             MaxTTL: 31536000
-            DefaultTTL: 86400
+            DefaultTTL: 0
             AllowedMethods:
               - GET
               - HEAD
@@ -401,7 +401,7 @@ Resources:
             Compress: false
             MinTTL: 0
             MaxTTL: 31536000
-            DefaultTTL: 86400
+            DefaultTTL: 0
             AllowedMethods:
               - GET
               - HEAD
@@ -431,7 +431,7 @@ Resources:
             Compress: false
             MinTTL: 0
             MaxTTL: 31536000
-            DefaultTTL: 86400
+            DefaultTTL: 0
             AllowedMethods:
               - GET
               - HEAD
@@ -461,7 +461,7 @@ Resources:
             Compress: false
             MinTTL: 0
             MaxTTL: 31536000
-            DefaultTTL: 86400
+            DefaultTTL: 0
             AllowedMethods:
               - GET
               - HEAD
@@ -554,7 +554,7 @@ Resources:
             Compress: false
             MinTTL: 0
             MaxTTL: 31536000
-            DefaultTTL: 86400
+            DefaultTTL: 0
             AllowedMethods:
               - GET
               - HEAD
@@ -743,7 +743,7 @@ Resources:
             Compress: false
             MinTTL: 0
             MaxTTL: 31536000
-            DefaultTTL: 86400
+            DefaultTTL: 0
             AllowedMethods:
               - GET
               - HEAD
@@ -773,7 +773,7 @@ Resources:
             Compress: false
             MinTTL: 0
             MaxTTL: 31536000
-            DefaultTTL: 86400
+            DefaultTTL: 0
             AllowedMethods:
               - GET
               - HEAD
@@ -803,7 +803,7 @@ Resources:
             Compress: false
             MinTTL: 0
             MaxTTL: 31536000
-            DefaultTTL: 86400
+            DefaultTTL: 0
             AllowedMethods:
               - GET
               - HEAD
@@ -833,7 +833,7 @@ Resources:
             Compress: false
             MinTTL: 0
             MaxTTL: 31536000
-            DefaultTTL: 86400
+            DefaultTTL: 0
             AllowedMethods:
               - GET
               - HEAD
@@ -863,7 +863,7 @@ Resources:
             Compress: false
             MinTTL: 0
             MaxTTL: 31536000
-            DefaultTTL: 86400
+            DefaultTTL: 0
             AllowedMethods:
               - GET
               - HEAD
@@ -893,7 +893,7 @@ Resources:
             Compress: false
             MinTTL: 0
             MaxTTL: 31536000
-            DefaultTTL: 86400
+            DefaultTTL: 0
             AllowedMethods:
               - GET
               - HEAD
@@ -923,7 +923,7 @@ Resources:
             Compress: false
             MinTTL: 0
             MaxTTL: 31536000
-            DefaultTTL: 86400
+            DefaultTTL: 0
             AllowedMethods:
               - GET
               - HEAD
@@ -953,7 +953,7 @@ Resources:
             Compress: false
             MinTTL: 0
             MaxTTL: 31536000
-            DefaultTTL: 86400
+            DefaultTTL: 0
             AllowedMethods:
               - GET
               - HEAD
@@ -983,7 +983,7 @@ Resources:
             Compress: false
             MinTTL: 0
             MaxTTL: 31536000
-            DefaultTTL: 86400
+            DefaultTTL: 0
             AllowedMethods:
               - GET
               - HEAD
@@ -1076,7 +1076,7 @@ Resources:
             Compress: false
             MinTTL: 0
             MaxTTL: 31536000
-            DefaultTTL: 86400
+            DefaultTTL: 0
             AllowedMethods:
               - GET
               - HEAD
@@ -1108,7 +1108,7 @@ Resources:
             - HEAD
           MinTTL: 0
           MaxTTL: 31536000
-          DefaultTTL: 86400
+          DefaultTTL: 0
           ForwardedValues:
             QueryString: true
             Cookies:
