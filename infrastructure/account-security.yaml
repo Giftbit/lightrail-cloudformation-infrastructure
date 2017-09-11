@@ -79,6 +79,7 @@ Resources:
         LogGroupName: !Ref CloudTrailCloudWatchLogsGroup
         EmergencyWebhookUrl: !Ref PagerDutyEmergencyWebhookUrl
         NonEmergencyWebhookUrl: !Ref PagerDutyNonEmergencyWebhookUrl
+        # yamllint disable rule:truthy
         AlertCloudTrail: Yes
         AlertLargeEC2s: Yes
         AlertAuthFailures: No
@@ -89,6 +90,7 @@ Resources:
         AlertNetworkACLs: No
         AlertSecurityGroups: No
         AlertVPCs: No
+        # yamllint enable rule:truthy
 
   ActivityAware:
     Type: AWS::CloudFormation::Stack
