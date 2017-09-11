@@ -17,5 +17,7 @@ Resources:
 Outputs:
   HostedZoneId:
     Value: !Ref Zone
+  HostedZoneName:
+    Value: !Ref DomainName
   NameServers:
     Value: !Join [",", !GetAtt Zone.NameServers]

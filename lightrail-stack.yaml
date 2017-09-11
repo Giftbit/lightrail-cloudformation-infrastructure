@@ -257,7 +257,7 @@ Resources:
       Parameters:
         EnvironmentName: !Ref EnvironmentName
         ConfigureAliases: !If [ShouldConfigureCloudfrontAliases, "yes", "no"]
-        BaseDomainName: !FindInMap [Common, !Ref EnvironmentName, DomainName]
+        BaseDomainName: !GetAtt LightrailDns.Outputs.HostedZoneName
         HostedZoneId: !GetAtt LightrailDns.Outputs.HostedZoneId
         ViewerCertificateArn: !FindInMap [CloudFront, !Ref EnvironmentName, ACMCertificateArn]
         WebsiteEndpoint: !GetAtt LightrailWebsite.Outputs.Domain
@@ -379,7 +379,7 @@ Resources:
         VpcId: !GetAtt LightrailVPC.Outputs.VpcId
         SecurityGroups: !GetAtt LightrailVPC.Outputs.AlbSecurityGroupId
         SubnetIds: !GetAtt LightrailVPC.Outputs.PublicSubnetIds
-        CertificateArn: !GetAtt LightrailCertificates.Outputs.CertificateArn
+        BaseDomain: !GetAtt LightrailDns.Outputs.HostedZoneName
   LightrailSecureConfig:
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2

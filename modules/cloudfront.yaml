@@ -570,7 +570,10 @@ Resources:
             ForwardedValues:
               QueryString: true
               Headers:
-                - "*"
+                - Authorization
+                - x-amzn-trace-id
+                - lightrailRequestId
+                - AuthorizeAs
               Cookies:
                 Forward: all
           - !If
@@ -1090,7 +1093,10 @@ Resources:
             ForwardedValues:
               QueryString: true
               Headers:
-                - "*"
+                - Authorization
+                - x-amzn-trace-id
+                - lightrailRequestId
+                - AuthorizeAs
               Cookies:
                 Forward: all
         DefaultCacheBehavior:

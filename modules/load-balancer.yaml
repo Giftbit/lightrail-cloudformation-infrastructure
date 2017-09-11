@@ -21,9 +21,14 @@ Parameters:
     Type: String
     Description: A list of Subnet IDs attach the load balancer to
     AllowedPattern: subnet-[0-9a-z]+(,subnet-[0-9a-z]+)+
-  CertificateArn:
+  BaseDomain:
     Type: String
-    Description: The ACM Certificate Arn to use for this Load Balancer
+    Description: The Base Domain Name that you want to use
+
+Mappings:
+  TargetHostedZoneIds:
+    us-west-2:
+      ALB: Z1H1FL5HABSF5
 
 Conditions:
   EnvIsDev: !Equals [!Ref EnvironmentName, Dev]
@@ -52,11 +57,28 @@ Resources:
       Port: 443
       Protocol: HTTPS
       Certificates:
-        - CertificateArn: !Ref CertificateArn
+        - CertificateArn: !Ref Certificate
       DefaultActions:
         -
           Type: forward
           TargetGroupArn: !Ref DefaultTargetGroup
+  Certificate:
+    Type: AWS::CertificateManager::Certificate
+    Properties:
+      DomainName: !Sub "alb.${BaseDomain}"
+      DomainValidationOptions:
+        -
+          DomainName: !Sub "alb.${BaseDomain}"
+          ValidationDomain: !Ref BaseDomain
+  AlbZoneRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneName: !Sub "${BaseDomain}."
+      Name: !Sub "alb.${BaseDomain}."
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt LoadBalancer.DNSName
+        HostedZoneId: !FindInMap [TargetHostedZoneIds, !Ref "AWS::Region", ALB]
 
   # Batch Configuration
   BatchTargetGroup:
@@ -206,7 +228,7 @@ Resources:
 
 Outputs:
   DNSName:
-    Value: !GetAtt LoadBalancer.DNSName
+    Value: !Ref AlbZoneRecord
   ServicesTargetGroupArn:
     Value: !Ref ServicesTargetGroup
   BatchTargetGroupArn:
