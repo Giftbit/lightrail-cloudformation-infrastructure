@@ -92,8 +92,8 @@ Mappings:
       ScaleDownRecurrence: "0 3 * * TUE-SAT"
     Production-us-west-2:
       InstanceType: t2.medium
-      MinInstances: 2
-      MaxInstances: 4
+      MinInstances: 3
+      MaxInstances: 5
       SSHKeyName: LightrailProductionECS
       ScaleUpRecurrence: ""
       ScaleDownRecurrence: ""
@@ -109,7 +109,7 @@ Mappings:
       RdsInstanceClass: db.t2.small
       RdsMultiAZ: false
     Production-us-west-2:
-      RdsSnapshotId: production-new-account-20170829
+      RdsSnapshotId: prod-migration-20170911
       RoleName: production-LightrailServices-1KFEHOLF9Z0KA-Role-1JZMIQD5B0TTW
       RdsInstanceClass: db.m3.medium
       RdsMultiAZ: true
@@ -216,10 +216,6 @@ Conditions:
   EnvIsDev: !Equals [!Ref EnvironmentName, Dev]
   EnvIsDevAndRegionIsUSWest2: !And [{Condition: EnvIsDev}, {Condition: RegionIsUSWest2}]
   EnvIsNotDevAndRegionIsUSWest2: !And [!Not [{Condition: EnvIsDev}], {Condition: RegionIsUSWest2}]
-  # Temporary: This condition, and references to it, should be removed when migrating production to the new account.
-  # This is here because CloudFront will only let a single distribution alias a domain name, so if the existing
-  # production account aliases lightrail.com, then the new production account can't
-  ShouldConfigureCloudfrontAliases: !Not [!Equals [!Ref EnvironmentName, Production]]  # TODO: Make this condition True after we transition Production. CloudFront only allows a single distribution to have a given alias, in this case, www.lightrail.com and api.lightrail.com
   ProductionAccountIdProvided: !Not [!Equals [!Ref ProductionAccountId, ""]]
   StagingAccountIdProvided: !Not [!Equals [!Ref StagingAccountId, ""]]
   DevAccountIdProvided: !Not [!Equals [!Ref DevAccountId, ""]]
@@ -256,7 +252,7 @@ Resources:
       TemplateURL: ./modules/cloudfront.yaml
       Parameters:
         EnvironmentName: !Ref EnvironmentName
-        ConfigureAliases: !If [ShouldConfigureCloudfrontAliases, "yes", "no"]
+        ConfigureAliases: "yes"
         BaseDomainName: !FindInMap [Common, !Ref EnvironmentName, DomainName]
         HostedZoneId: !GetAtt LightrailDns.Outputs.HostedZoneId
         ViewerCertificateArn: !FindInMap [CloudFront, !Ref EnvironmentName, ACMCertificateArn]
