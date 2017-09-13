@@ -13,7 +13,6 @@ Metadata:
           default: Domains
         Parameters:
           - BaseDomainName
-          - HostedZoneId
       -
         Label:
           default: Price Class
@@ -44,10 +43,6 @@ Parameters:
   BaseDomainName:
     Type: String
     Description: Please enter the Base domain that you want the CloudFormation domains to be subdomains of
-  HostedZoneId:
-    Type: String
-    Description: Please enter the Hosted Zone ID for the base domain.
-    Default: ""
   PriceClass:
     Type: String
     Description: Please Select your Price Class
@@ -101,12 +96,12 @@ Resources:
   AppZoneRecord:
     Type: AWS::Route53::RecordSet
     Properties:
-      HostedZoneId: !Ref HostedZoneId
+      HostedZoneName: !Sub "${BaseDomainName}."
       Name: !Sub "www.${BaseDomainName}."
-      Type: CNAME
-      TTL: 300
-      ResourceRecords:
-        - !GetAtt AppDistribution.DomainName
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt AppDistribution.DomainName
+        HostedZoneId: Z2FDTNDATAQYW2  # This is the Route53 HostedZoneId for CloudFront. See http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-route53-aliastarget.html
   AppDistribution:
     Type: "AWS::CloudFront::Distribution"
     Properties:
@@ -670,12 +665,12 @@ Resources:
   ApiZoneRecord:
     Type: AWS::Route53::RecordSet
     Properties:
-      HostedZoneId: !Ref HostedZoneId
+      HostedZoneName: !Sub "${BaseDomainName}."
       Name: !Sub "api.${BaseDomainName}."
-      Type: CNAME
-      TTL: 300
-      ResourceRecords:
-        - !GetAtt ApiDistribution.DomainName
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt ApiDistribution.DomainName
+        HostedZoneId: Z2FDTNDATAQYW2  # This is the Route53 HostedZoneId for CloudFront. See http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-route53-aliastarget.html
   ApiDistribution:
     Type: AWS::CloudFront::Distribution
     Properties:
@@ -1181,6 +1176,66 @@ Resources:
             QueryString: true
             Cookies:
               Forward: none
+  RedirectBucket:
+    Type: "AWS::S3::Bucket"
+    Properties:
+      AccessControl: Private
+      WebsiteConfiguration:
+        RedirectAllRequestsTo:
+          HostName: !Sub "www.${BaseDomainName}"
+          Protocol: https
+  RedirectDistribution:
+    Type: "AWS::CloudFront::Distribution"
+    Properties:
+      DistributionConfig:
+        Aliases:
+          - !Ref BaseDomainName
+        Enabled: true
+        Comment: !Sub "Managed with CloudFormation Stack ${AWS::StackName}"
+        PriceClass: !Ref PriceClass
+        DefaultRootObject: index.html
+        ViewerCertificate:
+          AcmCertificateArn: !If [ViewerCertificateArnSet, !Ref ViewerCertificateArn, !Ref "AWS::NoValue"]
+          CloudFrontDefaultCertificate: !If [ViewerCertificateArnNotSet, true, !Ref "AWS::NoValue"]
+          SslSupportMethod: !If [ViewerCertificateArnSet, "sni-only", !Ref "AWS::NoValue"]
+          MinimumProtocolVersion: TLSv1
+        Origins:
+          -
+            DomainName: !Sub "${RedirectBucket}.s3-website-${AWS::Region}.amazonaws.com"
+            Id: RedirectOrigin
+            CustomOriginConfig:
+              OriginSSLProtocols:
+                - TLSv1.1
+                - TLSv1.2
+              OriginProtocolPolicy: http-only
+              HTTPSPort: 443
+              HTTPPort: 80
+        DefaultCacheBehavior:
+          TargetOriginId: RedirectOrigin
+          ViewerProtocolPolicy: allow-all
+          AllowedMethods:
+            - GET
+            - HEAD
+          CachedMethods:
+            - GET
+            - HEAD
+          MinTTL: 0
+          MaxTTL: 31536000
+          DefaultTTL: 86400
+          ForwardedValues:
+            QueryString: true
+            Cookies:
+              Forward: none
+  RedirectDomain:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      Comment: !Sub "Redirect Domain"
+      HostedZoneName: !Sub "${BaseDomainName}."
+      Name: !Sub "${BaseDomainName}."
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt RedirectDistribution.DomainName
+        HostedZoneId: Z2FDTNDATAQYW2  # This is the Route53 HostedZoneId for CloudFront. See http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-route53-aliastarget.html
 
 Outputs:
   AppDomain:

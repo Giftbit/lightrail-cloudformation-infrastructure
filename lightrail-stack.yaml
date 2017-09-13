@@ -239,12 +239,19 @@ Resources:
       TemplateURL: ./modules/dns-zone.yaml
       Parameters:
         DomainName: !FindInMap [Common, !Ref EnvironmentName, DomainName]
+  LightrailDnsExternalServices:
+    Type: AWS::CloudFormation::Stack
+    Condition: RegionIsUSWest2
+    Properties:
+      TemplateURL: ./modules/dns-external-services.yaml
+      Parameters:
+        BaseDomain: !GetAtt LightrailDns.Outputs.HostedDomainName
   LightrailCertificates:
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: ./modules/certificates.yaml
       Parameters:
-        BaseDomain: !FindInMap [Common, !Ref EnvironmentName, DomainName]
+        BaseDomain: !GetAtt LightrailDns.Outputs.HostedDomainName
   LightrailCloudfront:
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2
@@ -254,7 +261,6 @@ Resources:
         EnvironmentName: !Ref EnvironmentName
         ConfigureAliases: "yes"
         BaseDomainName: !FindInMap [Common, !Ref EnvironmentName, DomainName]
-        HostedZoneId: !GetAtt LightrailDns.Outputs.HostedZoneId
         ViewerCertificateArn: !FindInMap [CloudFront, !Ref EnvironmentName, ACMCertificateArn]
         WebsiteEndpoint: !GetAtt LightrailWebsite.Outputs.Domain
         ReactEndpoint: !GetAtt LightrailReact.Outputs.ReactDomainName
