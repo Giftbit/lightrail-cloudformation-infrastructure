@@ -261,7 +261,6 @@ Resources:
         EnvironmentName: !Ref EnvironmentName
         ConfigureAliases: "yes"
         BaseDomainName: !FindInMap [Common, !Ref EnvironmentName, DomainName]
-        HostedZoneId: !GetAtt LightrailDns.Outputs.HostedZoneId
         ViewerCertificateArn: !FindInMap [CloudFront, !Ref EnvironmentName, ACMCertificateArn]
         WebsiteEndpoint: !GetAtt LightrailWebsite.Outputs.Domain
         ReactEndpoint: !GetAtt LightrailReact.Outputs.ReactDomainName
