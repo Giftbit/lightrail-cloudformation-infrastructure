@@ -1,0 +1,106 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Lightrail Subdomains"
+
+Parameters:
+  BaseDomain:
+    Type: String
+    Description: The Base Domain Name that you want to use
+
+Resources:
+  IncomingMail:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneName: !Sub "${BaseDomain}."
+      Name: !Sub "${BaseDomain}."
+      Type: MX
+      TTL: 300
+      ResourceRecords:
+        - 1 ASPMX.L.GOOGLE.COM.
+        - 5 ALT1.ASPMX.L.GOOGLE.COM.
+        - 5 ALT2.ASPMX.L.GOOGLE.COM.
+        - 10 ALT3.ASPMX.L.GOOGLE.COM.
+        - 10 ALT4.ASPMX.L.GOOGLE.COM.
+  DomainVerificationRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneName: !Sub "${BaseDomain}."
+      Name: !Sub "${BaseDomain}."
+      Type: TXT
+      TTL: 300
+      ResourceRecords:
+        - '"google-site-verification=hB0pZKHU41BGKnLqXvBmecFi362yiXMkqKEf5acn-sY"'
+        - '"v=spf1 include:_spf.google.com include:amazonses.com ~all"'
+  Help:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneName: !Sub "${BaseDomain}."
+      Name: !Sub "help.${BaseDomain}."
+      Type: CNAME
+      TTL: 300
+      ResourceRecords:
+        - custom.intercom.help
+  GoogleDkim:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneName: !Sub "${BaseDomain}."
+      Name: !Sub "google._domainkey.${BaseDomain}."
+      Type: TXT
+      TTL: 300
+      ResourceRecords:
+        - '"v=DKIM1; k=rsa; p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCGs/2PyMOGH5V94oV6nxQUvlXlgI2Kpmegeh3QcOfW7i+U3TFLEJU2YXuzoXL14KQcTCpVZf65ADDk1P9dsuqlcHzU3j2u8F47MDYW3eJUZzE1jb8fb0DhGO/OibupIrtZy/2zCvvcI0Qck1FOetpAVNt7lJFCKnvJnQriZYGRoQIDAQAB"'
+  IntercomDkim:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneName: !Sub "${BaseDomain}."
+      Name: !Sub "intercom._domainkey.${BaseDomain}."
+      Type: CNAME
+      TTL: 300
+      ResourceRecords:
+        - ebc6e2f6-230a-4c13-bd7a-302e1392ab47.dkim.intercom.io
+  Blog:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneName: !Sub "${BaseDomain}."
+      Name: !Sub "blog.${BaseDomain}."
+      Type: A
+      TTL: 300
+      ResourceRecords:
+        - 52.0.16.118
+        - 52.1.119.170
+        - 52.1.147.205
+        - 52.1.173.203
+        - 52.4.145.119
+        - 52.4.175.111
+        - 52.4.225.124
+        - 52.4.240.221
+        - 52.4.38.70
+        - 52.5.181.79
+        - 52.6.3.192
+        - 52.6.46.142
+  BlogSSLVerification:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneName: !Sub "${BaseDomain}."
+      Name: !Sub "f55a892d1901bfae09c1c4a82d15d1b2.${BaseDomain}."
+      Type: CNAME
+      TTL: 300
+      ResourceRecords:
+        - fd2c47384a09eec5c68758c346e1fc3524a7964d.comodoca.com
+  Try:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneName: !Sub "${BaseDomain}."
+      Name: !Sub "try.${BaseDomain}."
+      Type: CNAME
+      TTL: 300
+      ResourceRecords:
+        - unbouncepages.com
+  WooCommerceTest:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneName: !Sub "${BaseDomain}."
+      Name: !Sub "woocommercetest.${BaseDomain}."
+      Type: A
+      TTL: 300
+      ResourceRecords:
+        - 52.43.28.91
