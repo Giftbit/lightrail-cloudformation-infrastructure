@@ -614,7 +614,7 @@ Resources:
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2
     Properties:
-      TemplateURL: https://raw.githubusercontent.com/Giftbit/giftbit-simple-rollup/86d30a1/infrastructure/ci.yaml
+      TemplateURL: https://raw.githubusercontent.com/Giftbit/giftbit-simple-rollup/0bf12e1/infrastructure/ci.yaml
       Parameters:
         ProjectParameterOverrides: !Sub
           - >
