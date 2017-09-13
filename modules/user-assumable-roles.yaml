@@ -175,10 +175,3 @@ Resources:
             Condition:
               Bool:
                 aws:MultiFactorAuthPresent: true
-  TemporaryInfrastructureAdminAccess:
-    Type: AWS::IAM::UserToGroupAddition
-    Properties:
-      GroupName: !Ref InfrastructureAdminGroup
-      Users:
-        - jamie.s
-        - jeff.g
