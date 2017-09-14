@@ -21,9 +21,14 @@ Parameters:
     Type: String
     Description: A list of Subnet IDs attach the load balancer to
     AllowedPattern: subnet-[0-9a-z]+(,subnet-[0-9a-z]+)+
-  CertificateArn:
+  BaseDomain:
     Type: String
-    Description: The ACM Certificate Arn to use for this Load Balancer
+    Description: The Base Domain Name that you want to use
+
+Mappings:
+  TargetHostedZoneIds:  # See Amazon Route 53 Hosted Zone ID at http://docs.amazonaws.cn/en_us/general/latest/gr/rande.html#elb_region
+    us-west-2:
+      ALB: Z1H1FL5HABSF5
 
 Conditions:
   EnvIsDev: !Equals [!Ref EnvironmentName, Dev]
@@ -52,11 +57,37 @@ Resources:
       Port: 443
       Protocol: HTTPS
       Certificates:
-        - CertificateArn: !Ref CertificateArn
+        - CertificateArn: !Ref Certificate
       DefaultActions:
         -
           Type: forward
           TargetGroupArn: !Ref DefaultTargetGroup
+  Certificate:
+    Type: AWS::CertificateManager::Certificate
+    Properties:
+      DomainName: !Sub "alb.${BaseDomain}"
+      SubjectAlternativeNames:
+        - !Sub "api.${BaseDomain}"  # These are just temporary, but we need to have them for the transition period, where CloudFront will still be using the Host header
+        - !Sub "www.${BaseDomain}"
+      DomainValidationOptions:
+        -
+          DomainName: !Sub "alb.${BaseDomain}"
+          ValidationDomain: !Ref BaseDomain
+        -
+          DomainName: !Sub "www.${BaseDomain}"
+          ValidationDomain: !Ref BaseDomain
+        -
+          DomainName: !Sub "api.${BaseDomain}"
+          ValidationDomain: !Ref BaseDomain
+  AlbZoneRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneName: !Sub "${BaseDomain}."
+      Name: !Sub "alb.${BaseDomain}."
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt LoadBalancer.DNSName
+        HostedZoneId: !FindInMap [TargetHostedZoneIds, !Ref "AWS::Region", ALB]
 
   # Batch Configuration
   BatchTargetGroup:
@@ -206,7 +237,7 @@ Resources:
 
 Outputs:
   DNSName:
-    Value: !GetAtt LoadBalancer.DNSName
+    Value: !Ref AlbZoneRecord
   ServicesTargetGroupArn:
     Value: !Ref ServicesTargetGroup
   BatchTargetGroupArn:
