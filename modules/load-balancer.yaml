@@ -66,9 +66,18 @@ Resources:
     Type: AWS::CertificateManager::Certificate
     Properties:
       DomainName: !Sub "alb.${BaseDomain}"
+      SubjectAlternativeNames:
+        - !Sub "api.${BaseDomain}"  # These are just temporary, but we need to have them for the transition period, where CloudFront will still be using the Host header
+        - !Sub "www.${BaseDomain}"
       DomainValidationOptions:
         -
           DomainName: !Sub "alb.${BaseDomain}"
+          ValidationDomain: !Ref BaseDomain
+        -
+          DomainName: !Sub "www.${BaseDomain}"
+          ValidationDomain: !Ref BaseDomain
+        -
+          DomainName: !Sub "api.${BaseDomain}"
           ValidationDomain: !Ref BaseDomain
   AlbZoneRecord:
     Type: AWS::Route53::RecordSet

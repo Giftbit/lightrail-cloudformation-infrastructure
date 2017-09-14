@@ -381,7 +381,7 @@ Resources:
         VpcId: !GetAtt LightrailVPC.Outputs.VpcId
         SecurityGroups: !GetAtt LightrailVPC.Outputs.AlbSecurityGroupId
         SubnetIds: !GetAtt LightrailVPC.Outputs.PublicSubnetIds
-        BaseDomain: !GetAtt LightrailDns.Outputs.HostedZoneName
+        BaseDomain: !GetAtt LightrailDns.Outputs.HostedDomainName
   LightrailSecureConfig:
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2
