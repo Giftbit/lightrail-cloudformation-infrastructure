@@ -26,7 +26,7 @@ Parameters:
     Description: The Base Domain Name that you want to use
 
 Mappings:
-  TargetHostedZoneIds:
+  TargetHostedZoneIds:  # See Amazon Route 53 Hosted Zone ID at http://docs.amazonaws.cn/en_us/general/latest/gr/rande.html#elb_region
     us-west-2:
       ALB: Z1H1FL5HABSF5
 
