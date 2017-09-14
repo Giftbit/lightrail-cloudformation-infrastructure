@@ -117,6 +117,12 @@ Resources:
           CloudFrontDefaultCertificate: !If [ViewerCertificateArnNotSet, true, !Ref "AWS::NoValue"]
           SslSupportMethod: !If [ViewerCertificateArnSet, "sni-only", !Ref "AWS::NoValue"]
           MinimumProtocolVersion: TLSv1
+        CustomErrorResponses:
+          # By Default, CloudFront caches the following Error codes for 5 Minutes: 400, 403, 404, 405, 414, 500, 501, 502, 503, 504
+          # See http://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/HTTPStatusCodes.html#HTTPStatusCodes-cached-errors
+          -
+            ErrorCode: 404
+            ErrorCachingMinTTL: 0  # By default, CloudFront will cache
         Origins:
           -
             DomainName: !Ref WebsiteEndpoint
@@ -688,6 +694,12 @@ Resources:
           CloudFrontDefaultCertificate: !If [ViewerCertificateArnNotSet, true, !Ref "AWS::NoValue"]
           SslSupportMethod: !If [ViewerCertificateArnSet, "sni-only", !Ref "AWS::NoValue"]
           MinimumProtocolVersion: TLSv1
+        CustomErrorResponses:
+          # By Default, CloudFront caches the following Error codes for 5 Minutes: 400, 403, 404, 405, 414, 500, 501, 502, 503, 504
+          # See http://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/HTTPStatusCodes.html#HTTPStatusCodes-cached-errors
+          -
+            ErrorCode: 404
+            ErrorCachingMinTTL: 0  # By default, CloudFront will cache
         Origins:
           -
             DomainName: "giftbit-api-forwarding.s3-website-us-west-2.amazonaws.com"
