@@ -201,7 +201,7 @@ Mappings:
       Endpoint: hl0fjfzg5b.execute-api.us-west-2.amazonaws.com
   Reactions:
     Dev-us-west-2:
-      RoleNames: dev-Reactions-IngressFunctionRole-7MU0VX1GHW9O,dev-Reactions-ReactionsRestFunctionRole-19WM63XU0BYE0,dev-Reactions-ReactionWorkerFunctionRole-RDZIU897EZ6J
+      RoleNames: dev-Reactions-IngressFunctionRole-7MU0VX1GHW9O,dev-Reactions-ReactionsRestFunctionRole-19WM63XU0BYE0,dev-Reactions-ReactionWorkerFunctionRole-RDZIU897EZ6J,dev-Reactions-LogsRestFunctionRole-RSTNN570XZIZ
       Endpoint: vsq1f3h973.execute-api.us-west-2.amazonaws.com
     Staging-us-west-2:
       RoleNames: ""
