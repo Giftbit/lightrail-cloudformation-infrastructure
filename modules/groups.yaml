@@ -130,6 +130,23 @@ Resources:
               - ecs:List*
             Resource: "*"
 
+  BillingReadAccess:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: BillingReadAccess
+      Groups:
+        - !Ref DevelopersGroup
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - aws-portal:ViewBilling
+              - aws-portal:ViewUsage
+              - budgets:ViewBudget
+            Resource: "*"
+
   ApiGatewayReadOnly:
     Type: AWS::IAM::Policy
     Properties:
