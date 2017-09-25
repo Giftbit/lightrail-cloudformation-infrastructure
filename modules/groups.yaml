@@ -174,10 +174,24 @@ Resources:
           -
             Effect: Allow
             Action:
-              - cloudformation:DescribeChangeSet
               - codepipeline:RetryStageExecution
               - codepipeline:StartPipelineExecution
               - codepipeline:ListPipelineExecutions
+            Resource: "*"
+
+  CloudFormationChangeSetReadAccess:
+    Type: AWS::IAM::Policy
+    Properties:
+      Groups:
+        - !Ref DevelopersGroup
+      PolicyName: CloudFormationChangeSetReadAccess
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - cloudformation:DescribeChangeSet
             Resource: "*"
 
   ElasticsearchServiceReadOnly:
