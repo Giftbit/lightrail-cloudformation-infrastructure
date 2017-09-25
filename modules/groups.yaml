@@ -174,10 +174,12 @@ Resources:
           -
             Effect: Allow
             Action:
+              - cloudformation:DescribeChangeSet
               - codepipeline:RetryStageExecution
               - codepipeline:StartPipelineExecution
               - codepipeline:ListPipelineExecutions
             Resource: "*"
+
   ElasticsearchServiceReadOnly:
     Type: AWS::IAM::Policy
     Properties:
