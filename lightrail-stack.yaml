@@ -209,6 +209,19 @@ Mappings:
     Production-us-west-2:
       RoleNames: ""
       Endpoint: ""
+  S3EventTranscoder:
+    Dev-us-west-2:
+      GitHubBranch: dev-ci
+      GitHubBranchDest: ""
+      LambdaArn: "" # "arn:aws:lambda:us-west-2:757264843183:function:s3EventTranscoder-s3EventTranscoderFunction-14TOD7Y5JPNA8"
+    Staging-us-west-2:
+      GitHubBranch: staging
+      GitHubBranchDest: ""
+      LambdaArn: ""
+    Production-us-west-2:
+      GitHubBranch: master
+      GitHubBranchDest: ""
+      LambdaArn: ""
 
 Conditions:
   RegionIsUSWest2: !Equals [!Ref "AWS::Region", us-west-2]
@@ -467,6 +480,7 @@ Resources:
       TemplateURL: ./modules/event-stream.yaml
       Parameters:
         EnvironmentName: !Ref EnvironmentName
+        S3EventTranscoderLambdaArn: !FindInMap [S3EventTranscoder, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], LambdaArn]
   LightrailLogstash:
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2
@@ -649,6 +663,35 @@ Resources:
         -
           Key: Service
           Value: SimpleRollup
+  LightrailS3EventTranscoder:
+    Type: AWS::CloudFormation::Stack
+    Condition: RegionIsUSWest2
+    Properties:
+      TemplateURL: https://raw.githubusercontent.com/Giftbit/s3-event-transcoder/11f566a/infrastructure/ci.yaml
+      Parameters:
+        ProjectParameterOverrides: !Sub
+          - >
+            {
+              "SecureConfigBucket": "${LightrailSecureConfig.Outputs.BucketName}",
+              "SecureConfigKmsArn": "${LightrailSecureConfig.Outputs.EncryptionKeyArn}",
+              "SecureConfigKeyDataDog": "${SecureConfigFileNameDataDog}",
+              "S3EventSourceBucket": "${LightrailEventStream.Outputs.DataBucketName}",
+              "S3EventSourceBucketKmsArn": "${LightrailEventStream.Outputs.EncryptionKeyArn}",
+              "S3EventDestinationBucket": "temporary-kinesis-event-destination-bucket"
+            }
+          -
+            SecureConfigFileNameDataDog: !FindInMap [SecureConfig, FileNames, DataDog]
+        GitHubBranch: !FindInMap [S3EventTranscoder, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], GitHubBranch]
+        GitHubBranchDest: !FindInMap [CardsSearch, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], GitHubBranchDest]
+        GitHubOAuthToken: !Ref GitHubOAuthToken
+        CodeBuildImageNodeSSH: !GetAtt CIResources.Outputs.CodebuildImageNodeSSH
+        CiKeysAccessRoleArn: !GetAtt CIResources.Outputs.KeysAccessRoleArn
+        CiKeysBucketName: !GetAtt CIResources.Outputs.KeysBucketName
+        ProjectName: !Sub "${AWS::StackName}-S3EventTranscoder"
+      Tags:
+        -
+          Key: Service
+          Value: S3EventTranscoder
   LightrailCardsSearch:
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2

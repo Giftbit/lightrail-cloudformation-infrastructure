@@ -9,7 +9,12 @@ Parameters:
       - Dev
       - Staging
       - Production
-
+  S3EventTranscoderLambdaArn:
+    Type: String
+    Description: Lambda function to be triggered on ObjectCreatedEvents
+    Default: ""
+Conditions:
+  ShouldConfigureS3EventTranscoderNotification: !Not [!Equals [!Ref S3EventTranscoderLambdaArn, ""]]
 Resources:
   KinesisStream:
     Type: AWS::Kinesis::Stream
@@ -27,6 +32,13 @@ Resources:
     Type: AWS::S3::Bucket
     Properties:
       AccessControl: Private
+      NotificationConfiguration: !If
+        - ShouldConfigureS3EventTranscoderNotification
+        -
+          LambdaConfigurations:
+            - Function: !Ref S3EventTranscoderLambdaArn
+              Event: 's3:ObjectCreated:*'
+        - !Ref AWS::NoValue
       Tags:
         -
           Key: Service
