@@ -149,7 +149,7 @@ Mappings:
       Endpoint: s6tkfuiyga.execute-api.us-west-2.amazonaws.com
     Staging-us-west-2:
       GitHubBranch: staging
-      GitHubBranchDest: ""
+      GitHubBranchDest: master
       Capacity: low
       RoleName: staging-SimpleRollup-RestFunctionRole-UMGA0LJAWL37
       Endpoint: qq578kbti9.execute-api.us-west-2.amazonaws.com
@@ -170,7 +170,7 @@ Mappings:
       Endpoint: hon8eb7zgg.execute-api.us-west-2.amazonaws.com
     Staging-us-west-2:
       GitHubBranch: staging
-      GitHubBranchDest: ""
+      GitHubBranchDest: master
       ElasticSearchInstanceCount: 2
       ElasticSearchInstanceType: t2.small.elasticsearch
       ElasticSearchMasterInstanceType: none
@@ -193,7 +193,7 @@ Mappings:
       Endpoint: wowqnrwyy0.execute-api.us-west-2.amazonaws.com
     Staging-us-west-2:
       GitHubBranch: staging
-      GitHubBranchDest: ""
+      GitHubBranchDest: master
       Capacity: low
       RoleName: staging-Kvs-KvsFunctionRole-16TX23DYH1DQ
       Endpoint: 1tnp8xblpd.execute-api.us-west-2.amazonaws.com
@@ -213,6 +213,19 @@ Mappings:
     Production-us-west-2:
       RoleNames: ""
       Endpoint: ""
+  S3EventTranscoder:
+    Dev-us-west-2:
+      GitHubBranch: dev-ci
+      GitHubBranchDest: ""
+      LambdaArn: "arn:aws:lambda:us-west-2:757264843183:function:dev-S3EventTranscoder-s3EventTranscoderFunction-14UBP7097F4WC"
+    Staging-us-west-2:
+      GitHubBranch: staging
+      GitHubBranchDest: ""
+      LambdaArn: ""
+    Production-us-west-2:
+      GitHubBranch: master
+      GitHubBranchDest: ""
+      LambdaArn: ""
 
 Conditions:
   RegionIsUSWest2: !Equals [!Ref "AWS::Region", us-west-2]
@@ -471,6 +484,14 @@ Resources:
       TemplateURL: ./modules/event-stream.yaml
       Parameters:
         EnvironmentName: !Ref EnvironmentName
+        S3EventTranscoderLambdaArn: !FindInMap [S3EventTranscoder, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], LambdaArn]
+  LightrailAthena:
+    Type: AWS::CloudFormation::Stack
+    Condition: RegionIsUSWest2
+    Properties:
+      TemplateURL: ./modules/athena.yaml
+      Parameters:
+        EnvironmentName: !Ref EnvironmentName
   LightrailLogstash:
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2
@@ -653,6 +674,36 @@ Resources:
         -
           Key: Service
           Value: SimpleRollup
+  LightrailS3EventTranscoder:
+    Type: AWS::CloudFormation::Stack
+    Condition: RegionIsUSWest2
+    Properties:
+      TemplateURL: https://raw.githubusercontent.com/Giftbit/s3-event-transcoder/512f31c/infrastructure/ci.yaml
+      Parameters:
+        ProjectParameterOverrides: !Sub
+          - >
+            {
+              "SecureConfigBucket": "${LightrailSecureConfig.Outputs.BucketName}",
+              "SecureConfigKmsArn": "${LightrailSecureConfig.Outputs.EncryptionKeyArn}",
+              "SecureConfigKeyDataDog": "${SecureConfigFileNameDataDog}",
+              "S3EventSourceBucket": "${LightrailEventStream.Outputs.DataBucketName}",
+              "S3EventSourceBucketKmsArn": "${LightrailEventStream.Outputs.EncryptionKeyArn}",
+              "S3EventDestinationBucket": "${LightrailAthena.Outputs.DataBucketName}",
+              "S3EventDestinationBucketKmsArn": "${LightrailAthena.Outputs.EncryptionKeyArn}"
+            }
+          -
+            SecureConfigFileNameDataDog: !FindInMap [SecureConfig, FileNames, DataDog]
+        GitHubBranch: !FindInMap [S3EventTranscoder, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], GitHubBranch]
+        GitHubBranchDest: !FindInMap [CardsSearch, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], GitHubBranchDest]
+        GitHubOAuthToken: !Ref GitHubOAuthToken
+        CodeBuildImageNodeSSH: !GetAtt CIResources.Outputs.CodebuildImageNodeSSH
+        CiKeysAccessRoleArn: !GetAtt CIResources.Outputs.KeysAccessRoleArn
+        CiKeysBucketName: !GetAtt CIResources.Outputs.KeysBucketName
+        ProjectName: !Sub "${AWS::StackName}-S3EventTranscoder"
+      Tags:
+        -
+          Key: Service
+          Value: S3EventTranscoder
   LightrailCardsSearch:
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2
