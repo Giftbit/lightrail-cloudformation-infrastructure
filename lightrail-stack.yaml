@@ -213,7 +213,7 @@ Mappings:
     Dev-us-west-2:
       GitHubBranch: dev-ci
       GitHubBranchDest: ""
-      LambdaArn: "" # "arn:aws:lambda:us-west-2:757264843183:function:s3EventTranscoder-s3EventTranscoderFunction-14TOD7Y5JPNA8"
+      LambdaArn: "dev-S3EventTranscoder-s3EventTranscoderFunction-14UBP7097F4WC"
     Staging-us-west-2:
       GitHubBranch: staging
       GitHubBranchDest: ""
