@@ -213,7 +213,7 @@ Mappings:
     Dev-us-west-2:
       GitHubBranch: dev-ci
       GitHubBranchDest: ""
-      LambdaArn: "dev-S3EventTranscoder-s3EventTranscoderFunction-14UBP7097F4WC"
+      LambdaArn: "arn:aws:lambda:us-west-2:757264843183:function:dev-S3EventTranscoder-s3EventTranscoderFunction-14UBP7097F4WC"
     Staging-us-west-2:
       GitHubBranch: staging
       GitHubBranchDest: ""
@@ -481,6 +481,13 @@ Resources:
       Parameters:
         EnvironmentName: !Ref EnvironmentName
         S3EventTranscoderLambdaArn: !FindInMap [S3EventTranscoder, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], LambdaArn]
+  LightrailAthena:
+    Type: AWS::CloudFormation::Stack
+    Condition: RegionIsUSWest2
+    Properties:
+      TemplateURL: ./modules/athena.yaml
+      Parameters:
+        EnvironmentName: !Ref EnvironmentName
   LightrailLogstash:
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2
@@ -677,7 +684,8 @@ Resources:
               "SecureConfigKeyDataDog": "${SecureConfigFileNameDataDog}",
               "S3EventSourceBucket": "${LightrailEventStream.Outputs.DataBucketName}",
               "S3EventSourceBucketKmsArn": "${LightrailEventStream.Outputs.EncryptionKeyArn}",
-              "S3EventDestinationBucket": "temporary-kinesis-event-destination-bucket"
+              "S3EventDestinationBucket": "${LightrailAthena.Outputs.DataBucketName}",
+              "S3EventDestinationBucketKmsArn": "${LightrailAthena.Outputs.EncryptionKeyArn}"
             }
           -
             SecureConfigFileNameDataDog: !FindInMap [SecureConfig, FileNames, DataDog]
