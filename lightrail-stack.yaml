@@ -24,11 +24,15 @@ Parameters:
     Description: The ID of the account to be considered Dev
     Default: ""
     AllowedPattern: (\d{12})?
-  GitHubOAuthToken:
+  EncryptedGitHubOAuthToken:
     Type: String
     Description: GitHub OAuth Token. Used for CI Stacks to access GitHub Repos
     Default: "****"
     NoEcho: true
+  EncryptionKeyArn:
+    Type: String
+    Description: The ARN that encrypted parameters are passed with
+    AllowedPattern: arn:aws:kms:[a-z0-9-]+:\d{12}:key/[a-z0-9-]+
   CloudFormationServiceRoleName:
     Type: String
     Description: >
@@ -611,7 +615,7 @@ Resources:
             "SecureConfigKMSArn": "${LightrailSecureConfig.Outputs.EncryptionKeyArn}"
           }
         GitHubBranchDest: !FindInMap [CredentialsRevocation, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], GitHubBranchDest]
-        GitHubOAuthToken: !Ref GitHubOAuthToken
+        GitHubOAuthToken: !GetAtt GitHubOAuthToken.DecryptedValue
         CodeBuildImageNodeSSH: !GetAtt CIResources.Outputs.CodebuildImageNodeSSH
         CiKeysAccessRoleArn: !GetAtt CIResources.Outputs.KeysAccessRoleArn
         CiKeysBucketName: !GetAtt CIResources.Outputs.KeysBucketName
@@ -640,7 +644,7 @@ Resources:
             Capacity: !FindInMap [SimpleRollup, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], Capacity]
         GitHubBranch: !FindInMap [SimpleRollup, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], GitHubBranch]
         GitHubBranchDest: !FindInMap [SimpleRollup, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], GitHubBranchDest]
-        GitHubOAuthToken: !Ref GitHubOAuthToken
+        GitHubOAuthToken: !GetAtt GitHubOAuthToken.DecryptedValue
         CodeBuildImageNodeSSH: !GetAtt CIResources.Outputs.CodebuildImageNodeSSH
         CiKeysAccessRoleArn: !GetAtt CIResources.Outputs.KeysAccessRoleArn
         CiKeysBucketName: !GetAtt CIResources.Outputs.KeysBucketName
@@ -680,7 +684,7 @@ Resources:
               !FindInMap [CardsSearch, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], ElasticSearchMasterInstanceType]
         GitHubBranch: !FindInMap [CardsSearch, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], GitHubBranch]
         GitHubBranchDest: !FindInMap [CardsSearch, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], GitHubBranchDest]
-        GitHubOAuthToken: !Ref GitHubOAuthToken
+        GitHubOAuthToken: !GetAtt GitHubOAuthToken.DecryptedValue
         CodeBuildImageNodeSSH: !GetAtt CIResources.Outputs.CodebuildImageNodeSSH
         CiKeysAccessRoleArn: !GetAtt CIResources.Outputs.KeysAccessRoleArn
         CiKeysBucketName: !GetAtt CIResources.Outputs.KeysBucketName
@@ -708,7 +712,7 @@ Resources:
             Capacity: !FindInMap [Kvs, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], Capacity]
         GitHubBranch: !FindInMap [Kvs, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], GitHubBranch]
         GitHubBranchDest: !FindInMap [Kvs, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], GitHubBranchDest]
-        GitHubOAuthToken: !Ref GitHubOAuthToken
+        GitHubOAuthToken: !GetAtt GitHubOAuthToken.DecryptedValue
         CodeBuildImageNodeSSH: !GetAtt CIResources.Outputs.CodebuildImageNodeSSH
         CiKeysAccessRoleArn: !GetAtt CIResources.Outputs.KeysAccessRoleArn
         CiKeysBucketName: !GetAtt CIResources.Outputs.KeysBucketName
@@ -788,6 +792,46 @@ Resources:
       Runtime: nodejs6.10
       Timeout: 15
       Code: ../res/role-id-lookup.zip
+
+  DecryptionLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - sts:AssumeRole
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+      Policies:
+        -
+          PolicyName: EncryptionAccess
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              -
+                Effect: Allow
+                Action:
+                  - kms:Decrypt
+                Resource: !Ref EncryptionKeyArn
+  DecryptionLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      Description: Backs a CloudFormation Custom Resource for decrypting values with a specified KMS Key
+      Role: !GetAtt DecryptionLambdaRole.Arn
+      Handler: kmsDependency.handler
+      Runtime: nodejs
+      Timeout: 15
+      Code: ../res/kms-decryption-custom-resource.zip
+  GitHubOAuthToken:
+    Type: AWS::CloudFormation::CustomResource
+    Properties:
+      ServiceToken: !GetAtt DecryptionLambda.Arn
+      EncryptedValue: !Ref EncryptedGitHubOAuthToken
 
 Outputs:
   AppDomain:

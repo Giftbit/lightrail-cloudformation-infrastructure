@@ -876,6 +876,13 @@ Resources:
       ServiceToken: !GetAtt EncryptionLambda.Arn
       KeyId: !GetAtt EncryptionKey.Arn
       PlainText: !Ref GitHubOAuthToken
+  EncryptedDownstreamGitHubOAuthToken:
+    Type: AWS::CloudFormation::CustomResource
+    Version: 1.0
+    Properties:
+      ServiceToken: !GetAtt EncryptionLambda.Arn
+      KeyId: !GetAtt EncryptionKey.Arn
+      PlainText: !Ref DownstreamGitHubOAuthToken
 
 Outputs:
   ProjectName:
