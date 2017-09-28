@@ -878,11 +878,14 @@ Resources:
       Runtime: nodejs6.10
       Timeout: 15
       Code: ../res/kms-decryption-custom-resource.zip
+      Environment:
+        Variables:
+          REGION: !Ref AWS::Region
   GitHubOAuthToken:
     Type: AWS::CloudFormation::CustomResource
     Properties:
       ServiceToken: !GetAtt DecryptionLambda.Arn
-      EncryptedValue: !Ref EncryptedGitHubOAuthToken
+      EncryptedValue: !Sub "kms:${EncryptedGitHubOAuthToken}"
 
 Outputs:
   AppDomain:
