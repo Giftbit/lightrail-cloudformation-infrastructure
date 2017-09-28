@@ -30,6 +30,15 @@ Metadata:
           - DevAccountId
           - StagingAccountId
           - ProductionAccountId
+      -
+        Label:
+          default: >
+            Manage Accounts with CodePipeline (Deploy this stack first with no enabled accounts, then set up the CI Roles in the
+            accounts, before enabling the accounts below)
+        Parameters:
+          - UseCodePipelineToManageDevAccount
+          - UseCodePipelineToManageStagingAccount
+          - UseCodePipelineToManageProductionAccount
 
 Parameters:
   ProjectName:
@@ -82,6 +91,27 @@ Parameters:
       This account will not be effected by the pipeline if disabled.
     AllowedPattern: "(\\d{12})?"
     Default: ""
+  UseCodePipelineToManageDevAccount:
+    Type: String
+    Description: (Optional) If DevAccountId is set, should it be managed with CodePipeline
+    Default: true
+    AllowedValues:
+      - true
+      - false
+  UseCodePipelineToManageStagingAccount:
+    Type: String
+    Description: (Optional) If StagingAccountId is set, should it be managed with CodePipeline
+    Default: true
+    AllowedValues:
+      - true
+      - false
+  UseCodePipelineToManageProductionAccount:
+    Type: String
+    Description: (Optional) If ProductionAccountId is set, should it be managed with CodePipeline
+    Default: true
+    AllowedValues:
+      - true
+      - false
   CurrentAccountStackName:
     Type: String
     Description: The CloudFormation Stack that should be used for the lightrail account
@@ -92,9 +122,15 @@ Parameters:
     NoEcho: true
 
 Conditions:
-  DevAccountIsEnabled: !Not [!Equals [!Ref DevAccountId, ""]]
-  StagingAccountIsEnabled: !Not [!Equals [!Ref StagingAccountId, ""]]
-  ProductionAccountIsEnabled: !Not [!Equals [!Ref ProductionAccountId, ""]]
+  DevAccountIsEnabled: !And
+    - !Not [!Equals [!Ref DevAccountId, ""]]
+    - !Equals [!Ref UseCodePipelineToManageDevAccount, true]
+  StagingAccountIsEnabled: !And
+    - !Not [!Equals [!Ref StagingAccountId, ""]]
+    - !Equals [!Ref UseCodePipelineToManageStagingAccount, true]
+  ProductionAccountIsEnabled: !And
+    - !Not [!Equals [!Ref ProductionAccountId, ""]]
+    - !Equals [!Ref UseCodePipelineToManageProductionAccount, true]
   AnAccountIsEnabled: !Or
     - Condition: DevAccountIsEnabled
     - Condition: StagingAccountIsEnabled
@@ -275,7 +311,7 @@ Resources:
                       "StagingAccountId": "${StagingAccountId}",
                       "DevAccountId": "${DevAccountId}",
                       "EncryptedGitHubOAuthToken": "${EncryptedDownstreamGitHubOAuthToken.CipherText}",
-                      "EncryptionKeyArn": "${EncryptionKey.Arn}",
+                      "DecryptionLambdaArn": "${DecryptionLambda.Arn}",
                       "CloudFormationServiceRoleName": "${ProjectName}-CloudFormationServiceRole"
                     }
                   TemplatePath: BuildOutputArtifact::lightrail-stack.yaml
@@ -339,7 +375,7 @@ Resources:
                       "StagingAccountId": "${StagingAccountId}",
                       "DevAccountId": "${DevAccountId}",
                       "EncryptedGitHubOAuthToken": "${EncryptedDownstreamGitHubOAuthToken.CipherText}",
-                      "EncryptionKeyArn": "${EncryptionKey.Arn}",
+                      "DecryptionLambdaArn": "${DecryptionLambda.Arn}",
                       "CloudFormationServiceRoleName": "${ProjectName}-CloudFormationServiceRole"
                     }
                   TemplatePath: BuildOutputArtifact::lightrail-stack.yaml
@@ -403,7 +439,7 @@ Resources:
                       "StagingAccountId": "${StagingAccountId}",
                       "DevAccountId": "${DevAccountId}",
                       "EncryptedGitHubOAuthToken": "${EncryptedDownstreamGitHubOAuthToken.CipherText}",
-                      "EncryptionKeyArn": "${EncryptionKey.Arn}",
+                      "DecryptionLambdaArn": "${DecryptionLambda.Arn}",
                       "CloudFormationServiceRoleName": "${ProjectName}-CloudFormationServiceRole"
                     }
                   TemplatePath: BuildOutputArtifact::lightrail-stack.yaml
@@ -886,6 +922,69 @@ Resources:
       ServiceToken: !GetAtt EncryptionLambda.Arn
       KeyId: !GetAtt EncryptionKey.Arn
       PlainText: !Ref DownstreamGitHubOAuthToken
+
+  DecryptionLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${AWS::StackName}-DecryptionLambdaRole"
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - sts:AssumeRole
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+      Policies:
+        -
+          PolicyName: EncryptionAccess
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              -
+                Effect: Allow
+                Action:
+                  - kms:Decrypt
+                Resource: !GetAtt EncryptionKey.Arn
+  DecryptionLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      Description: Backs a CloudFormation Custom Resource for decrypting values with a specified KMS Key
+      Role: !GetAtt DecryptionLambdaRole.Arn
+      Handler: kmsDependency.handler
+      Runtime: nodejs6.10
+      Timeout: 15
+      Code: ../res/kms-decryption-custom-resource.zip
+      Environment:
+        Variables:
+          REGION: !Ref AWS::Region
+  DecryptionLambdaDevAccess:
+    Type: AWS::Lambda::Permission
+    Condition: DevAccountIsEnabled
+    Properties:
+      Action: "lambda:InvokeFunction"
+      FunctionName: !GetAtt DecryptionLambda.Arn
+      Principal: !Sub "arn:aws:iam::${DevAccountId}:role/${ProjectName}-CloudFormationServiceRole"
+      SourceAccount: !Ref DevAccountId
+  DecryptionLambdaStagingAccess:
+    Type: AWS::Lambda::Permission
+    Condition: StagingAccountIsEnabled
+    Properties:
+      Action: "lambda:InvokeFunction"
+      FunctionName: !GetAtt DecryptionLambda.Arn
+      Principal: !Sub "arn:aws:iam::${StagingAccountId}:role/${ProjectName}-CloudFormationServiceRole"
+      SourceAccount: !Ref DevAccountId
+  DecryptionLambdaProductionAccess:
+    Type: AWS::Lambda::Permission
+    Condition: ProductionAccountIsEnabled
+    Properties:
+      Action: "lambda:InvokeFunction"
+      FunctionName: !GetAtt DecryptionLambda.Arn
+      Principal: !Sub "arn:aws:iam::${ProductionAccountId}:role/${ProjectName}-CloudFormationServiceRole"
+      SourceAccount: !Ref DevAccountId
 
 Outputs:
   ProjectName:

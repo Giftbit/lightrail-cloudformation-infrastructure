@@ -29,10 +29,10 @@ Parameters:
     Description: GitHub OAuth Token. Used for CI Stacks to access GitHub Repos
     Default: "****"
     NoEcho: true
-  EncryptionKeyArn:
+  DecryptionLambdaArn:
     Type: String
     Description: The ARN that encrypted parameters are passed with
-    AllowedPattern: arn:aws:kms:[a-z0-9-]+:\d{12}:key/[a-z0-9-]+
+    AllowedPattern: arn:aws:lambda:[a-z0-9-]+:\d{12}:function:[a-zA-Z0-9_-]+
   CloudFormationServiceRoleName:
     Type: String
     Description: >
@@ -843,48 +843,10 @@ Resources:
       Runtime: nodejs6.10
       Timeout: 15
       Code: ../res/role-id-lookup.zip
-
-  DecryptionLambdaRole:
-    Type: AWS::IAM::Role
-    Properties:
-      ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
-      AssumeRolePolicyDocument:
-        Version: 2012-10-17
-        Statement:
-          - Effect: Allow
-            Action:
-              - sts:AssumeRole
-            Principal:
-              Service:
-                - lambda.amazonaws.com
-      Policies:
-        -
-          PolicyName: EncryptionAccess
-          PolicyDocument:
-            Version: 2012-10-17
-            Statement:
-              -
-                Effect: Allow
-                Action:
-                  - kms:Decrypt
-                Resource: !Ref EncryptionKeyArn
-  DecryptionLambda:
-    Type: AWS::Lambda::Function
-    Properties:
-      Description: Backs a CloudFormation Custom Resource for decrypting values with a specified KMS Key
-      Role: !GetAtt DecryptionLambdaRole.Arn
-      Handler: kmsDependency.handler
-      Runtime: nodejs6.10
-      Timeout: 15
-      Code: ../res/kms-decryption-custom-resource.zip
-      Environment:
-        Variables:
-          REGION: !Ref AWS::Region
   GitHubOAuthToken:
     Type: AWS::CloudFormation::CustomResource
     Properties:
-      ServiceToken: !GetAtt DecryptionLambda.Arn
+      ServiceToken: !Ref DecryptionLambdaArn
       EncryptedValue: !Sub "kms:${EncryptedGitHubOAuthToken}"
 
 Outputs:
