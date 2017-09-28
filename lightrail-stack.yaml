@@ -695,7 +695,7 @@ Resources:
             SecureConfigFileNameDataDog: !FindInMap [SecureConfig, FileNames, DataDog]
         GitHubBranch: !FindInMap [S3EventTranscoder, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], GitHubBranch]
         GitHubBranchDest: !FindInMap [CardsSearch, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], GitHubBranchDest]
-        GitHubOAuthToken: !Ref GitHubOAuthToken
+        GitHubOAuthToken: !GetAtt GitHubOAuthToken.DecryptedValue
         CodeBuildImageNodeSSH: !GetAtt CIResources.Outputs.CodebuildImageNodeSSH
         CiKeysAccessRoleArn: !GetAtt CIResources.Outputs.KeysAccessRoleArn
         CiKeysBucketName: !GetAtt CIResources.Outputs.KeysBucketName
