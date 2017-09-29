@@ -214,14 +214,17 @@ Mappings:
       GitHubBranch: dev-ci
       GitHubBranchDest: ""
       LambdaArn: "arn:aws:lambda:us-west-2:757264843183:function:dev-S3EventTranscoder-s3EventTranscoderFunction-14UBP7097F4WC"
+      RoleName: "dev-S3EventTranscoder-s3EventTranscoderFunctionRol-HDCE8T5DY5R1"
     Staging-us-west-2:
       GitHubBranch: staging
       GitHubBranchDest: ""
       LambdaArn: ""
+      RoleName: ""
     Production-us-west-2:
       GitHubBranch: master
       GitHubBranchDest: ""
       LambdaArn: ""
+      RoleName: ""
 
 Conditions:
   RegionIsUSWest2: !Equals [!Ref "AWS::Region", us-west-2]
@@ -419,6 +422,7 @@ Resources:
           - !FindInMap [CardsSearch, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
           - !FindInMap [Kvs, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
           - !FindInMap [Reactions, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleNames]
+          - !FindInMap [S3EventTranscoder, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
   LightrailSecureConfigPolicyAdminAccessRoleIdGrants:
     Type: AWS::CloudFormation::CustomResource
     Version: 1.0
