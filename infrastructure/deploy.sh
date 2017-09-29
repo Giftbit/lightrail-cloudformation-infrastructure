@@ -11,7 +11,7 @@ if ! type "aws" &> /dev/null; then
     exit 1
 fi
 
-BUILD_ARTIFACT_BUCKET="$(aws s3api list-buckets --query 'Buckets[?starts_with(Name,`cf-template`)].Name' --output text)"
+BUILD_ARTIFACT_BUCKET="$(aws s3api list-buckets --query 'Buckets[?starts_with(Name,`cf-template`) && ends_with(Name,`us-west-2`)].Name' --output text)"
 
 temp_file=$(mktemp)
 aws cloudformation package --template-file ci.yaml --s3-bucket $BUILD_ARTIFACT_BUCKET --output-template-file $temp_file

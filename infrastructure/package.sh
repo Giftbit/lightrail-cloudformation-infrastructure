@@ -4,12 +4,14 @@
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd $SCRIPT_DIR
 
+set -x
+
 if ! type "aws" &> /dev/null; then
     echo "'aws' was not found in the path.  Install awscli using 'sudo pip install awscli' then try again."
     exit 1
 fi
 
-BUILD_ARTIFACT_BUCKET="$(aws s3api list-buckets --query 'Buckets[?starts_with(Name,`cf-template`)].Name' --output text)"
+BUILD_ARTIFACT_BUCKET="$(aws s3api list-buckets --query 'Buckets[?starts_with(Name,`cf-template`) && ends_with(Name,`us-west-2`)].Name' --output text)"
 
 uuid=$(uuidgen)
 while [ -n "$(aws s3 ls s3://$BUILD_ARTIFACT_BUCKET/$uuid.yaml)" ]; do

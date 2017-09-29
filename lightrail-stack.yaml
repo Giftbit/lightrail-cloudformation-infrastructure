@@ -24,11 +24,15 @@ Parameters:
     Description: The ID of the account to be considered Dev
     Default: ""
     AllowedPattern: (\d{12})?
-  GitHubOAuthToken:
+  EncryptedGitHubOAuthToken:
     Type: String
     Description: GitHub OAuth Token. Used for CI Stacks to access GitHub Repos
     Default: "****"
     NoEcho: true
+  DecryptionLambdaArn:
+    Type: String
+    Description: The ARN that encrypted parameters are passed with
+    AllowedPattern: arn:aws:lambda:[a-z0-9-]+:\d{12}:function:[a-zA-Z0-9_-]+
   CloudFormationServiceRoleName:
     Type: String
     Description: >
@@ -636,7 +640,7 @@ Resources:
             "SecureConfigKMSArn": "${LightrailSecureConfig.Outputs.EncryptionKeyArn}"
           }
         GitHubBranchDest: !FindInMap [CredentialsRevocation, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], GitHubBranchDest]
-        GitHubOAuthToken: !Ref GitHubOAuthToken
+        GitHubOAuthToken: !GetAtt GitHubOAuthToken.DecryptedValue
         CodeBuildImageNodeSSH: !GetAtt CIResources.Outputs.CodebuildImageNodeSSH
         CiKeysAccessRoleArn: !GetAtt CIResources.Outputs.KeysAccessRoleArn
         CiKeysBucketName: !GetAtt CIResources.Outputs.KeysBucketName
@@ -665,7 +669,7 @@ Resources:
             Capacity: !FindInMap [SimpleRollup, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], Capacity]
         GitHubBranch: !FindInMap [SimpleRollup, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], GitHubBranch]
         GitHubBranchDest: !FindInMap [SimpleRollup, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], GitHubBranchDest]
-        GitHubOAuthToken: !Ref GitHubOAuthToken
+        GitHubOAuthToken: !GetAtt GitHubOAuthToken.DecryptedValue
         CodeBuildImageNodeSSH: !GetAtt CIResources.Outputs.CodebuildImageNodeSSH
         CiKeysAccessRoleArn: !GetAtt CIResources.Outputs.KeysAccessRoleArn
         CiKeysBucketName: !GetAtt CIResources.Outputs.KeysBucketName
@@ -695,7 +699,7 @@ Resources:
             SecureConfigFileNameDataDog: !FindInMap [SecureConfig, FileNames, DataDog]
         GitHubBranch: !FindInMap [S3EventTranscoder, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], GitHubBranch]
         GitHubBranchDest: !FindInMap [CardsSearch, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], GitHubBranchDest]
-        GitHubOAuthToken: !Ref GitHubOAuthToken
+        GitHubOAuthToken: !GetAtt GitHubOAuthToken.DecryptedValue
         CodeBuildImageNodeSSH: !GetAtt CIResources.Outputs.CodebuildImageNodeSSH
         CiKeysAccessRoleArn: !GetAtt CIResources.Outputs.KeysAccessRoleArn
         CiKeysBucketName: !GetAtt CIResources.Outputs.KeysBucketName
@@ -735,7 +739,7 @@ Resources:
               !FindInMap [CardsSearch, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], ElasticSearchMasterInstanceType]
         GitHubBranch: !FindInMap [CardsSearch, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], GitHubBranch]
         GitHubBranchDest: !FindInMap [CardsSearch, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], GitHubBranchDest]
-        GitHubOAuthToken: !Ref GitHubOAuthToken
+        GitHubOAuthToken: !GetAtt GitHubOAuthToken.DecryptedValue
         CodeBuildImageNodeSSH: !GetAtt CIResources.Outputs.CodebuildImageNodeSSH
         CiKeysAccessRoleArn: !GetAtt CIResources.Outputs.KeysAccessRoleArn
         CiKeysBucketName: !GetAtt CIResources.Outputs.KeysBucketName
@@ -763,7 +767,7 @@ Resources:
             Capacity: !FindInMap [Kvs, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], Capacity]
         GitHubBranch: !FindInMap [Kvs, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], GitHubBranch]
         GitHubBranchDest: !FindInMap [Kvs, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], GitHubBranchDest]
-        GitHubOAuthToken: !Ref GitHubOAuthToken
+        GitHubOAuthToken: !GetAtt GitHubOAuthToken.DecryptedValue
         CodeBuildImageNodeSSH: !GetAtt CIResources.Outputs.CodebuildImageNodeSSH
         CiKeysAccessRoleArn: !GetAtt CIResources.Outputs.KeysAccessRoleArn
         CiKeysBucketName: !GetAtt CIResources.Outputs.KeysBucketName
@@ -843,6 +847,11 @@ Resources:
       Runtime: nodejs6.10
       Timeout: 15
       Code: ../res/role-id-lookup.zip
+  GitHubOAuthToken:
+    Type: AWS::CloudFormation::CustomResource
+    Properties:
+      ServiceToken: !Ref DecryptionLambdaArn
+      EncryptedValue: !Sub "kms:${EncryptedGitHubOAuthToken}"
 
 Outputs:
   AppDomain:
