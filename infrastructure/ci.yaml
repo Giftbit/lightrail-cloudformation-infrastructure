@@ -968,7 +968,6 @@ Resources:
       Action: "lambda:InvokeFunction"
       FunctionName: !GetAtt DecryptionLambda.Arn
       Principal: !Sub "arn:aws:iam::${DevAccountId}:role/${ProjectName}-CloudFormationServiceRole"
-      SourceAccount: !Ref DevAccountId
   DecryptionLambdaStagingAccess:
     Type: AWS::Lambda::Permission
     Condition: StagingAccountIsEnabled
@@ -976,7 +975,6 @@ Resources:
       Action: "lambda:InvokeFunction"
       FunctionName: !GetAtt DecryptionLambda.Arn
       Principal: !Sub "arn:aws:iam::${StagingAccountId}:role/${ProjectName}-CloudFormationServiceRole"
-      SourceAccount: !Ref DevAccountId
   DecryptionLambdaProductionAccess:
     Type: AWS::Lambda::Permission
     Condition: ProductionAccountIsEnabled
@@ -984,7 +982,6 @@ Resources:
       Action: "lambda:InvokeFunction"
       FunctionName: !GetAtt DecryptionLambda.Arn
       Principal: !Sub "arn:aws:iam::${ProductionAccountId}:role/${ProjectName}-CloudFormationServiceRole"
-      SourceAccount: !Ref DevAccountId
 
 Outputs:
   ProjectName:
