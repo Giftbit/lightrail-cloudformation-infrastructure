@@ -678,7 +678,7 @@ Resources:
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2
     Properties:
-      TemplateURL: https://raw.githubusercontent.com/Giftbit/s3-event-transcoder/512f31c/infrastructure/ci.yaml
+      TemplateURL: https://raw.githubusercontent.com/Giftbit/s3-event-transcoder/b4d6108/infrastructure/ci.yaml
       Parameters:
         ProjectParameterOverrides: !Sub
           - >
