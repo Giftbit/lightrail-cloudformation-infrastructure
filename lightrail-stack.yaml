@@ -774,7 +774,6 @@ Resources:
             }
           -
             SecureConfigFileNameJwt: !FindInMap [SecureConfig, FileNames, JWT]
-            SecureConfigFileNameDataDog: !FindInMap [SecureConfig, FileNames, DataDog]
             Capacity: !FindInMap [Kvs, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], Capacity]
         GitHubBranch: !FindInMap [Kvs, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], GitHubBranch]
         GitHubBranchDest: !FindInMap [Kvs, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], GitHubBranchDest]
@@ -805,6 +804,7 @@ Resources:
             }
           -
             SecureConfigFileNameJwt: !FindInMap [SecureConfig, FileNames, JWT]
+            SecureConfigFileNameDataDog: !FindInMap [SecureConfig, FileNames, DataDog]
             Capacity: !FindInMap [Reactions, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], Capacity]
             DomainName: !FindInMap [Common, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], DomainName]
         GitHubBranch: !FindInMap [Reactions, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], GitHubBranch]
