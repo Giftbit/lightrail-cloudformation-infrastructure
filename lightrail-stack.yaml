@@ -789,7 +789,7 @@ Resources:
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2
     Properties:
-      TemplateURL: https://raw.githubusercontent.com/Giftbit/giftbit-reactions/907bb989c0f51107d2025c1a55c382ce3b93c004/infrastructure/ci.yaml
+      TemplateURL: https://raw.githubusercontent.com/Giftbit/giftbit-reactions/a6086ecbdea763f8564031555c5ea539dddf6336/infrastructure/ci.yaml
       Parameters:
         ProjectParameterOverrides: !Sub
           - >
