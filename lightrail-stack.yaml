@@ -769,7 +769,6 @@ Resources:
               "SecureConfigBucket": "${LightrailSecureConfig.Outputs.BucketName}",
               "SecureConfigKmsArn": "${LightrailSecureConfig.Outputs.EncryptionKeyArn}",
               "SecureConfigKeyJwt": "${SecureConfigFileNameJwt}",
-              "SecureConfigKeyDataDog": "${SecureConfigFileNameDataDog}",
               "Capacity": "${Capacity}"
             }
           -
