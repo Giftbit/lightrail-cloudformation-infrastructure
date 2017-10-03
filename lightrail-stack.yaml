@@ -805,7 +805,7 @@ Resources:
             SecureConfigFileNameJwt: !FindInMap [SecureConfig, FileNames, JWT]
             SecureConfigFileNameDataDog: !FindInMap [SecureConfig, FileNames, DataDog]
             Capacity: !FindInMap [Reactions, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], Capacity]
-            DomainName: !FindInMap [Common, !Ref EnvironmentName, DomainName]
+            DomainName: !GetAtt LightrailDns.Outputs.HostedDomainName
         GitHubBranch: !FindInMap [Reactions, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], GitHubBranch]
         GitHubBranchDest: !FindInMap [Reactions, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], GitHubBranchDest]
         GitHubOAuthToken: !GetAtt GitHubOAuthToken.DecryptedValue
