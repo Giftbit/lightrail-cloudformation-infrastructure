@@ -208,8 +208,8 @@ Mappings:
       GitHubBranch: dev-ci
       GitHubBranchDest: ""
       Capacity: low
-      RoleNames: dev-Reactions-IngressFunctionRole-7MU0VX1GHW9O,dev-Reactions-ReactionsRestFunctionRole-19WM63XU0BYE0,dev-Reactions-ReactionWorkerFunctionRole-RDZIU897EZ6J,dev-Reactions-LogsRestFunctionRole-RSTNN570XZIZ
-      Endpoint: vsq1f3h973.execute-api.us-west-2.amazonaws.com
+      RoleNames: dev-Reactions-IngressFunctionRole-1WSWAQEXFYBFD,dev-Reactions-LogsRestFunctionRole-DO9D51OBRJIX,dev-Reactions-QueueConsumerFunctionRole-1MJU3O9YZ1S1K,dev-Reactions-ReactionWorkerFunctionRole-1FPY0LCYJGYQ4,dev-Reactions-ReactionsRestFunctionRole-1RA07KXUTJX9R
+      Endpoint: serkjs3ing.execute-api.us-west-2.amazonaws.com
     Staging-us-west-2:
       GitHubBranch: staging
       GitHubBranchDest: master
