@@ -88,6 +88,9 @@ Resources:
   MarkettingGroup:
     Type: AWS::IAM::Group
 
+  BastionHostAccessGroup:
+    Type: AWS::IAM::Group
+
   BasicCloudformationAccessPolicy:
     Type: AWS::IAM::Policy
     Properties:
@@ -231,6 +234,7 @@ Resources:
       Groups:
         - !Ref AllEmployees
         - !Ref DevelopersGroup
+        - !Ref BastionHostAccessGroup
   JamieS:
     Type: AWS::IAM::User
     Properties:
@@ -238,6 +242,7 @@ Resources:
       Groups:
         - !Ref AllEmployees
         - !Ref DevelopersGroup
+        - !Ref BastionHostAccessGroup
   JamieT:
     Type: AWS::IAM::User
     Properties:
@@ -252,6 +257,7 @@ Resources:
       Groups:
         - !Ref AllEmployees
         - !Ref DevelopersGroup
+        - !Ref BastionHostAccessGroup
   MohammadJ:
     Type: AWS::IAM::User
     Properties:
@@ -273,6 +279,13 @@ Resources:
       Groups:
         - !Ref AllEmployees
         - !Ref DevelopersGroup
+        - !Ref BastionHostAccessGroup
+  MattB:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: matt.b
+      Groups:
+        - !Ref BastionHostAccessGroup
 
 Outputs:
   DevelopersGroupName:
@@ -281,3 +294,6 @@ Outputs:
   MarkettingGroupName:
     Description: The Name of the Marketting Group
     Value: !Ref MarkettingGroup
+  BastionHostAccessGroupName:
+    Description: The Name of the Bastion Host Access Group
+    Value: !Ref BastionHostAccessGroup
