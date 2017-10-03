@@ -205,12 +205,21 @@ Mappings:
       Endpoint: hl0fjfzg5b.execute-api.us-west-2.amazonaws.com
   Reactions:
     Dev-us-west-2:
+      GitHubBranch: dev-ci
+      GitHubBranchDest: ""
+      Capacity: low
       RoleNames: dev-Reactions-IngressFunctionRole-7MU0VX1GHW9O,dev-Reactions-ReactionsRestFunctionRole-19WM63XU0BYE0,dev-Reactions-ReactionWorkerFunctionRole-RDZIU897EZ6J,dev-Reactions-LogsRestFunctionRole-RSTNN570XZIZ
       Endpoint: vsq1f3h973.execute-api.us-west-2.amazonaws.com
     Staging-us-west-2:
+      GitHubBranch: staging
+      GitHubBranchDest: master
+      Capacity: low
       RoleNames: ""
       Endpoint: ""
     Production-us-west-2:
+      GitHubBranch: master
+      GitHubBranchDest: ""
+      Capacity: high
       RoleNames: ""
       Endpoint: ""
   S3EventTranscoder:
@@ -776,6 +785,38 @@ Resources:
         -
           Key: Service
           Value: KVS
+  LightrailReactions:
+    Type: AWS::CloudFormation::Stack
+    Condition: RegionIsUSWest2
+    Properties:
+      TemplateURL: https://raw.githubusercontent.com/Giftbit/giftbit-reactions/2d0773665c3cbdd70cf536f9eec861a6cc1e3251/infrastructure/ci.yaml
+      Parameters:
+        ProjectParameterOverrides: !Sub
+          - >
+            {
+              "SecureConfigBucket": "${LightrailSecureConfig.Outputs.BucketName}",
+              "SecureConfigKmsArn": "${LightrailSecureConfig.Outputs.EncryptionKeyArn}",
+              "SecureConfigKeyJwt": "${SecureConfigFileNameJwt}",
+              "SecureConfigKeyDataDog": "${SecureConfigFileNameDataDog}",
+              "Capacity": "${Capacity}",
+              "RestRootUrl": "https://api.${DomainName}/v1/"
+            }
+          -
+            SecureConfigFileNameJwt: !FindInMap [SecureConfig, FileNames, JWT]
+            SecureConfigFileNameDataDog: !FindInMap [SecureConfig, FileNames, DataDog]
+            Capacity: !FindInMap [Reactions, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], Capacity]
+            DomainName: !GetAtt LightrailDns.Outputs.HostedDomainName
+        GitHubBranch: !FindInMap [Reactions, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], GitHubBranch]
+        GitHubBranchDest: !FindInMap [Reactions, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], GitHubBranchDest]
+        GitHubOAuthToken: !GetAtt GitHubOAuthToken.DecryptedValue
+        CodeBuildImageNodeSSH: !GetAtt CIResources.Outputs.CodebuildImageNodeSSH
+        CiKeysAccessRoleArn: !GetAtt CIResources.Outputs.KeysAccessRoleArn
+        CiKeysBucketName: !GetAtt CIResources.Outputs.KeysBucketName
+        ProjectName: !Sub "${AWS::StackName}-Reactions"
+      Tags:
+        -
+          Key: Service
+          Value: Reactions
   LightrailDevArtifacts:
     Type: AWS::CloudFormation::Stack
     Condition: EnvIsDevAndRegionIsUSWest2
