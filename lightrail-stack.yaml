@@ -346,7 +346,7 @@ Resources:
     Properties:
       TemplateURL: ./modules/vpc.yaml
       Parameters:
-        BastionHostAuthorizedUsersGroup: !GetAtt Groups.Outputs.DevelopersGroupName
+        BastionHostAuthorizedUsersGroup: !GetAtt Groups.Outputs.BastionHostAccessGroupName
         EnvironmentName: !Ref EnvironmentName
         NatInstanceType: t2.nano
         VPCUniqueNumber: 1
