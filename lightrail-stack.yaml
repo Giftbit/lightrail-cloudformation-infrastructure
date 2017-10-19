@@ -60,6 +60,7 @@ Mappings:
     FileNames:
       JWT: authentication_badge_key.json
       DataDog: datadog.json
+      RoleDefinitions: RoleDefinitions.json
   Common:
     Dev:
       DomainName: lightraildev.net
@@ -666,6 +667,7 @@ Resources:
               "SecureConfigBucket": "${LightrailSecureConfig.Outputs.BucketName}",
               "SecureConfigKmsArn": "${LightrailSecureConfig.Outputs.EncryptionKeyArn}",
               "SecureConfigKeyJwt": "${SecureConfigFileNameJwt}",
+              "SecureConfigKeyRoleDefinitions": "${SecureConfigFileNameRoleDefinitions}",
               "SecureConfigKeyDataDog": "${SecureConfigFileNameDataDog}",
               "KinesisStreamArn": "${LightrailEventStream.Outputs.KinesisStreamArn}",
               "MessageBucket": "${LightrailEventStream.Outputs.DataBucketName}",
@@ -674,6 +676,7 @@ Resources:
             }
           -
             SecureConfigFileNameJwt: !FindInMap [SecureConfig, FileNames, JWT]
+            SecureConfigFileNameRoleDefinitions: !FindInMap [SecureConfig, FileNames, RoleDefinitions]
             SecureConfigFileNameDataDog: !FindInMap [SecureConfig, FileNames, DataDog]
             Capacity: !FindInMap [SimpleRollup, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], Capacity]
         GitHubBranch: !FindInMap [SimpleRollup, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], GitHubBranch]
@@ -729,6 +732,7 @@ Resources:
               "SecureConfigBucket": "${LightrailSecureConfig.Outputs.BucketName}",
               "SecureConfigKmsArn": "${LightrailSecureConfig.Outputs.EncryptionKeyArn}",
               "SecureConfigKeyJwt": "${SecureConfigFileNameJwt}",
+              "SecureConfigKeyRoleDefinitions": "${SecureConfigFileNameRoleDefinitions}",
               "SecureConfigKeyDataDog": "${SecureConfigFileNameDataDog}",
               "KinesisStreamArn": "${LightrailEventStream.Outputs.KinesisStreamArn}",
               "MessageBucket": "${LightrailEventStream.Outputs.DataBucketName}",
@@ -739,6 +743,7 @@ Resources:
             }
           -
             SecureConfigFileNameJwt: !FindInMap [SecureConfig, FileNames, JWT]
+            SecureConfigFileNameRoleDefinitions: !FindInMap [SecureConfig, FileNames, RoleDefinitions]
             SecureConfigFileNameDataDog: !FindInMap [SecureConfig, FileNames, DataDog]
             ElasticSearchInstanceCount:
               !FindInMap [CardsSearch, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], ElasticSearchInstanceCount]
@@ -788,11 +793,13 @@ Resources:
               "SecureConfigBucket": "${LightrailSecureConfig.Outputs.BucketName}",
               "SecureConfigKmsArn": "${LightrailSecureConfig.Outputs.EncryptionKeyArn}",
               "SecureConfigKeyJwt": "${SecureConfigFileNameJwt}",
+              "SecureConfigKeyRoleDefinitions": "${SecureConfigFileNameRoleDefinitions}",
               "StoredItemEncryptionKeyId": "${LightrailKvsEncryptionKey}"
               "Capacity": "${Capacity}"
             }
           -
             SecureConfigFileNameJwt: !FindInMap [SecureConfig, FileNames, JWT]
+            SecureConfigFileNameRoleDefinitions: !FindInMap [SecureConfig, FileNames, RoleDefinitions]
             Capacity: !FindInMap [Kvs, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], Capacity]
         GitHubBranch: !FindInMap [Kvs, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], GitHubBranch]
         GitHubBranchDest: !FindInMap [Kvs, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], GitHubBranchDest]
@@ -817,12 +824,14 @@ Resources:
               "SecureConfigBucket": "${LightrailSecureConfig.Outputs.BucketName}",
               "SecureConfigKmsArn": "${LightrailSecureConfig.Outputs.EncryptionKeyArn}",
               "SecureConfigKeyJwt": "${SecureConfigFileNameJwt}",
+              "SecureConfigKeyRoleDefinitions": "${SecureConfigFileNameRoleDefinitions}",
               "SecureConfigKeyDataDog": "${SecureConfigFileNameDataDog}",
               "Capacity": "${Capacity}",
               "RestRootUrl": "https://api.${DomainName}/v1/"
             }
           -
             SecureConfigFileNameJwt: !FindInMap [SecureConfig, FileNames, JWT]
+            SecureConfigFileNameRoleDefinitions: !FindInMap [SecureConfig, FileNames, RoleDefinitions]
             SecureConfigFileNameDataDog: !FindInMap [SecureConfig, FileNames, DataDog]
             Capacity: !FindInMap [Reactions, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], Capacity]
             DomainName: !GetAtt LightrailDns.Outputs.HostedDomainName
