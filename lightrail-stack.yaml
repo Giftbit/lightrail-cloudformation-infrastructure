@@ -757,6 +757,25 @@ Resources:
         -
           Key: Service
           Value: CardsSearch
+  LightrailKvsEncryptionKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: !Sub "${AWS::StackName}-Kvs stored item encryption key"
+      KeyPolicy:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS:
+                !Sub "arn:aws:iam::${AWS::AccountId}:root"
+            Action:
+              - kms:*
+            Resource: "*"
+  LightrailKvsEncryptionKeyAlias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: !Sub "alias/${AWS::StackName}-LightrailKvsEncryptionKey"
+      TargetKeyId: !Ref LightrailKvsEncryptionKey
   LightrailKvs:
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2
@@ -769,6 +788,7 @@ Resources:
               "SecureConfigBucket": "${LightrailSecureConfig.Outputs.BucketName}",
               "SecureConfigKmsArn": "${LightrailSecureConfig.Outputs.EncryptionKeyArn}",
               "SecureConfigKeyJwt": "${SecureConfigFileNameJwt}",
+              "StoredItemEncryptionKeyId": "${LightrailKvsEncryptionKey}"
               "Capacity": "${Capacity}"
             }
           -
