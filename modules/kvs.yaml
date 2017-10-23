@@ -92,7 +92,7 @@ Resources:
               "SecureConfigKmsArn": "${ConfigurationBucketKeyArn}",
               "SecureConfigKeyJwt": "${JwtConfigurationFileName}",
               "SecureConfigKeyRoleDefinitions": "${RoleDefintionsConfigurationFileName}",
-              "StoredItemEncryptionKeyId": "${EncryptionKey}"
+              "StoredItemEncryptionKeyId": "${EncryptionKey}",
               "Capacity": "${Capacity}"
             }
           -
