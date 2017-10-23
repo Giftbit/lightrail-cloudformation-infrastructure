@@ -188,13 +188,10 @@ Mappings:
   Kvs:
     Dev-us-west-2:
       RoleName: dev-Kvs-KvsFunctionRole-RLFP80MZ8Z16
-      Endpoint: wowqnrwyy0.execute-api.us-west-2.amazonaws.com
     Staging-us-west-2:
       RoleName: staging-Kvs-KvsFunctionRole-16TX23DYH1DQ
-      Endpoint: 1tnp8xblpd.execute-api.us-west-2.amazonaws.com
     Production-us-west-2:
       RoleName: production-Kvs-KvsFunctionRole-35C9CNH786LQ
-      Endpoint: hl0fjfzg5b.execute-api.us-west-2.amazonaws.com
   Reactions:
     Dev-us-west-2:
       GitHubBranch: dev-ci
@@ -289,7 +286,7 @@ Resources:
         StatsEndpoint: !FindInMap [SimpleRollup, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], Endpoint]
         BatchEndpoint: !GetAtt LightrailLoadBalancer.Outputs.DNSName
         CardsSearchEndpoint: !FindInMap [CardsSearch, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], Endpoint]
-        KvsEndpoint: !FindInMap [Kvs, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], Endpoint]
+        KvsEndpoint: !GetAtt LightrailKvs.Outputs.Endpoint
         ReactionsEndpoint: !FindInMap [Reactions, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], Endpoint]
   LightrailWebsite:
     Type: AWS::CloudFormation::Stack
@@ -753,6 +750,26 @@ Resources:
         -
           Key: Service
           Value: CardsSearch
+  LightrailKvs:
+    Type: AWS::CloudFormation::Stack
+    Condition: RegionIsUSWest2
+    Properties:
+      TemplateURL: ./modules/kvs.yaml
+      Parameters:
+        EnvironmentName: !Ref EnvironmentName
+        ProjectName: !Sub "${AWS::StackName}-Kvs"
+        ConfigurationBucketName: !GetAtt LightrailSecureConfig.Outputs.BucketName
+        ConfigurationBucketKeyArn: !GetAtt LightrailSecureConfig.Outputs.EncryptionKeyArn
+        JwtConfigurationFileName: !FindInMap [SecureConfig, FileNames, JWT]
+        RoleDefintionsConfigurationFileName: !FindInMap [SecureConfig, FileNames, RoleDefinitions]
+        GitHubOAuthToken: !GetAtt GitHubOAuthToken.DecryptedValue
+        CodeBuildImageNodeSSH: !GetAtt CIResources.Outputs.CodebuildImageNodeSSH
+        CiKeysAccessRoleArn: !GetAtt CIResources.Outputs.KeysAccessRoleArn
+        CiKeysBucketName: !GetAtt CIResources.Outputs.KeysBucketName
+      Tags:
+        -
+          Key: Service
+          Value: KVS
   LightrailReactions:
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2

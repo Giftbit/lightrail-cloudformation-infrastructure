@@ -1,0 +1,114 @@
+Parameters:
+  EnvironmentName:
+    Type: String
+    Description: Please select your environment
+    AllowedValues:
+      - Dev
+      - Staging
+      - Production
+  ProjectName:
+    Type: String
+    Description: The name of the project being built.  This name will be used on a number of resources.
+  ConfigurationBucketName:
+    Type: String
+    Description: The Name of the Configuration Bucket
+  ConfigurationBucketKeyArn:
+    Type: String
+    Description: The ARN of the Configuration Bucket Encryption Key
+    AllowedPattern: arn:aws:kms:[a-z0-9-]+:\d{12}:key/[a-z0-9-]+
+  JwtConfigurationFileName:
+    Type: String
+    Description: The Name of the JWT Configuration File in the Configuration Bucket
+  RoleDefintionsConfigurationFileName:
+    Type: String
+    Description: The Name of the Role Defintions Configuration File in the Configuration Bucket
+  GitHubOAuthToken:
+    Type: String
+    Description: GitHub oauth token.  This user must have admin access to the repo.
+    Default: "****"
+    NoEcho: true
+  CodeBuildImageNodeSSH:
+    Type: String
+    Description: Name of the docker image to build from.
+    Default: ""
+  CiKeysAccessRoleArn:
+    Type: String
+    Description: ARN for the role that can access our CI SSH keys bucket.
+    Default: ""
+  CiKeysBucketName:
+    Type: String
+    Description: S3 bucket with our CI SSH keys.
+    Default: ""
+
+Mappings:
+  Dev:
+    us-west-2:
+      GitHubBranch: dev-ci
+      GitHubBranchDest: ""
+      Capacity: low
+      Endpoint: wowqnrwyy0.execute-api.us-west-2.amazonaws.com
+  Staging:
+    us-west-2:
+      GitHubBranch: staging
+      GitHubBranchDest: master
+      Capacity: low
+      Endpoint: 1tnp8xblpd.execute-api.us-west-2.amazonaws.com
+  Production:
+    us-west-2:
+      GitHubBranch: master
+      GitHubBranchDest: ""
+      Capacity: high
+      Endpoint: hl0fjfzg5b.execute-api.us-west-2.amazonaws.com
+
+Resources:
+  EncryptionKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: !Sub "${AWS::StackName} stored item encryption key"
+      KeyPolicy:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS:
+                !Sub "arn:aws:iam::${AWS::AccountId}:root"
+            Action:
+              - kms:*
+            Resource: "*"
+  EncryptionKeyAlias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: !Sub "alias/${AWS::StackName}-EncryptionKey"
+      TargetKeyId: !Ref EncryptionKey
+  CI:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://raw.githubusercontent.com/Giftbit/giftbit-kvs/fcc0c03/infrastructure/ci.yaml
+      Parameters:
+        ProjectParameterOverrides: !Sub
+          - >
+            {
+              "SecureConfigBucket": "${ConfigurationBucketName}",
+              "SecureConfigKmsArn": "${ConfigurationBucketKeyArn}",
+              "SecureConfigKeyJwt": "${JwtConfigurationFileName}",
+              "SecureConfigKeyRoleDefinitions": "${RoleDefintionsConfigurationFileName}",
+              "StoredItemEncryptionKeyId": "${EncryptionKey}"
+              "Capacity": "${Capacity}"
+            }
+          -
+            Capacity: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", Capacity]
+        GitHubBranch: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", GitHubBranch]
+        GitHubBranchDest: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", GitHubBranchDest]
+        GitHubOAuthToken: !Ref GitHubOAuthToken
+        CodeBuildImageNodeSSH: !Ref CodeBuildImageNodeSSH
+        CiKeysAccessRoleArn: !Ref CiKeysAccessRoleArn
+        CiKeysBucketName: !Ref CiKeysBucketName
+        ProjectName: !Ref ProjectName
+      Tags:
+        -
+          Key: Service
+          Value: KVS
+
+Outputs:
+  Endpoint:
+    Value: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", Endpoint]
