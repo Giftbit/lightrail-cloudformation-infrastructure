@@ -187,21 +187,12 @@ Mappings:
       Endpoint: o0o62rx9nk.execute-api.us-west-2.amazonaws.com
   Kvs:
     Dev-us-west-2:
-      GitHubBranch: dev-ci
-      GitHubBranchDest: ""
-      Capacity: low
       RoleName: dev-Kvs-KvsFunctionRole-RLFP80MZ8Z16
       Endpoint: wowqnrwyy0.execute-api.us-west-2.amazonaws.com
     Staging-us-west-2:
-      GitHubBranch: staging
-      GitHubBranchDest: master
-      Capacity: low
       RoleName: staging-Kvs-KvsFunctionRole-16TX23DYH1DQ
       Endpoint: 1tnp8xblpd.execute-api.us-west-2.amazonaws.com
     Production-us-west-2:
-      GitHubBranch: master
-      GitHubBranchDest: ""
-      Capacity: high
       RoleName: production-Kvs-KvsFunctionRole-35C9CNH786LQ
       Endpoint: hl0fjfzg5b.execute-api.us-west-2.amazonaws.com
   Reactions:
@@ -762,56 +753,6 @@ Resources:
         -
           Key: Service
           Value: CardsSearch
-  LightrailKvsEncryptionKey:
-    Type: AWS::KMS::Key
-    Properties:
-      Description: !Sub "${AWS::StackName}-Kvs stored item encryption key"
-      KeyPolicy:
-        Version: 2012-10-17
-        Statement:
-          - Effect: Allow
-            Principal:
-              AWS:
-                !Sub "arn:aws:iam::${AWS::AccountId}:root"
-            Action:
-              - kms:*
-            Resource: "*"
-  LightrailKvsEncryptionKeyAlias:
-    Type: AWS::KMS::Alias
-    Properties:
-      AliasName: !Sub "alias/${AWS::StackName}-LightrailKvsEncryptionKey"
-      TargetKeyId: !Ref LightrailKvsEncryptionKey
-  LightrailKvs:
-    Type: AWS::CloudFormation::Stack
-    Condition: RegionIsUSWest2
-    Properties:
-      TemplateURL: https://raw.githubusercontent.com/Giftbit/giftbit-kvs/fcc0c03/infrastructure/ci.yaml
-      Parameters:
-        ProjectParameterOverrides: !Sub
-          - >
-            {
-              "SecureConfigBucket": "${LightrailSecureConfig.Outputs.BucketName}",
-              "SecureConfigKmsArn": "${LightrailSecureConfig.Outputs.EncryptionKeyArn}",
-              "SecureConfigKeyJwt": "${SecureConfigFileNameJwt}",
-              "SecureConfigKeyRoleDefinitions": "${SecureConfigFileNameRoleDefinitions}",
-              "StoredItemEncryptionKeyId": "${LightrailKvsEncryptionKey}"
-              "Capacity": "${Capacity}"
-            }
-          -
-            SecureConfigFileNameJwt: !FindInMap [SecureConfig, FileNames, JWT]
-            SecureConfigFileNameRoleDefinitions: !FindInMap [SecureConfig, FileNames, RoleDefinitions]
-            Capacity: !FindInMap [Kvs, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], Capacity]
-        GitHubBranch: !FindInMap [Kvs, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], GitHubBranch]
-        GitHubBranchDest: !FindInMap [Kvs, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], GitHubBranchDest]
-        GitHubOAuthToken: !GetAtt GitHubOAuthToken.DecryptedValue
-        CodeBuildImageNodeSSH: !GetAtt CIResources.Outputs.CodebuildImageNodeSSH
-        CiKeysAccessRoleArn: !GetAtt CIResources.Outputs.KeysAccessRoleArn
-        CiKeysBucketName: !GetAtt CIResources.Outputs.KeysBucketName
-        ProjectName: !Sub "${AWS::StackName}-Kvs"
-      Tags:
-        -
-          Key: Service
-          Value: KVS
   LightrailReactions:
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2
