@@ -192,6 +192,13 @@ Mappings:
       RoleName: staging-Kvs-KvsFunctionRole-16TX23DYH1DQ
     Production-us-west-2:
       RoleName: production-Kvs-KvsFunctionRole-35C9CNH786LQ
+  Turnkey:
+    Dev-us-west-2:
+      RoleNames: dev-Turnkey-GiftcardPurchaseFunctionRole-SU6IMR8DUHTF,dev-Turnkey-StripeFunctionRole-1QPQ3TNYBW4XW
+    Staging-us-west-2:
+      RoleNames: ""
+    Production-us-west-2:
+      RoleNames: ""
   Reactions:
     Dev-us-west-2:
       GitHubBranch: dev-ci
@@ -423,6 +430,7 @@ Resources:
           - !FindInMap [SimpleRollup, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
           - !FindInMap [CardsSearch, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
           - !FindInMap [Kvs, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
+          - !FindInMap [Turnkey, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleNames]
           - !FindInMap [Reactions, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleNames]
           - !FindInMap [S3EventTranscoder, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
   LightrailSecureConfigPolicyAdminAccessRoleIdGrants:
