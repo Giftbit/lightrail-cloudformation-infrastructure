@@ -1,0 +1,55 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Lightrail Rate Limiting
+
+Parameters:
+  EnvironmentName:
+    Type: String
+    Description: The Name of the Environment
+    AllowedValues:
+      - Dev
+      - Staging
+      - Production
+  RedisSecurityGroupIds:
+    Type: String
+    Description: A list of Security Group IDs to use for the load Balancer
+    AllowedPattern: sg-[0-9a-z]+(,sg-[0-9a-z])*
+  VpcPrivateSubnetIds:
+    Type: String
+    Description: The comma separated list of Security Group Ids
+
+Mappings:
+  Dev:
+    us-west-2:
+      RedisClusterSize: 2
+  Staging:
+    us-west-2:
+      RedisClusterSize: 1
+  Production:
+    us-west-2:
+      RedisClusterSize: 2
+
+Resources:
+  RedisElastiCacheSubnetGroup:
+    Type: AWS::ElastiCache::SubnetGroup
+    Properties:
+      Description: Subnet for Lightrail Rate Limiting Redis
+      SubnetIds: !Split [",", !Ref VpcPrivateSubnetIds]
+  RedisElastiCacheCluster:
+    Type: AWS::ElastiCache::ReplicationGroup
+    Properties:
+      ReplicationGroupDescription: Lightrail Rate Limiting Rate Store
+      Engine: redis
+      CacheNodeType: cache.t2.micro
+      AutoMinorVersionUpgrade: true
+      AutomaticFailoverEnabled: true
+      CacheSubnetGroupName: !Ref RedisElastiCacheSubnetGroup
+      Port: 6379
+      NumCacheClusters: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", RedisClusterSize]
+      SecurityGroupIds: !Split [",", !Ref RedisSecurityGroupIds]
+      PreferredMaintenanceWindow: sun:09:30-sun:10:30
+      SnapshotRetentionLimit: 2
+      SnapshotWindow: 10:30-11:30
+
+Outputs:
+  RedisEndpoint:
+    Value: !GetAtt RedisElastiCacheCluster.PrimaryEndPoint.Address
