@@ -12,7 +12,7 @@ Parameters:
   RedisSecurityGroupIds:
     Type: String
     Description: A list of Security Group IDs to use for the load Balancer
-    AllowedPattern: sg-[0-9a-z]+(,sg-[0-9a-z])*
+    AllowedPattern: sg-[0-9a-z]+(,sg-[0-9a-z]+)*
   VpcPrivateSubnetIds:
     Type: String
     Description: The comma separated list of Security Group Ids
