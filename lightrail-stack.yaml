@@ -194,7 +194,7 @@ Mappings:
       RoleName: production-Kvs-KvsFunctionRole-35C9CNH786LQ
   Turnkey:
     Dev-us-west-2:
-      RoleNames: dev-Turnkey-GiftcardPurchaseFunctionRole-SU6IMR8DUHTF,dev-Turnkey-StripeFunctionRole-1QPQ3TNYBW4XW
+      RoleNames: dev-Turnkey-GiftcardPurchaseFunctionRole-1KGBM93LPXQFP,dev-Turnkey-StripeFunctionRole-1G73BZDEQRT90
     Staging-us-west-2:
       RoleNames: ""
     Production-us-west-2:
