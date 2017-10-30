@@ -74,6 +74,9 @@ Parameters:
   KvsEndpoint:
     Type: String
     Description: Enter the domain that should handle the KVS requests
+  TurnkeyEndpoint:
+    Type: String
+    Description: Enter the domain that should handle the Turnkey requests
   ReactionsEndpoint:
     Type: String
     Description: Enter the domain that should handle the KVS requests
@@ -192,6 +195,17 @@ Resources:
           -
             DomainName: !Ref KvsEndpoint
             Id: KvsEndpointOrigin
+            OriginPath: /Prod
+            CustomOriginConfig:
+              OriginSSLProtocols:
+                - TLSv1.1
+                - TLSv1.2
+              OriginProtocolPolicy: https-only
+              HTTPSPort: 443
+              HTTPPort: 80
+          -
+            DomainName: !Ref TurnkeyEndpoint
+            Id: TurnkeyEndpointOrigin
             OriginPath: /Prod
             CustomOriginConfig:
               OriginSSLProtocols:
@@ -368,6 +382,36 @@ Resources:
           -
             PathPattern: "/v1/storage/*"
             TargetOriginId: KvsEndpointOrigin
+            ViewerProtocolPolicy: "redirect-to-https"
+            Compress: false
+            MinTTL: 0
+            MaxTTL: 31536000
+            DefaultTTL: 0
+            AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+              - PUT
+              - POST
+              - PATCH
+              - DELETE
+            CachedMethods:
+              - GET
+              - HEAD
+            ForwardedValues:
+              QueryString: true
+              Headers:
+                - Authorization
+                - Content-Length
+                - Content-Type
+                - Content-MD5
+                - Range
+                - X-Requested-With
+              Cookies:
+                Forward: all
+          -
+            PathPattern: "/v1/turnkey/*"
+            TargetOriginId: TurnkeyEndpointOrigin
             ViewerProtocolPolicy: "redirect-to-https"
             Compress: false
             MinTTL: 0
@@ -731,6 +775,17 @@ Resources:
               OriginProtocolPolicy: https-only
               HTTPSPort: 443
               HTTPPort: 80
+          -
+            DomainName: !Ref TurnkeyEndpoint
+            Id: TurnkeyEndpointOrigin
+            OriginPath: /Prod
+            CustomOriginConfig:
+              OriginSSLProtocols:
+                - TLSv1.1
+                - TLSv1.2
+              OriginProtocolPolicy: https-only
+              HTTPSPort: 443
+              HTTPPort: 80
           - !If
             - ReactionsEndpointSet
             -
@@ -899,6 +954,36 @@ Resources:
           -
             PathPattern: "/v1/storage/*"
             TargetOriginId: KvsEndpointOrigin
+            ViewerProtocolPolicy: "redirect-to-https"
+            Compress: false
+            MinTTL: 0
+            MaxTTL: 31536000
+            DefaultTTL: 0
+            AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+              - PUT
+              - POST
+              - PATCH
+              - DELETE
+            CachedMethods:
+              - GET
+              - HEAD
+            ForwardedValues:
+              QueryString: true
+              Headers:
+                - Authorization
+                - Content-Length
+                - Content-Type
+                - Content-MD5
+                - Range
+                - X-Requested-With
+              Cookies:
+                Forward: all
+          -
+            PathPattern: "/v1/turnkey/*"
+            TargetOriginId: TurnkeyEndpointOrigin
             ViewerProtocolPolicy: "redirect-to-https"
             Compress: false
             MinTTL: 0
