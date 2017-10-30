@@ -15,18 +15,7 @@ Parameters:
     AllowedPattern: sg-[0-9a-z]+(,sg-[0-9a-z]+)*
   VpcPrivateSubnetIds:
     Type: String
-    Description: The comma separated list of Security Group Ids
-
-Mappings:
-  Dev:
-    us-west-2:
-      RedisClusterSize: 2
-  Staging:
-    us-west-2:
-      RedisClusterSize: 1
-  Production:
-    us-west-2:
-      RedisClusterSize: 2
+    Description: The comma separated list of Security Group Idss
 
 Resources:
   RedisElastiCacheSubnetGroup:
@@ -34,31 +23,33 @@ Resources:
     Properties:
       Description: Subnet for Lightrail Rate Limiting Redis
       SubnetIds: !Split [",", !Ref VpcPrivateSubnetIds]
-  RedisParameterGroup:
-    Type: AWS::ElastiCache::ParameterGroup
-    Properties:
-      CacheParameterGroupFamily: redis3.2
-      Description: Enabling Cluster Mode
-      Properties:
-        "cluster-enabled": "yes"
-  RedisElastiCacheCluster:
+  # This cluster currently does not support AutomaticFailover. Enabling this requires recreating the cluster,
+  # and CloudFormation will not do it for you automatically.
+  #
+  # To enable Automatic Failover, increment the V number below, change AutomaticFailoverEnabled to true, increase
+  # the NumCacheClusters and
+  # uncomment the EngineVersion and CacheParameterGroupName. Automatic Failover on T2 based instances requires
+  # redis 3.2.4 or higher, and having the cluster mode enabled.
+  RedisElastiCacheClusterV1:
     Type: AWS::ElastiCache::ReplicationGroup
     Properties:
       ReplicationGroupDescription: Lightrail Rate Limiting Rate Store
       Engine: redis
-      EngineVersion: 3.2.6
-      CacheNodeType: cache.t2.micro
-      CacheParameterGroupName: !Ref RedisParameterGroup
+      CacheNodeType: cache.t2.small
       AutoMinorVersionUpgrade: true
-      AutomaticFailoverEnabled: true
+      AutomaticFailoverEnabled: false
       CacheSubnetGroupName: !Ref RedisElastiCacheSubnetGroup
       Port: 6379
-      NumCacheClusters: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", RedisClusterSize]
+      NumCacheClusters: 1
       SecurityGroupIds: !Split [",", !Ref RedisSecurityGroupIds]
       PreferredMaintenanceWindow: sun:09:30-sun:10:30
-      SnapshotRetentionLimit: 2
-      SnapshotWindow: 10:30-11:30
+#      EngineVersion: 3.2.6
+#      CacheParameterGroupName: default.redis3.2.cluster.on
+#      SnapshotRetentionLimit: 2
+#      SnapshotWindow: 10:30-11:30
 
-Outputs:
-  RedisEndpoint:
-    Value: !GetAtt RedisElastiCacheCluster.ConfigurationEndPoint.Address
+
+#Outputs:
+#  RedisEndpoint:
+#    # If you're using Automatic Failover, change PrimaryEndPoint to ConfigurationEndPoint
+#    Value: !GetAtt RedisElastiCacheClusterV1.PrimaryEndPoint.Address
