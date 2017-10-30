@@ -195,10 +195,13 @@ Mappings:
   Turnkey:
     Dev-us-west-2:
       RoleNames: dev-Turnkey-GiftcardPurchaseFunctionRole-1KGBM93LPXQFP,dev-Turnkey-StripeFunctionRole-1G73BZDEQRT90
+      Endpoint: vjn3uqm8ok.execute-api.us-west-2.amazonaws.com
     Staging-us-west-2:
       RoleNames: ""
+      Endpoint: ""
     Production-us-west-2:
       RoleNames: ""
+      Endpoint: ""
   Reactions:
     Dev-us-west-2:
       GitHubBranch: dev-ci
@@ -294,6 +297,7 @@ Resources:
         BatchEndpoint: !GetAtt LightrailLoadBalancer.Outputs.DNSName
         CardsSearchEndpoint: !FindInMap [CardsSearch, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], Endpoint]
         KvsEndpoint: !GetAtt LightrailKvs.Outputs.Endpoint
+        TurnkeyEndpoint: !FindInMap [Turnkey, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], Endpoint]
         ReactionsEndpoint: !FindInMap [Reactions, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], Endpoint]
   LightrailWebsite:
     Type: AWS::CloudFormation::Stack
