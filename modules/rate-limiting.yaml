@@ -34,12 +34,21 @@ Resources:
     Properties:
       Description: Subnet for Lightrail Rate Limiting Redis
       SubnetIds: !Split [",", !Ref VpcPrivateSubnetIds]
+  RedisParameterGroup:
+    Type: AWS::ElastiCache::ParameterGroup
+    Properties:
+      CacheParameterGroupFamily: redis3.2
+      Description: Enabling Cluster Mode
+      Properties:
+        "cluster-enabled": "yes"
   RedisElastiCacheCluster:
     Type: AWS::ElastiCache::ReplicationGroup
     Properties:
       ReplicationGroupDescription: Lightrail Rate Limiting Rate Store
       Engine: redis
+      EngineVersion: 3.2.6
       CacheNodeType: cache.t2.micro
+      CacheParameterGroupName: !Ref RedisParameterGroup
       AutoMinorVersionUpgrade: true
       AutomaticFailoverEnabled: true
       CacheSubnetGroupName: !Ref RedisElastiCacheSubnetGroup
@@ -52,4 +61,4 @@ Resources:
 
 Outputs:
   RedisEndpoint:
-    Value: !GetAtt RedisElastiCacheCluster.PrimaryEndPoint.Address
+    Value: !GetAtt RedisElastiCacheCluster.ConfigurationEndPoint.Address
