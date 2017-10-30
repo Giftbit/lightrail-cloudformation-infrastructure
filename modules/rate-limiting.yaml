@@ -1,0 +1,54 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Lightrail Rate Limiting
+
+Parameters:
+  EnvironmentName:
+    Type: String
+    Description: The Name of the Environment
+    AllowedValues:
+      - Dev
+      - Staging
+      - Production
+  RedisSecurityGroupIds:
+    Type: String
+    Description: A list of Security Group IDs to use for the load Balancer
+    AllowedPattern: sg-[0-9a-z]+(,sg-[0-9a-z]+)*
+  VpcPrivateSubnetIds:
+    Type: String
+    Description: The comma separated list of Security Group Idss
+
+Resources:
+  RedisElastiCacheSubnetGroup:
+    Type: AWS::ElastiCache::SubnetGroup
+    Properties:
+      Description: Subnet for Lightrail Rate Limiting Redis
+      SubnetIds: !Split [",", !Ref VpcPrivateSubnetIds]
+  # This cluster currently does not support AutomaticFailover. Enabling this requires recreating the cluster,
+  # and CloudFormation will not do it for you automatically.
+  #
+  # To enable Automatic Failover, increment the V number below, change AutomaticFailoverEnabled to true, increase
+  # the NumCacheClusters and
+  # uncomment the EngineVersion and CacheParameterGroupName. Automatic Failover on T2 based instances requires
+  # redis 3.2.4 or higher, and having the cluster mode enabled.
+  RedisElastiCacheClusterV1:
+    Type: AWS::ElastiCache::ReplicationGroup
+    Properties:
+      ReplicationGroupDescription: Lightrail Rate Limiting Rate Store
+      Engine: redis
+      CacheNodeType: cache.t2.small
+      AutoMinorVersionUpgrade: true
+      AutomaticFailoverEnabled: false
+      CacheSubnetGroupName: !Ref RedisElastiCacheSubnetGroup
+      Port: 6379
+      NumCacheClusters: 1
+      SecurityGroupIds: !Split [",", !Ref RedisSecurityGroupIds]
+      PreferredMaintenanceWindow: sun:09:30-sun:10:30
+#      EngineVersion: 3.2.6
+#      CacheParameterGroupName: default.redis3.2.cluster.on
+#      SnapshotRetentionLimit: 2
+#      SnapshotWindow: 10:30-11:30
+
+Outputs:
+  RedisEndpoint:
+    # If you're using Automatic Failover, change PrimaryEndPoint to ConfigurationEndPoint
+    Value: !GetAtt RedisElastiCacheClusterV1.PrimaryEndPoint.Address
