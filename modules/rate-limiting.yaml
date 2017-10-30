@@ -48,8 +48,7 @@ Resources:
 #      SnapshotRetentionLimit: 2
 #      SnapshotWindow: 10:30-11:30
 
-
-#Outputs:
-#  RedisEndpoint:
-#    # If you're using Automatic Failover, change PrimaryEndPoint to ConfigurationEndPoint
-#    Value: !GetAtt RedisElastiCacheClusterV1.PrimaryEndPoint.Address
+Outputs:
+  RedisEndpoint:
+    # If you're using Automatic Failover, change PrimaryEndPoint to ConfigurationEndPoint
+    Value: !GetAtt RedisElastiCacheClusterV1.PrimaryEndPoint.Address
