@@ -358,7 +358,6 @@ Resources:
       IpProtocol: tcp
       SourceSecurityGroupId: !Ref AlbSecurityGroup
 
-
   # RDS Security Groups
   RdsSecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -382,6 +381,25 @@ Resources:
         -
           Key: Name
           Value: !Sub "${EnvironmentName} Lightrail RDS Instances"
+
+  # Redis Security Groups
+  RedisSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub "Lightrail-${EnvironmentName}-Redis"
+      GroupDescription: Rate Limiting Redis
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        -
+          IpProtocol: tcp
+          FromPort: 6379
+          ToPort: 6379
+          SourceSecurityGroupId: !Ref EcsClusterInstanceSecurityGroup
+
+      Tags:
+        -
+          Key: Name
+          Value: !Sub "${EnvironmentName} Lightrail Rate Limiting Redis"
 
   # Public Subnets
   SubnetPublicA:
@@ -560,13 +578,16 @@ Outputs:
   RdsSecurityGroupId:
     Description: Id for the RDS Security Group
     Value: !Ref RdsSecurityGroup
+  RedisSecurityGroupId:
+    Description: Id for the Redis Security Group
+    Value: !Ref RedisSecurityGroup
 
   # Subnet Outputs
   PublicSubnetIds:
     Description: The Subnet IDs for Public Subnets
     Value: !Join [',', [!Ref SubnetPublicA, !Ref SubnetPublicB, !Ref SubnetPublicC]]
   PrivateSubnetIds:
-    Description: The Subnet IDs for RDS
+    Description: The Subnet IDs for Private Subnets
     Value: !Join [',', [!Ref SubnetPrivateA, !Ref SubnetPrivateB, !Ref SubnetPrivateC]]
   RdsSubnetIds:
     Description: The Subnet IDs for RDS

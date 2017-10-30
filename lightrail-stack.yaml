@@ -359,6 +359,15 @@ Resources:
         EnvironmentName: !Ref EnvironmentName
         NatInstanceType: t2.nano
         VPCUniqueNumber: 1
+  LightrailRateLimiting:
+    Type: AWS::CloudFormation::Stack
+    Condition: RegionIsUSWest2
+    Properties:
+      TemplateURL: ./modules/rate-limiting.yaml
+      Parameters:
+        EnvironmentName: !Ref EnvironmentName
+        RedisSecurityGroupIds: !GetAtt LightrailVPC.Outputs.RedisSecurityGroupId
+        VpcPrivateSubnetIds: !GetAtt LightrailVPC.Outputs.PrivateSubnetIds
   LightrailECSCluster:
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2
