@@ -94,6 +94,7 @@ Conditions:
   ViewerCertificateArnSet: !Not [!Equals [!Ref ViewerCertificateArn, ""]]
   ViewerCertificateArnNotSet: !Equals [!Ref ViewerCertificateArn, ""]
   ReactEndpointSet: !Not [!Equals [!Ref ReactEndpoint, ""]]
+  TurnkeyEndpointSet: !Not [!Equals [!Ref TurnkeyEndpoint, ""]]
   ReactionsEndpointSet: !Not [!Equals [!Ref ReactionsEndpoint, ""]]
 Resources:
   AppZoneRecord:
@@ -203,17 +204,20 @@ Resources:
               OriginProtocolPolicy: https-only
               HTTPSPort: 443
               HTTPPort: 80
-          -
-            DomainName: !Ref TurnkeyEndpoint
-            Id: TurnkeyEndpointOrigin
-            OriginPath: /Prod
-            CustomOriginConfig:
-              OriginSSLProtocols:
-                - TLSv1.1
-                - TLSv1.2
-              OriginProtocolPolicy: https-only
-              HTTPSPort: 443
-              HTTPPort: 80
+          - !If
+            - TurnkeyEndpointSet
+            -
+              DomainName: !Ref TurnkeyEndpoint
+              Id: TurnkeyEndpointOrigin
+              OriginPath: /Prod
+              CustomOriginConfig:
+                OriginSSLProtocols:
+                  - TLSv1.1
+                  - TLSv1.2
+                OriginProtocolPolicy: https-only
+                HTTPSPort: 443
+                HTTPPort: 80
+            - !Ref AWS::NoValue
           - !If
             - ReactionsEndpointSet
             -
@@ -409,36 +413,39 @@ Resources:
                 - X-Requested-With
               Cookies:
                 Forward: all
-          -
-            PathPattern: "/v1/turnkey/*"
-            TargetOriginId: TurnkeyEndpointOrigin
-            ViewerProtocolPolicy: "redirect-to-https"
-            Compress: false
-            MinTTL: 0
-            MaxTTL: 31536000
-            DefaultTTL: 0
-            AllowedMethods:
-              - GET
-              - HEAD
-              - OPTIONS
-              - PUT
-              - POST
-              - PATCH
-              - DELETE
-            CachedMethods:
-              - GET
-              - HEAD
-            ForwardedValues:
-              QueryString: true
-              Headers:
-                - Authorization
-                - Content-Length
-                - Content-Type
-                - Content-MD5
-                - Range
-                - X-Requested-With
-              Cookies:
-                Forward: all
+          - !If
+            - TurnkeyEndpointSet
+            -
+              PathPattern: "/v1/turnkey/*"
+              TargetOriginId: TurnkeyEndpointOrigin
+              ViewerProtocolPolicy: "redirect-to-https"
+              Compress: false
+              MinTTL: 0
+              MaxTTL: 31536000
+              DefaultTTL: 0
+              AllowedMethods:
+                - GET
+                - HEAD
+                - OPTIONS
+                - PUT
+                - POST
+                - PATCH
+                - DELETE
+              CachedMethods:
+                - GET
+                - HEAD
+              ForwardedValues:
+                QueryString: true
+                Headers:
+                  - Authorization
+                  - Content-Length
+                  - Content-Type
+                  - Content-MD5
+                  - Range
+                  - X-Requested-With
+                Cookies:
+                  Forward: all
+            - !Ref AWS::NoValue
           -
             PathPattern: "/v1/dailystats/*"
             TargetOriginId: StatsEndpointOrigin
@@ -775,17 +782,20 @@ Resources:
               OriginProtocolPolicy: https-only
               HTTPSPort: 443
               HTTPPort: 80
-          -
-            DomainName: !Ref TurnkeyEndpoint
-            Id: TurnkeyEndpointOrigin
-            OriginPath: /Prod
-            CustomOriginConfig:
-              OriginSSLProtocols:
-                - TLSv1.1
-                - TLSv1.2
-              OriginProtocolPolicy: https-only
-              HTTPSPort: 443
-              HTTPPort: 80
+          - !If
+            - TurnkeyEndpointSet
+            -
+              DomainName: !Ref TurnkeyEndpoint
+              Id: TurnkeyEndpointOrigin
+              OriginPath: /Prod
+              CustomOriginConfig:
+                OriginSSLProtocols:
+                  - TLSv1.1
+                  - TLSv1.2
+                OriginProtocolPolicy: https-only
+                HTTPSPort: 443
+                HTTPPort: 80
+            - !Ref AWS::NoValue
           - !If
             - ReactionsEndpointSet
             -
@@ -981,36 +991,39 @@ Resources:
                 - X-Requested-With
               Cookies:
                 Forward: all
-          -
-            PathPattern: "/v1/turnkey/*"
-            TargetOriginId: TurnkeyEndpointOrigin
-            ViewerProtocolPolicy: "redirect-to-https"
-            Compress: false
-            MinTTL: 0
-            MaxTTL: 31536000
-            DefaultTTL: 0
-            AllowedMethods:
-              - GET
-              - HEAD
-              - OPTIONS
-              - PUT
-              - POST
-              - PATCH
-              - DELETE
-            CachedMethods:
-              - GET
-              - HEAD
-            ForwardedValues:
-              QueryString: true
-              Headers:
-                - Authorization
-                - Content-Length
-                - Content-Type
-                - Content-MD5
-                - Range
-                - X-Requested-With
-              Cookies:
-                Forward: all
+          - !If
+            - TurnkeyEndpointSet
+            -
+              PathPattern: "/v1/turnkey/*"
+              TargetOriginId: TurnkeyEndpointOrigin
+              ViewerProtocolPolicy: "redirect-to-https"
+              Compress: false
+              MinTTL: 0
+              MaxTTL: 31536000
+              DefaultTTL: 0
+              AllowedMethods:
+                - GET
+                - HEAD
+                - OPTIONS
+                - PUT
+                - POST
+                - PATCH
+                - DELETE
+              CachedMethods:
+                - GET
+                - HEAD
+              ForwardedValues:
+                QueryString: true
+                Headers:
+                  - Authorization
+                  - Content-Length
+                  - Content-Type
+                  - Content-MD5
+                  - Range
+                  - X-Requested-With
+                Cookies:
+                  Forward: all
+            - !Ref AWS::NoValue
           -
             PathPattern: "/v1/dailystats/*"
             TargetOriginId: StatsEndpointOrigin
