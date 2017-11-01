@@ -430,11 +430,17 @@ Resources:
     Condition: RegionIsUSWest2
     Properties:
       TemplateURL: ./modules/secure-bucket.yaml
+  LightrailSecureDownloadPolicy:
+    Type: AWS::CloudFormation::Stack
+    Condition: RegionIsUSWest2
+    Properties:
+      TemplateURL: ./modules/secure-bucket-policy.yaml
       Parameters:
         EnvironmentName: !Ref EnvironmentName
-        UserIdsToGrantReadAccess: !Ref LightrailSecureDownloadReadAccessRoleIdGrants
-        UserIdsToGrantReadWriteAccess: !Ref LightrailSecureDownloadReadWriteAccessRoleIdGrants
-        UserIdsToGrantPolicyAdminAccess: !Ref LightrailSecureDownloadPolicyAdminAccessRoleIdGrants
+        BucketName: !GetAtt LightrailSecureDownload.Outputs.BucketName
+        EncryptionKeyArn: !GetAtt LightrailSecureDownload.Outputs.EncryptionKeyArn
+        UserIdsToGrantReadAccess: !Ref LightrailSecureConfigReadAccessRoleIdGrants
+        UserIdsToGrantPolicyAdminAccess: !Ref LightrailSecureConfigPolicyAdminAccessRoleIdGrants
   LightrailSecureDownloadReadAccessRoleIdGrants:
     Type: AWS::CloudFormation::CustomResource
     Version: 1.0
