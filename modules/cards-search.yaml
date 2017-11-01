@@ -27,6 +27,18 @@ Parameters:
   RoleDefintionsConfigurationFileName:
     Type: String
     Description: The Name of the Role Defintions Configuration File in the Configuration Bucket
+  KinesisStreamArn:
+    Type: String
+    Description: ARN of the Kinesis stream
+    AllowedPattern: arn:aws:kinesis:[a-z0-9-]+:\d{12}:stream/[A-Za-z0-9._-]+
+  MessageBucket:
+    Type: String
+    Description: Name of the S3 bucket holding historical kinesis stream events
+    AllowedPattern: \S+
+  MessageBucketKmsArn:
+    Type: String
+    Description: ARN of the KMS key securing the MessageBucket
+    AllowedPattern: arn:aws:kms:[a-z0-9-]+:\d{12}:key/[a-z0-9-]+
   GitHubOAuthToken:
     Type: String
     Description: GitHub oauth token.  This user must have admin access to the repo.
@@ -88,9 +100,9 @@ Resources:
               "SecureConfigKeyJwt": "${JwtConfigurationFileName}",
               "SecureConfigKeyRoleDefinitions": "${RoleDefintionsConfigurationFileName}",
               "SecureConfigKeyDataDog": "${DataDogConfigurationFileName}",
-              "KinesisStreamArn": "${LightrailEventStream.Outputs.KinesisStreamArn}",
-              "MessageBucket": "${LightrailEventStream.Outputs.DataBucketName}",
-              "MessageBucketKmsArn": "${LightrailEventStream.Outputs.EncryptionKeyArn}",
+              "KinesisStreamArn": "${KinesisStreamArn}",
+              "MessageBucket": "${MessageBucket}",
+              "MessageBucketKmsArn": "${MessageBucketKmsArn}",
               "ElasticSearchInstanceCount": "${ElasticSearchInstanceCount}",
               "ElasticSearchInstanceType": "${ElasticSearchInstanceType}",
               "ElasticSearchMasterInstanceType": "${ElasticSearchMasterInstanceType}"
@@ -105,7 +117,7 @@ Resources:
         GitHubBranch: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", GitHubBranch]
         GitHubBranchDest: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", GitHubBranchDest]
         GitHubOAuthToken: !Ref GitHubOAuthToken
-        CodeBuildImageNodeSSH: !REf CodeBuildImageNodeSSH
+        CodeBuildImageNodeSSH: !Ref CodeBuildImageNodeSSH
         CiKeysAccessRoleArn: !Ref CiKeysAccessRoleArn
         CiKeysBucketName: !Ref CiKeysBucketName
         ProjectName: !Sub "${AWS::StackName}-CardsSearch"

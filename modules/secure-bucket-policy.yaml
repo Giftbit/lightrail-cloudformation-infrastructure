@@ -55,7 +55,7 @@ Resources:
   BucketPolicy:
     Type: AWS::S3::BucketPolicy
     Properties:
-      Bucket: !Ref Bucket
+      Bucket: !Ref BucketName
       PolicyDocument:
         Statement:
           -  # For Security and consistency, don't allow putting any object not using the encryption key

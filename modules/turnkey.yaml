@@ -79,8 +79,7 @@ Resources:
     Properties:
       TemplateURL: https://raw.githubusercontent.com/Giftbit/internal-turnkey/ed378162d95f8ecb61eb59701b485d56ab49fbf8/infrastructure/ci.yaml
       Parameters:
-        ProjectParameterOverrides: !Sub
-          - >
+        ProjectParameterOverrides: !Sub >
             {
               "LightrailDomain": "${LightrailDomain}",
               "LightrailWebappDomain": "${LightrailWebappDomain}",
@@ -90,7 +89,6 @@ Resources:
               "SecureConfigKeyRoleDefinitions": "${RoleDefintionsConfigurationFileName}",
               "SecureConfigKeyStripe": "${StripeConfigurationFileName}"
             }
-          -
         GitHubBranch: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", GitHubBranch]
         GitHubBranchDest: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", GitHubBranchDest]
         GitHubOAuthToken: !Ref GitHubOAuthToken

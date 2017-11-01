@@ -714,6 +714,9 @@ Resources:
         DataDogConfigurationFileName: !FindInMap [SecureConfig, FileNames, DataDog]
         JwtConfigurationFileName: !FindInMap [SecureConfig, FileNames, JWT]
         RoleDefintionsConfigurationFileName: !FindInMap [SecureConfig, FileNames, RoleDefinitions]
+        KinesisStreamArn: !GetAtt LightrailEventStream.Outputs.KinesisStreamArn
+        MessageBucket: !GetAtt LightrailEventStream.Outputs.DataBucketName
+        MessageBucketKmsArn: !GetAtt LightrailEventStream.Outputs.EncryptionKeyArn
         GitHubOAuthToken: !GetAtt GitHubOAuthToken.DecryptedValue
         CodeBuildImageNodeSSH: !GetAtt CIResources.Outputs.CodebuildImageNodeSSH
         CiKeysAccessRoleArn: !GetAtt CIResources.Outputs.KeysAccessRoleArn
