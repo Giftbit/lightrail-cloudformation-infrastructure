@@ -1,0 +1,41 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: An S3 bucket and KMS key that can be secured
+# Use bucket-securing-policy.yaml to secure the bucket produced here.
+# The policy is a separate file to break up circular references.
+
+Resources:
+  EncryptionKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: !Sub "${AWS::StackName} Encryption Key"
+      KeyPolicy:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: "Allow"
+            Principal:
+              AWS:
+                !Sub "arn:aws:iam::${AWS::AccountId}:root"
+            Action:
+              - "kms:*"
+            Resource: "*"
+  EncryptionKeyAlias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: !Sub "alias/${AWS::StackName}-Key"
+      TargetKeyId: !Ref EncryptionKey
+  Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      AccessControl: Private
+
+Outputs:
+  BucketName:
+    Description: The name of the Secure Bucket
+    Value: !Ref Bucket
+  BucketArn:
+    Description: The Arn of the Secure Bucket
+    Value: !Sub "arn:aws:s3:::${Bucket}"
+  EncryptionKeyArn:
+    Description: The ARN of the Secure Bucket KMS Key
+    Value: !GetAtt EncryptionKey.Arn

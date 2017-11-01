@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: "Lightrail Secure Bucket"
+Description: Secures an S3 bucket with its KMS key
 
 Parameters:
   EnvironmentName:
@@ -9,6 +9,14 @@ Parameters:
       - Dev
       - Staging
       - Production
+  BucketName:
+    Type: String
+    Description: Name of the secure config bucket
+    AllowedPattern: \S+
+  EncryptionKeyArn:
+    Type: String
+    Description: ARN of the secure config encryption key
+    AllowedPattern: arn:aws:kms:[a-z0-9-]+:\d{12}:key/[a-f0-9-]+
   UserIdsToGrantReadAccess:
     Type: String
     Description: >
@@ -44,34 +52,10 @@ Conditions:
   ShouldConfigureReadWriteAccess: !Not [!Equals [!Ref UserIdsToGrantReadWriteAccess, ""]]
 
 Resources:
-  EncryptionKey:
-    Type: AWS::KMS::Key
-    Properties:
-      Description: !Sub "${AWS::StackName} Encryption Key"
-      KeyPolicy:
-        Version: "2012-10-17"
-        Statement:
-          -
-            Effect: "Allow"
-            Principal:
-              AWS:
-                !Sub "arn:aws:iam::${AWS::AccountId}:root"
-            Action:
-              - "kms:*"
-            Resource: "*"
-  EncryptionKeyAlias:
-    Type: AWS::KMS::Alias
-    Properties:
-      AliasName: !Sub "alias/${AWS::StackName}-Key"
-      TargetKeyId: !Ref EncryptionKey
-  Bucket:
-    Type: AWS::S3::Bucket
-    Properties:
-      AccessControl: Private
   BucketPolicy:
     Type: AWS::S3::BucketPolicy
     Properties:
-      Bucket: !Ref Bucket
+      Bucket: !Ref BucketName
       PolicyDocument:
         Statement:
           -  # For Security and consistency, don't allow putting any object not using the encryption key
@@ -79,11 +63,11 @@ Resources:
             Action:
               - s3:PutObject
             Resource:
-              - !Sub "arn:aws:s3:::${Bucket}/*"
+              - !Sub "arn:aws:s3:::${BucketName}/*"
             Principal: "*"
             Condition:
               StringNotEquals:
-                "s3:x-amz-server-side-encryption-aws-kms-key-id": !GetAtt EncryptionKey.Arn
+                "s3:x-amz-server-side-encryption-aws-kms-key-id": !Ref EncryptionKeyArn
           -
             Effect: "Deny"
             NotAction:
@@ -91,8 +75,8 @@ Resources:
               - s3:GetBucketPolicy
               - s3:DeleteBucketPolicy
             Resource:
-              - !Sub "arn:aws:s3:::${Bucket}"
-              - !Sub "arn:aws:s3:::${Bucket}/*"
+              - !Sub "arn:aws:s3:::${BucketName}"
+              - !Sub "arn:aws:s3:::${BucketName}/*"
             Principal: "*"
             Condition:
               StringLike:
@@ -113,8 +97,8 @@ Resources:
                 - s3:GetBucketPolicy
                 - s3:DeleteBucketPolicy
               Resource:
-                - !Sub "arn:aws:s3:::${Bucket}"
-                - !Sub "arn:aws:s3:::${Bucket}/*"
+                - !Sub "arn:aws:s3:::${BucketName}"
+                - !Sub "arn:aws:s3:::${BucketName}/*"
               Principal: "*"
               Condition:
                 StringLike:
@@ -132,8 +116,8 @@ Resources:
                 - s3:GetObjectTagging
                 - s3:GetBucketLocation
               Resource:
-                - !Sub "arn:aws:s3:::${Bucket}"
-                - !Sub "arn:aws:s3:::${Bucket}/*"
+                - !Sub "arn:aws:s3:::${BucketName}"
+                - !Sub "arn:aws:s3:::${BucketName}/*"
               Principal: "*"
               Condition:
                 StringLike:
@@ -152,8 +136,8 @@ Resources:
                 - s3:GetBucketLocation
                 - s3:GetBucketVersioning
               Resource:
-                - !Sub "arn:aws:s3:::${Bucket}"
-                - !Sub "arn:aws:s3:::${Bucket}/*"
+                - !Sub "arn:aws:s3:::${BucketName}"
+                - !Sub "arn:aws:s3:::${BucketName}/*"
               Principal: "*"
               Condition:
                 StringLike:
@@ -176,8 +160,8 @@ Resources:
                 - s3:GetBucketLocation
                 - s3:GetBucketVersioning
               Resource:
-                - !Sub "arn:aws:s3:::${Bucket}"
-                - !Sub "arn:aws:s3:::${Bucket}/*"
+                - !Sub "arn:aws:s3:::${BucketName}"
+                - !Sub "arn:aws:s3:::${BucketName}/*"
               Principal: "*"
               Condition:
                 StringLike:
@@ -189,8 +173,8 @@ Resources:
               - s3:GetBucketLocation
               - s3:GetBucketTagging
             Resource:
-              - !Sub "arn:aws:s3:::${Bucket}"
-              - !Sub "arn:aws:s3:::${Bucket}/*"
+              - !Sub "arn:aws:s3:::${BucketName}"
+              - !Sub "arn:aws:s3:::${BucketName}/*"
             Principal: "*"
             Condition:
               StringNotLike:
@@ -217,14 +201,3 @@ Resources:
                         - ShouldConfigureReadWriteAccess
                         - !Ref UserIdsToGrantReadWriteAccess  # This elements is comma separated, so joining it just works
                         - !Ref AWS::NoValue
-
-Outputs:
-  BucketName:
-    Description: The name of the Secure Bucket
-    Value: !Ref Bucket
-  BucketArn:
-    Description: The Arn of the Secure Bucket
-    Value: !Sub "arn:aws:s3:::${Bucket}"
-  EncryptionKeyArn:
-    Description: The ARN of the Secure Bucket KMS Key
-    Value: !GetAtt EncryptionKey.Arn

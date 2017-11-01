@@ -61,6 +61,7 @@ Mappings:
       JWT: authentication_badge_key.json
       DataDog: datadog.json
       RoleDefinitions: RoleDefinitions.json
+      StripeConnect: stripe_connect.json
   Common:
     Dev:
       DomainName: lightraildev.net
@@ -160,48 +161,6 @@ Mappings:
       Capacity: high
       RoleName: production-SimpleRollup-RestFunctionRole-1WHS2OKB6RF1L
       Endpoint: cky1xydze9.execute-api.us-west-2.amazonaws.com
-  CardsSearch:
-    Dev-us-west-2:
-      GitHubBranch: dev-ci
-      GitHubBranchDest: ""
-      ElasticSearchInstanceCount: 2
-      ElasticSearchInstanceType: t2.small.elasticsearch
-      ElasticSearchMasterInstanceType: none
-      RoleName: dev-CardsSearch-RestFunctionRole-1WFJDWKX4AFSD
-      Endpoint: hon8eb7zgg.execute-api.us-west-2.amazonaws.com
-    Staging-us-west-2:
-      GitHubBranch: staging
-      GitHubBranchDest: master
-      ElasticSearchInstanceCount: 2
-      ElasticSearchInstanceType: t2.small.elasticsearch
-      ElasticSearchMasterInstanceType: none
-      RoleName: staging-CardsSearch-RestFunctionRole-QB1BTL5IJBMS
-      Endpoint: s7fqdm27c1.execute-api.us-west-2.amazonaws.com
-    Production-us-west-2:
-      GitHubBranch: master
-      GitHubBranchDest: ""
-      ElasticSearchInstanceCount: 2
-      ElasticSearchInstanceType: t2.small.elasticsearch
-      ElasticSearchMasterInstanceType: t2.small.elasticsearch
-      RoleName: production-CardsSearch-RestFunctionRole-42IZL2PQ2ADC
-      Endpoint: o0o62rx9nk.execute-api.us-west-2.amazonaws.com
-  Kvs:
-    Dev-us-west-2:
-      RoleName: dev-Kvs-KvsFunctionRole-RLFP80MZ8Z16
-    Staging-us-west-2:
-      RoleName: staging-Kvs-KvsFunctionRole-16TX23DYH1DQ
-    Production-us-west-2:
-      RoleName: production-Kvs-KvsFunctionRole-35C9CNH786LQ
-  Turnkey:
-    Dev-us-west-2:
-      RoleNames: dev-Turnkey-GiftcardPurchaseFunctionRole-1KGBM93LPXQFP,dev-Turnkey-StripeFunctionRole-1G73BZDEQRT90
-      Endpoint: vjn3uqm8ok.execute-api.us-west-2.amazonaws.com
-    Staging-us-west-2:
-      RoleNames: ""
-      Endpoint: ""
-    Production-us-west-2:
-      RoleNames: ""
-      Endpoint: ""
   Reactions:
     Dev-us-west-2:
       GitHubBranch: dev-ci
@@ -295,9 +254,9 @@ Resources:
         ServicesEndpoint: !GetAtt LightrailLoadBalancer.Outputs.DNSName
         StatsEndpoint: !FindInMap [SimpleRollup, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], Endpoint]
         BatchEndpoint: !GetAtt LightrailLoadBalancer.Outputs.DNSName
-        CardsSearchEndpoint: !FindInMap [CardsSearch, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], Endpoint]
+        CardsSearchEndpoint: !GetAtt LightrailCardsSearch.Outputs.Endpoint
         KvsEndpoint: !GetAtt LightrailKvs.Outputs.Endpoint
-        TurnkeyEndpoint: !FindInMap [Turnkey, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], Endpoint]
+        TurnkeyEndpoint: !GetAtt LightrailTurnkey.Outputs.Endpoint
         ReactionsEndpoint: !FindInMap [Reactions, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], Endpoint]
   LightrailWebsite:
     Type: AWS::CloudFormation::Stack
@@ -424,9 +383,16 @@ Resources:
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2
     Properties:
-      TemplateURL: ./modules/secure-bucket.yaml
+      TemplateURL: ./modules/securable-bucket.yaml
+  LightrailSecureConfigPolicy:
+    Type: AWS::CloudFormation::Stack
+    Condition: RegionIsUSWest2
+    Properties:
+      TemplateURL: ./modules/bucket-securing-policy.yaml
       Parameters:
         EnvironmentName: !Ref EnvironmentName
+        BucketName: !GetAtt LightrailSecureConfig.Outputs.BucketName
+        EncryptionKeyArn: !GetAtt LightrailSecureConfig.Outputs.EncryptionKeyArn
         UserIdsToGrantReadAccess: !Ref LightrailSecureConfigReadAccessRoleIdGrants
         UserIdsToGrantPolicyAdminAccess: !Ref LightrailSecureConfigPolicyAdminAccessRoleIdGrants
   LightrailSecureConfigReadAccessRoleIdGrants:
@@ -441,9 +407,9 @@ Resources:
           - !FindInMap [Services, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
           - !FindInMap [Batch, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
           - !FindInMap [SimpleRollup, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
-          - !FindInMap [CardsSearch, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
-          - !FindInMap [Kvs, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
-          - !FindInMap [Turnkey, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleNames]
+          - !GetAtt LightrailCardsSearch.Outputs.RoleName
+          - !GetAtt LightrailKvs.Outputs.RoleName
+          - !GetAtt LightrailTurnkey.Outputs.RoleNames
           - !FindInMap [Reactions, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleNames]
           - !FindInMap [S3EventTranscoder, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
   LightrailSecureConfigPolicyAdminAccessRoleIdGrants:
@@ -463,12 +429,18 @@ Resources:
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2
     Properties:
-      TemplateURL: ./modules/secure-bucket.yaml
+      TemplateURL: ./modules/securable-bucket.yaml
+  LightrailSecureDownloadPolicy:
+    Type: AWS::CloudFormation::Stack
+    Condition: RegionIsUSWest2
+    Properties:
+      TemplateURL: ./modules/bucket-securing-policy.yaml
       Parameters:
         EnvironmentName: !Ref EnvironmentName
-        UserIdsToGrantReadAccess: !Ref LightrailSecureDownloadReadAccessRoleIdGrants
-        UserIdsToGrantReadWriteAccess: !Ref LightrailSecureDownloadReadWriteAccessRoleIdGrants
-        UserIdsToGrantPolicyAdminAccess: !Ref LightrailSecureDownloadPolicyAdminAccessRoleIdGrants
+        BucketName: !GetAtt LightrailSecureDownload.Outputs.BucketName
+        EncryptionKeyArn: !GetAtt LightrailSecureDownload.Outputs.EncryptionKeyArn
+        UserIdsToGrantReadAccess: !Ref LightrailSecureConfigReadAccessRoleIdGrants
+        UserIdsToGrantPolicyAdminAccess: !Ref LightrailSecureConfigPolicyAdminAccessRoleIdGrants
   LightrailSecureDownloadReadAccessRoleIdGrants:
     Type: AWS::CloudFormation::CustomResource
     Version: 1.0
@@ -719,7 +691,7 @@ Resources:
           -
             SecureConfigFileNameDataDog: !FindInMap [SecureConfig, FileNames, DataDog]
         GitHubBranch: !FindInMap [S3EventTranscoder, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], GitHubBranch]
-        GitHubBranchDest: !FindInMap [CardsSearch, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], GitHubBranchDest]
+        GitHubBranchDest: !FindInMap [S3EventTranscoder, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], GitHubBranchDest]
         GitHubOAuthToken: !GetAtt GitHubOAuthToken.DecryptedValue
         CodeBuildImageNodeSSH: !GetAtt CIResources.Outputs.CodebuildImageNodeSSH
         CiKeysAccessRoleArn: !GetAtt CIResources.Outputs.KeysAccessRoleArn
@@ -733,44 +705,26 @@ Resources:
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2
     Properties:
-      TemplateURL: https://raw.githubusercontent.com/Giftbit/giftbit-cards-search/2271464/infrastructure/ci.yaml
+      TemplateURL: ./modules/cards-search.yaml
       Parameters:
-        ProjectParameterOverrides: !Sub
-          - >
-            {
-              "SecureConfigBucket": "${LightrailSecureConfig.Outputs.BucketName}",
-              "SecureConfigKmsArn": "${LightrailSecureConfig.Outputs.EncryptionKeyArn}",
-              "SecureConfigKeyJwt": "${SecureConfigFileNameJwt}",
-              "SecureConfigKeyRoleDefinitions": "${SecureConfigFileNameRoleDefinitions}",
-              "SecureConfigKeyDataDog": "${SecureConfigFileNameDataDog}",
-              "KinesisStreamArn": "${LightrailEventStream.Outputs.KinesisStreamArn}",
-              "MessageBucket": "${LightrailEventStream.Outputs.DataBucketName}",
-              "MessageBucketKmsArn": "${LightrailEventStream.Outputs.EncryptionKeyArn}",
-              "ElasticSearchInstanceCount": "${ElasticSearchInstanceCount}",
-              "ElasticSearchInstanceType": "${ElasticSearchInstanceType}",
-              "ElasticSearchMasterInstanceType": "${ElasticSearchMasterInstanceType}"
-            }
-          -
-            SecureConfigFileNameJwt: !FindInMap [SecureConfig, FileNames, JWT]
-            SecureConfigFileNameRoleDefinitions: !FindInMap [SecureConfig, FileNames, RoleDefinitions]
-            SecureConfigFileNameDataDog: !FindInMap [SecureConfig, FileNames, DataDog]
-            ElasticSearchInstanceCount:
-              !FindInMap [CardsSearch, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], ElasticSearchInstanceCount]
-            ElasticSearchInstanceType:
-              !FindInMap [CardsSearch, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], ElasticSearchInstanceType]
-            ElasticSearchMasterInstanceType:
-              !FindInMap [CardsSearch, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], ElasticSearchMasterInstanceType]
-        GitHubBranch: !FindInMap [CardsSearch, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], GitHubBranch]
-        GitHubBranchDest: !FindInMap [CardsSearch, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], GitHubBranchDest]
+        EnvironmentName: !Ref EnvironmentName
+        ProjectName: !Sub "${AWS::StackName}-CardsSearch"
+        ConfigurationBucketName: !GetAtt LightrailSecureConfig.Outputs.BucketName
+        ConfigurationBucketKeyArn: !GetAtt LightrailSecureConfig.Outputs.EncryptionKeyArn
+        DataDogConfigurationFileName: !FindInMap [SecureConfig, FileNames, DataDog]
+        JwtConfigurationFileName: !FindInMap [SecureConfig, FileNames, JWT]
+        RoleDefintionsConfigurationFileName: !FindInMap [SecureConfig, FileNames, RoleDefinitions]
+        KinesisStreamArn: !GetAtt LightrailEventStream.Outputs.KinesisStreamArn
+        MessageBucket: !GetAtt LightrailEventStream.Outputs.DataBucketName
+        MessageBucketKmsArn: !GetAtt LightrailEventStream.Outputs.EncryptionKeyArn
         GitHubOAuthToken: !GetAtt GitHubOAuthToken.DecryptedValue
         CodeBuildImageNodeSSH: !GetAtt CIResources.Outputs.CodebuildImageNodeSSH
         CiKeysAccessRoleArn: !GetAtt CIResources.Outputs.KeysAccessRoleArn
         CiKeysBucketName: !GetAtt CIResources.Outputs.KeysBucketName
-        ProjectName: !Sub "${AWS::StackName}-CardsSearch"
       Tags:
         -
           Key: Service
-          Value: CardsSearch
+          Value: KVS
   LightrailKvs:
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2
@@ -791,6 +745,29 @@ Resources:
         -
           Key: Service
           Value: KVS
+  LightrailTurnkey:
+    Type: AWS::CloudFormation::Stack
+    Condition: RegionIsUSWest2
+    Properties:
+      TemplateURL: ./modules/turnkey.yaml
+      Parameters:
+        EnvironmentName: !Ref EnvironmentName
+        ProjectName: !Sub "${AWS::StackName}-Turnkey"
+        LightrailDomain: !Sub "api.${LightrailDns.Outputs.HostedDomainName}"
+        LightrailWebappDomain: !Sub "www.${LightrailDns.Outputs.HostedDomainName}"
+        ConfigurationBucketName: !GetAtt LightrailSecureConfig.Outputs.BucketName
+        ConfigurationBucketKeyArn: !GetAtt LightrailSecureConfig.Outputs.EncryptionKeyArn
+        JwtConfigurationFileName: !FindInMap [SecureConfig, FileNames, JWT]
+        RoleDefintionsConfigurationFileName: !FindInMap [SecureConfig, FileNames, RoleDefinitions]
+        StripeConfigurationFileName: !FindInMap [SecureConfig, FileNames, StripeConnect]
+        GitHubOAuthToken: !GetAtt GitHubOAuthToken.DecryptedValue
+        CodeBuildImageNodeSSH: !GetAtt CIResources.Outputs.CodebuildImageNodeSSH
+        CiKeysAccessRoleArn: !GetAtt CIResources.Outputs.KeysAccessRoleArn
+        CiKeysBucketName: !GetAtt CIResources.Outputs.KeysBucketName
+      Tags:
+        -
+          Key: Service
+          Value: Turnkey
   LightrailReactions:
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2
@@ -806,14 +783,13 @@ Resources:
               "SecureConfigKeyRoleDefinitions": "${SecureConfigFileNameRoleDefinitions}",
               "SecureConfigKeyDataDog": "${SecureConfigFileNameDataDog}",
               "Capacity": "${Capacity}",
-              "RestRootUrl": "https://api.${DomainName}/v1/"
+              "RestRootUrl": "https://api.${LightrailDns.Outputs.HostedDomainName}/v1/"
             }
           -
             SecureConfigFileNameJwt: !FindInMap [SecureConfig, FileNames, JWT]
             SecureConfigFileNameRoleDefinitions: !FindInMap [SecureConfig, FileNames, RoleDefinitions]
             SecureConfigFileNameDataDog: !FindInMap [SecureConfig, FileNames, DataDog]
             Capacity: !FindInMap [Reactions, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], Capacity]
-            DomainName: !GetAtt LightrailDns.Outputs.HostedDomainName
         GitHubBranch: !FindInMap [Reactions, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], GitHubBranch]
         GitHubBranchDest: !FindInMap [Reactions, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], GitHubBranchDest]
         GitHubOAuthToken: !GetAtt GitHubOAuthToken.DecryptedValue
