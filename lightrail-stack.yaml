@@ -161,27 +161,6 @@ Mappings:
       Capacity: high
       RoleName: production-SimpleRollup-RestFunctionRole-1WHS2OKB6RF1L
       Endpoint: cky1xydze9.execute-api.us-west-2.amazonaws.com
-  CardsSearch:
-    Dev-us-west-2:
-      RoleName: dev-CardsSearch-RestFunctionRole-1WFJDWKX4AFSD
-    Staging-us-west-2:
-      RoleName: staging-CardsSearch-RestFunctionRole-QB1BTL5IJBMS
-    Production-us-west-2:
-      RoleName: production-CardsSearch-RestFunctionRole-42IZL2PQ2ADC
-  Kvs:
-    Dev-us-west-2:
-      RoleName: dev-Kvs-KvsFunctionRole-RLFP80MZ8Z16
-    Staging-us-west-2:
-      RoleName: staging-Kvs-KvsFunctionRole-16TX23DYH1DQ
-    Production-us-west-2:
-      RoleName: production-Kvs-KvsFunctionRole-35C9CNH786LQ
-  Turnkey:
-    Dev-us-west-2:
-      RoleNames: dev-Turnkey-GiftcardPurchaseFunctionRole-1KGBM93LPXQFP,dev-Turnkey-StripeFunctionRole-1G73BZDEQRT90
-    Staging-us-west-2:
-      RoleNames: ""
-    Production-us-west-2:
-      RoleNames: ""
   Reactions:
     Dev-us-west-2:
       GitHubBranch: dev-ci
@@ -405,8 +384,15 @@ Resources:
     Condition: RegionIsUSWest2
     Properties:
       TemplateURL: ./modules/secure-bucket.yaml
+  LightrailSecureConfigPolicy:
+    Type: AWS::CloudFormation::Stack
+    Condition: RegionIsUSWest2
+    Properties:
+      TemplateURL: ./modules/secure-bucket-policy.yaml
       Parameters:
         EnvironmentName: !Ref EnvironmentName
+        BucketName: !GetAtt LightrailSecureConfig.Outputs.BucketName
+        EncryptionKeyArn: !GetAtt LightrailSecureConfig.Outputs.EncryptionKeyArn
         UserIdsToGrantReadAccess: !Ref LightrailSecureConfigReadAccessRoleIdGrants
         UserIdsToGrantPolicyAdminAccess: !Ref LightrailSecureConfigPolicyAdminAccessRoleIdGrants
   LightrailSecureConfigReadAccessRoleIdGrants:
@@ -421,9 +407,9 @@ Resources:
           - !FindInMap [Services, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
           - !FindInMap [Batch, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
           - !FindInMap [SimpleRollup, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
-          - !FindInMap [CardsSearch, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
-          - !FindInMap [Kvs, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
-          - !FindInMap [Turnkey, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleNames]
+          - !GetAtt LightrailCardsSearch.Outputs.RoleName
+          - !GetAtt LightrailKvs.Outputs.RoleName
+          - !GetAtt LightrailTurnkey.Outputs.RoleNames
           - !FindInMap [Reactions, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleNames]
           - !FindInMap [S3EventTranscoder, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
   LightrailSecureConfigPolicyAdminAccessRoleIdGrants:
@@ -758,8 +744,8 @@ Resources:
       Parameters:
         EnvironmentName: !Ref EnvironmentName
         ProjectName: !Sub "${AWS::StackName}-Turnkey"
-        LightrailDomain: !GetAtt LightrailCloudfront.Outputs.ApiDomain
-        LightrailWebappDomain: !GetAtt LightrailCloudfront.Outputs.AppDomain
+        LightrailDomain: !Sub "api.${LightrailDns.Outputs.HostedDomainName}"
+        LightrailWebappDomain: !Sub "www.${LightrailDns.Outputs.HostedDomainName}"
         ConfigurationBucketName: !GetAtt LightrailSecureConfig.Outputs.BucketName
         ConfigurationBucketKeyArn: !GetAtt LightrailSecureConfig.Outputs.EncryptionKeyArn
         JwtConfigurationFileName: !FindInMap [SecureConfig, FileNames, JWT]
@@ -788,7 +774,7 @@ Resources:
               "SecureConfigKeyRoleDefinitions": "${SecureConfigFileNameRoleDefinitions}",
               "SecureConfigKeyDataDog": "${SecureConfigFileNameDataDog}",
               "Capacity": "${Capacity}",
-              "RestRootUrl": "https://${LightrailCloudfront.Outputs.ApiDomain}/v1/"
+              "RestRootUrl": "https://api.${LightrailDns.Outputs.HostedDomainName}/v1/"
             }
           -
             SecureConfigFileNameJwt: !FindInMap [SecureConfig, FileNames, JWT]

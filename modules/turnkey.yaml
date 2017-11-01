@@ -58,16 +58,19 @@ Mappings:
     us-west-2:
       GitHubBranch: dev-ci
       GitHubBranchDest: ""
+      RoleNames: dev-Turnkey-GiftcardPurchaseFunctionRole-1KGBM93LPXQFP,dev-Turnkey-StripeFunctionRole-1G73BZDEQRT90
       Endpoint: vjn3uqm8ok.execute-api.us-west-2.amazonaws.com
   Staging:
     us-west-2:
       GitHubBranch: staging
       GitHubBranchDest: master
+      RoleNames: ""
       Endpoint: ""
   Production:
     us-west-2:
       GitHubBranch: master
       GitHubBranchDest: ""
+      RoleNames: ""
       Endpoint: ""
 
 Resources:
@@ -88,7 +91,6 @@ Resources:
               "SecureConfigKeyStripe": "${StripeConfigurationFileName}"
             }
           -
-            Capacity: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", Capacity]
         GitHubBranch: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", GitHubBranch]
         GitHubBranchDest: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", GitHubBranchDest]
         GitHubOAuthToken: !Ref GitHubOAuthToken
@@ -101,5 +103,7 @@ Resources:
           Value: Turnkey
 
 Outputs:
+  RoleNames:
+    Value: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", RoleNames]
   Endpoint:
     Value: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", Endpoint]

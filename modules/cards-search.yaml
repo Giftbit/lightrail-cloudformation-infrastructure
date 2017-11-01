@@ -53,6 +53,7 @@ Mappings:
       ElasticSearchInstanceCount: 2
       ElasticSearchInstanceType: t2.small.elasticsearch
       ElasticSearchMasterInstanceType: none
+      RoleName: dev-CardsSearch-RestFunctionRole-1WFJDWKX4AFSD
       Endpoint: hon8eb7zgg.execute-api.us-west-2.amazonaws.com
   Staging:
     us-west-2:
@@ -61,6 +62,7 @@ Mappings:
       ElasticSearchInstanceCount: 2
       ElasticSearchInstanceType: t2.small.elasticsearch
       ElasticSearchMasterInstanceType: none
+      RoleName: staging-CardsSearch-RestFunctionRole-QB1BTL5IJBMS
       Endpoint: s7fqdm27c1.execute-api.us-west-2.amazonaws.com
   Production:
     us-west-2:
@@ -69,6 +71,7 @@ Mappings:
       ElasticSearchInstanceCount: 2
       ElasticSearchInstanceType: t2.small.elasticsearch
       ElasticSearchMasterInstanceType: t2.small.elasticsearch
+      RoleName: production-CardsSearch-RestFunctionRole-42IZL2PQ2ADC
       Endpoint: o0o62rx9nk.execute-api.us-west-2.amazonaws.com
 
 Resources:
@@ -112,5 +115,7 @@ Resources:
           Value: CardsSearch
 
 Outputs:
+  RoleName:
+    Value: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", RoleName]
   Endpoint:
     Value: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", Endpoint]
