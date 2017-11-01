@@ -1,4 +1,4 @@
-Description: KVS helper module
+Description: Turnkey helper module
 
 Parameters:
   EnvironmentName:
@@ -11,6 +11,14 @@ Parameters:
   ProjectName:
     Type: String
     Description: The name of the project being built.  This name will be used on a number of resources.
+  LightrailDomain:
+    Type: String
+    Description: The domain of the Lightrail REST API
+    AllowedPattern: (\w+\.)+\w{3}
+  LightrailWebappDomain:
+    Type: String
+    Description: The domain of the Lightrail web app
+    AllowedPattern: (\w+\.)+\w{3}
   ConfigurationBucketName:
     Type: String
     Description: The Name of the Configuration Bucket
@@ -24,6 +32,9 @@ Parameters:
   RoleDefintionsConfigurationFileName:
     Type: String
     Description: The Name of the Role Defintions Configuration File in the Configuration Bucket
+  StripeConfigurationFileName:
+    Type: String
+    Description: Key of the Stripe Connect secure config object in S3
   GitHubOAuthToken:
     Type: String
     Description: GitHub oauth token.  This user must have admin access to the repo.
@@ -47,55 +58,34 @@ Mappings:
     us-west-2:
       GitHubBranch: dev-ci
       GitHubBranchDest: ""
-      Capacity: low
-      Endpoint: wowqnrwyy0.execute-api.us-west-2.amazonaws.com
+      Endpoint: vjn3uqm8ok.execute-api.us-west-2.amazonaws.com
   Staging:
     us-west-2:
       GitHubBranch: staging
       GitHubBranchDest: master
-      Capacity: low
-      Endpoint: 1tnp8xblpd.execute-api.us-west-2.amazonaws.com
+      Endpoint: ""
   Production:
     us-west-2:
       GitHubBranch: master
       GitHubBranchDest: ""
-      Capacity: high
-      Endpoint: hl0fjfzg5b.execute-api.us-west-2.amazonaws.com
+      Endpoint: ""
 
 Resources:
-  EncryptionKey:
-    Type: AWS::KMS::Key
-    Properties:
-      Description: !Sub "${AWS::StackName} stored item encryption key"
-      KeyPolicy:
-        Version: 2012-10-17
-        Statement:
-          - Effect: Allow
-            Principal:
-              AWS:
-                !Sub "arn:aws:iam::${AWS::AccountId}:root"
-            Action:
-              - kms:*
-            Resource: "*"
-  EncryptionKeyAlias:
-    Type: AWS::KMS::Alias
-    Properties:
-      AliasName: !Sub "alias/${AWS::StackName}-EncryptionKey"
-      TargetKeyId: !Ref EncryptionKey
   CI:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://raw.githubusercontent.com/Giftbit/giftbit-kvs/2b480b254f641e10ddd227f1bf4bc8fd34a97eee/infrastructure/ci.yaml
+      TemplateURL: https://raw.githubusercontent.com/Giftbit/internal-turnkey/ed378162d95f8ecb61eb59701b485d56ab49fbf8/infrastructure/ci.yaml
       Parameters:
         ProjectParameterOverrides: !Sub
           - >
             {
+              "LightrailDomain": "${LightrailDomain}",
+              "LightrailWebappDomain": "${LightrailWebappDomain}",
               "SecureConfigBucket": "${ConfigurationBucketName}",
               "SecureConfigKmsArn": "${ConfigurationBucketKeyArn}",
               "SecureConfigKeyJwt": "${JwtConfigurationFileName}",
               "SecureConfigKeyRoleDefinitions": "${RoleDefintionsConfigurationFileName}",
-              "StoredItemEncryptionKeyId": "${EncryptionKey}",
-              "Capacity": "${Capacity}"
+              "SecureConfigKeyStripe": "${StripeConfigurationFileName}"
             }
           -
             Capacity: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", Capacity]
@@ -107,9 +97,8 @@ Resources:
         CiKeysBucketName: !Ref CiKeysBucketName
         ProjectName: !Ref ProjectName
       Tags:
-        -
-          Key: Service
-          Value: KVS
+        - Key: Service
+          Value: Turnkey
 
 Outputs:
   Endpoint:

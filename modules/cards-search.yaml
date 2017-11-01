@@ -1,4 +1,4 @@
-Description: KVS helper module
+Description: Cards Search helper module
 
 Parameters:
   EnvironmentName:
@@ -18,6 +18,9 @@ Parameters:
     Type: String
     Description: The ARN of the Configuration Bucket Encryption Key
     AllowedPattern: arn:aws:kms:[a-z0-9-]+:\d{12}:key/[a-z0-9-]+
+  DataDogConfigurationFileName:
+    Type: String
+    Description: The Name of the DataDog Configuration File in the Configuration Bucket
   JwtConfigurationFileName:
     Type: String
     Description: The Name of the JWT Configuration File in the Configuration Bucket
@@ -47,45 +50,32 @@ Mappings:
     us-west-2:
       GitHubBranch: dev-ci
       GitHubBranchDest: ""
-      Capacity: low
-      Endpoint: wowqnrwyy0.execute-api.us-west-2.amazonaws.com
+      ElasticSearchInstanceCount: 2
+      ElasticSearchInstanceType: t2.small.elasticsearch
+      ElasticSearchMasterInstanceType: none
+      Endpoint: hon8eb7zgg.execute-api.us-west-2.amazonaws.com
   Staging:
     us-west-2:
       GitHubBranch: staging
       GitHubBranchDest: master
-      Capacity: low
-      Endpoint: 1tnp8xblpd.execute-api.us-west-2.amazonaws.com
+      ElasticSearchInstanceCount: 2
+      ElasticSearchInstanceType: t2.small.elasticsearch
+      ElasticSearchMasterInstanceType: none
+      Endpoint: s7fqdm27c1.execute-api.us-west-2.amazonaws.com
   Production:
     us-west-2:
       GitHubBranch: master
       GitHubBranchDest: ""
-      Capacity: high
-      Endpoint: hl0fjfzg5b.execute-api.us-west-2.amazonaws.com
+      ElasticSearchInstanceCount: 2
+      ElasticSearchInstanceType: t2.small.elasticsearch
+      ElasticSearchMasterInstanceType: t2.small.elasticsearch
+      Endpoint: o0o62rx9nk.execute-api.us-west-2.amazonaws.com
 
 Resources:
-  EncryptionKey:
-    Type: AWS::KMS::Key
-    Properties:
-      Description: !Sub "${AWS::StackName} stored item encryption key"
-      KeyPolicy:
-        Version: 2012-10-17
-        Statement:
-          - Effect: Allow
-            Principal:
-              AWS:
-                !Sub "arn:aws:iam::${AWS::AccountId}:root"
-            Action:
-              - kms:*
-            Resource: "*"
-  EncryptionKeyAlias:
-    Type: AWS::KMS::Alias
-    Properties:
-      AliasName: !Sub "alias/${AWS::StackName}-EncryptionKey"
-      TargetKeyId: !Ref EncryptionKey
   CI:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://raw.githubusercontent.com/Giftbit/giftbit-kvs/2b480b254f641e10ddd227f1bf4bc8fd34a97eee/infrastructure/ci.yaml
+      TemplateURL: https://raw.githubusercontent.com/Giftbit/giftbit-cards-search/2271464/infrastructure/ci.yaml
       Parameters:
         ProjectParameterOverrides: !Sub
           - >
@@ -94,22 +84,32 @@ Resources:
               "SecureConfigKmsArn": "${ConfigurationBucketKeyArn}",
               "SecureConfigKeyJwt": "${JwtConfigurationFileName}",
               "SecureConfigKeyRoleDefinitions": "${RoleDefintionsConfigurationFileName}",
-              "StoredItemEncryptionKeyId": "${EncryptionKey}",
-              "Capacity": "${Capacity}"
+              "SecureConfigKeyDataDog": "${DataDogConfigurationFileName}",
+              "KinesisStreamArn": "${LightrailEventStream.Outputs.KinesisStreamArn}",
+              "MessageBucket": "${LightrailEventStream.Outputs.DataBucketName}",
+              "MessageBucketKmsArn": "${LightrailEventStream.Outputs.EncryptionKeyArn}",
+              "ElasticSearchInstanceCount": "${ElasticSearchInstanceCount}",
+              "ElasticSearchInstanceType": "${ElasticSearchInstanceType}",
+              "ElasticSearchMasterInstanceType": "${ElasticSearchMasterInstanceType}"
             }
           -
-            Capacity: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", Capacity]
+            ElasticSearchInstanceCount:
+              !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", ElasticSearchInstanceCount]
+            ElasticSearchInstanceType:
+              !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", ElasticSearchInstanceType]
+            ElasticSearchMasterInstanceType:
+              !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", ElasticSearchMasterInstanceType]
         GitHubBranch: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", GitHubBranch]
         GitHubBranchDest: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", GitHubBranchDest]
         GitHubOAuthToken: !Ref GitHubOAuthToken
-        CodeBuildImageNodeSSH: !Ref CodeBuildImageNodeSSH
+        CodeBuildImageNodeSSH: !REf CodeBuildImageNodeSSH
         CiKeysAccessRoleArn: !Ref CiKeysAccessRoleArn
         CiKeysBucketName: !Ref CiKeysBucketName
-        ProjectName: !Ref ProjectName
+        ProjectName: !Sub "${AWS::StackName}-CardsSearch"
       Tags:
         -
           Key: Service
-          Value: KVS
+          Value: CardsSearch
 
 Outputs:
   Endpoint:
