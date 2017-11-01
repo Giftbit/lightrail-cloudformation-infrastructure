@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: "Lightrail Secure Bucket policy"
+Description: Secures an S3 bucket with its KMS key
 
 Parameters:
   EnvironmentName:

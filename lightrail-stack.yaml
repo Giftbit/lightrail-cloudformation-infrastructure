@@ -383,12 +383,12 @@ Resources:
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2
     Properties:
-      TemplateURL: ./modules/secure-bucket.yaml
+      TemplateURL: ./modules/securable-bucket.yaml
   LightrailSecureConfigPolicy:
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2
     Properties:
-      TemplateURL: ./modules/secure-bucket-policy.yaml
+      TemplateURL: ./modules/bucket-securing-policy.yaml
       Parameters:
         EnvironmentName: !Ref EnvironmentName
         BucketName: !GetAtt LightrailSecureConfig.Outputs.BucketName
@@ -429,12 +429,12 @@ Resources:
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2
     Properties:
-      TemplateURL: ./modules/secure-bucket.yaml
+      TemplateURL: ./modules/securable-bucket.yaml
   LightrailSecureDownloadPolicy:
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2
     Properties:
-      TemplateURL: ./modules/secure-bucket-policy.yaml
+      TemplateURL: ./modules/bucket-securing-policy.yaml
       Parameters:
         EnvironmentName: !Ref EnvironmentName
         BucketName: !GetAtt LightrailSecureDownload.Outputs.BucketName

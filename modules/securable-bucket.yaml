@@ -1,5 +1,7 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: "Lightrail Secure Bucket"
+Description: An S3 bucket and KMS key that can be secured
+# Use bucket-securing-policy.yaml to secure the bucket produced here.
+# The policy is a separate file to break up circular references.
 
 Resources:
   EncryptionKey:
