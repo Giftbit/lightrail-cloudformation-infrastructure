@@ -1,0 +1,106 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Logo Upload Helper Module
+
+Parameters:
+  EnvironmentName:
+    Type: String
+    Description: Please select your environment
+    AllowedValues:
+      - Dev
+      - Staging
+      - Production
+  ProjectName:
+    Type: String
+    Description: The name of the project being built.  This name will be used on a number of resources.
+  ConfigurationBucketName:
+    Type: String
+    Description: The Name of the Configuration Bucket
+  ConfigurationBucketKeyArn:
+    Type: String
+    Description: The ARN of the Configuration Bucket Encryption Key
+    AllowedPattern: arn:aws:kms:[a-z0-9-]+:\d{12}:key/[a-z0-9-]+
+  JwtConfigurationFileName:
+    Type: String
+    Description: The Name of the JWT Configuration File in the Configuration Bucket
+  RoleDefintionsConfigurationFileName:
+    Type: String
+    Description: The Name of the Role Defintions Configuration File in the Configuration Bucket
+  GitHubOAuthToken:
+    Type: String
+    Description: GitHub oauth token.  This user must have admin access to the repo.
+    Default: "****"
+    NoEcho: true
+  CodeBuildImageNodeSSH:
+    Type: String
+    Description: Name of the docker image to build from.
+    Default: ""
+  CiKeysAccessRoleArn:
+    Type: String
+    Description: ARN for the role that can access our CI SSH keys bucket.
+    Default: ""
+  CiKeysBucketName:
+    Type: String
+    Description: S3 bucket with our CI SSH keys.
+    Default: ""
+  WebsiteDomainUrl:
+    Type: String
+    Description: The Scheme and Domain that will serve the logos
+    AllowedPattern: https:\/\/[^/]+
+
+Mappings:
+  Dev:
+    us-west-2:
+      GitHubBranch: dev-ci
+      GitHubBranchDest: ""
+      RoleName: dev-LogoUpload-LogoUploadAuthorizerFunctionRole-1FI4MCOFGM8W7
+      ServiceEndpoint: j3wmt0ddki.execute-api.us-west-2.amazonaws.com
+      BucketEndpoint: dev-logoupload-logobucket-520up48h1gdh.s3-website-us-west-2.amazonaws.com
+  Staging:
+    us-west-2:
+      GitHubBranch: staging
+      GitHubBranchDest: master
+      RoleName: ""
+      ServiceEndpoint: ""
+      BucketEndpoint: ""
+  Production:
+    us-west-2:
+      GitHubBranch: master
+      GitHubBranchDest: ""
+      RoleName: ""
+      ServiceEndpoint: ""
+      BucketEndpoint: ""
+
+Resources:
+  CI:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://raw.githubusercontent.com/Giftbit/lightrail-logo-upload/5fa1d02e5454f0287ef789f9e1c0e813cbf857d1/infrastructure/ci.yaml
+      Parameters:
+        ProjectParameterOverrides: !Sub >
+          {
+            "SecureConfigBucket": "${ConfigurationBucketName}",
+            "SecureConfigKmsArn": "${ConfigurationBucketKeyArn}",
+            "SecureConfigKeyJwt": "${JwtConfigurationFileName}",
+            "SecureConfigKeyRoleDefinitions": "${RoleDefintionsConfigurationFileName}",
+            "WebsiteDomainUrl": "${WebsiteDomainUrl}",
+            "LogoPath": "/logo"
+          }
+        GitHubBranch: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", GitHubBranch]
+        GitHubBranchDest: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", GitHubBranchDest]
+        GitHubOAuthToken: !Ref GitHubOAuthToken
+        CodeBuildImageNodeSSH: !Ref CodeBuildImageNodeSSH
+        CiKeysAccessRoleArn: !Ref CiKeysAccessRoleArn
+        CiKeysBucketName: !Ref CiKeysBucketName
+        ProjectName: !Ref ProjectName
+      Tags:
+        -
+          Key: Service
+          Value: LogoUpload
+
+Outputs:
+  RoleName:
+    Value: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", RoleName]
+  ServiceEndpoint:
+    Value: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", ServiceEndpoint]
+  BucketEndpoint:
+    Value: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", BucketEndpoint]

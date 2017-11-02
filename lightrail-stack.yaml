@@ -412,6 +412,7 @@ Resources:
           - !GetAtt LightrailTurnkey.Outputs.RoleNames
           - !FindInMap [Reactions, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleNames]
           - !FindInMap [S3EventTranscoder, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
+          - !GetAtt LightrailLogoUpload.Outputs.RoleName
   LightrailSecureConfigPolicyAdminAccessRoleIdGrants:
     Type: AWS::CloudFormation::CustomResource
     Version: 1.0
@@ -802,6 +803,27 @@ Resources:
         -
           Key: Service
           Value: Reactions
+  LightrailLogoUpload:
+    Type: AWS::CloudFormation::Stack
+    Condition: RegionIsUSWest2
+    Properties:
+      TemplateURL: ./modules/logo-upload.yaml
+      Parameters:
+        EnvironmentName: !Ref EnvironmentName
+        ProjectName: !Sub "${AWS::StackName}-LogoUpload"
+        ConfigurationBucketName: !GetAtt LightrailSecureConfig.Outputs.BucketName
+        ConfigurationBucketKeyArn: !GetAtt LightrailSecureConfig.Outputs.EncryptionKeyArn
+        JwtConfigurationFileName: !FindInMap [SecureConfig, FileNames, JWT]
+        RoleDefintionsConfigurationFileName: !FindInMap [SecureConfig, FileNames, RoleDefinitions]
+        GitHubOAuthToken: !GetAtt GitHubOAuthToken.DecryptedValue
+        CodeBuildImageNodeSSH: !GetAtt CIResources.Outputs.CodebuildImageNodeSSH
+        CiKeysAccessRoleArn: !GetAtt CIResources.Outputs.KeysAccessRoleArn
+        CiKeysBucketName: !GetAtt CIResources.Outputs.KeysBucketName
+        WebsiteDomainUrl: !Sub "https://www.${LightrailDns.Outputs.HostedDomainName}"
+      Tags:
+        -
+          Key: Service
+          Value: LogoUpload
   LightrailDevArtifacts:
     Type: AWS::CloudFormation::Stack
     Condition: EnvIsDevAndRegionIsUSWest2
