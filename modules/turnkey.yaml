@@ -64,14 +64,14 @@ Mappings:
     us-west-2:
       GitHubBranch: staging
       GitHubBranchDest: master
-      RoleNames: ""
-      Endpoint: ""
+      RoleNames: staging-Turnkey-GiftcardPurchaseFunctionRole-6OE7SS30H6TU,staging-Turnkey-StripeFunctionRole-V0W37G8KYYD3
+      Endpoint: tk1tioiyz5.execute-api.us-west-2.amazonaws.com
   Production:
     us-west-2:
       GitHubBranch: master
       GitHubBranchDest: ""
-      RoleNames: ""
-      Endpoint: ""
+      RoleNames: production-Turnkey-GiftcardPurchaseFunctionRole-1VO6BCQNGZKOZ,production-Turnkey-StripeFunctionRole-107HU60YD7SP7
+      Endpoint: 13shovrsob.execute-api.us-west-2.amazonaws.com
 
 Resources:
   CI:
