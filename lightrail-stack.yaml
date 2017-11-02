@@ -439,8 +439,9 @@ Resources:
         EnvironmentName: !Ref EnvironmentName
         BucketName: !GetAtt LightrailSecureDownload.Outputs.BucketName
         EncryptionKeyArn: !GetAtt LightrailSecureDownload.Outputs.EncryptionKeyArn
-        UserIdsToGrantReadAccess: !Ref LightrailSecureConfigReadAccessRoleIdGrants
-        UserIdsToGrantPolicyAdminAccess: !Ref LightrailSecureConfigPolicyAdminAccessRoleIdGrants
+        UserIdsToGrantReadAccess: !Ref LightrailSecureDownloadReadAccessRoleIdGrants
+        UserIdsToGrantReadWriteAccess: !Ref LightrailSecureDownloadReadWriteAccessRoleIdGrants
+        UserIdsToGrantPolicyAdminAccess: !Ref LightrailSecureDownloadPolicyAdminAccessRoleIdGrants
   LightrailSecureDownloadReadAccessRoleIdGrants:
     Type: AWS::CloudFormation::CustomResource
     Version: 1.0
