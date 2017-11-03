@@ -73,33 +73,31 @@ Mappings:
       Endpoint: ""
 
 Resources:
-  NoopBucket: # this was the closest I could find to a Noop. A resource is required.
-    Type: AWS::S3::Bucket
-#  CI:
-#    Type: AWS::CloudFormation::Stack
-#    Properties:
-#      TemplateURL: https://raw.githubusercontent.com/Giftbit/giftbit-reactions/2f23b11f58b17d11fea0bc619b8123025fa15355/infrastructure/ci.yaml
-#      Parameters:
-#        ProjectParameterOverrides: !Sub
-#          - >
-#            {
-#              "SecureConfigBucket": "${SecureConfigBucket}",
-#              "SecureConfigKmsArn": "${SecureConfigKmsArn}",
-#              "SecureConfigKeyJwt": "${SecureConfigKeyJwt}",
-#              "SecureConfigKeyRoleDefinitions": "${SecureConfigKeyRoleDefinitions}",
-#              "SecureConfigKeyDataDog": "${SecureConfigKeyDataDog}",
-#              "Capacity": "${Capacity}",
-#              "RestRootUrl": "https://${LightrailDomain}/v1/"
-#            }
-#          -
-#            Capacity: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", Capacity]
-#        GitHubBranch: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", GitHubBranch]
-#        GitHubBranchDest: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", GitHubBranchDest]
-#        GitHubOAuthToken: !Ref GitHubOAuthToken
-#        CodeBuildImageNodeSSH: !Ref CodeBuildImageNodeSSH
-#        CiKeysAccessRoleArn: !Ref CiKeysAccessRoleArn
-#        CiKeysBucketName: !Ref CiKeysBucketName
-#        ProjectName: !Ref ProjectName
+  CI:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://raw.githubusercontent.com/Giftbit/giftbit-reactions/2f23b11f58b17d11fea0bc619b8123025fa15355/infrastructure/ci.yaml
+      Parameters:
+        ProjectParameterOverrides: !Sub
+          - >
+            {
+              "SecureConfigBucket": "${SecureConfigBucket}",
+              "SecureConfigKmsArn": "${SecureConfigKmsArn}",
+              "SecureConfigKeyJwt": "${SecureConfigKeyJwt}",
+              "SecureConfigKeyRoleDefinitions": "${SecureConfigKeyRoleDefinitions}",
+              "SecureConfigKeyDataDog": "${SecureConfigKeyDataDog}",
+              "Capacity": "${Capacity}",
+              "RestRootUrl": "https://${LightrailDomain}/v1/"
+            }
+          -
+            Capacity: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", Capacity]
+        GitHubBranch: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", GitHubBranch]
+        GitHubBranchDest: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", GitHubBranchDest]
+        GitHubOAuthToken: !Ref GitHubOAuthToken
+        CodeBuildImageNodeSSH: !Ref CodeBuildImageNodeSSH
+        CiKeysAccessRoleArn: !Ref CiKeysAccessRoleArn
+        CiKeysBucketName: !Ref CiKeysBucketName
+        ProjectName: !Ref ProjectName
 
 Outputs:
   RoleNames:
