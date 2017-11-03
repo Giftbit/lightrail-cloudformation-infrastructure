@@ -87,42 +87,40 @@ Mappings:
       Endpoint: o0o62rx9nk.execute-api.us-west-2.amazonaws.com
 
 Resources:
-  NoopBucket: # this was the closest I could find to a Noop. A resource is required.
-    Type: AWS::S3::Bucket
-#  CI:
-#    Type: AWS::CloudFormation::Stack
-#    Properties:
-#      TemplateURL: https://raw.githubusercontent.com/Giftbit/giftbit-cards-search/2271464/infrastructure/ci.yaml
-#      Parameters:
-#        ProjectParameterOverrides: !Sub
-#          - >
-#            {
-#              "SecureConfigBucket": "${SecureConfigBucket}",
-#              "SecureConfigKmsArn": "${SecureConfigKmsArn}",
-#              "SecureConfigKeyJwt": "${SecureConfigKeyJwt}",
-#              "SecureConfigKeyRoleDefinitions": "${SecureConfigKeyRoleDefinitions}",
-#              "SecureConfigKeyDataDog": "${SecureConfigKeyDataDog}",
-#              "KinesisStreamArn": "${KinesisStreamArn}",
-#              "MessageBucket": "${MessageBucket}",
-#              "MessageBucketKmsArn": "${MessageBucketKmsArn}",
-#              "ElasticSearchInstanceCount": "${ElasticSearchInstanceCount}",
-#              "ElasticSearchInstanceType": "${ElasticSearchInstanceType}",
-#              "ElasticSearchMasterInstanceType": "${ElasticSearchMasterInstanceType}"
-#            }
-#          -
-#            ElasticSearchInstanceCount:
-#              !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", ElasticSearchInstanceCount]
-#            ElasticSearchInstanceType:
-#              !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", ElasticSearchInstanceType]
-#            ElasticSearchMasterInstanceType:
-#              !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", ElasticSearchMasterInstanceType]
-#        GitHubBranch: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", GitHubBranch]
-#        GitHubBranchDest: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", GitHubBranchDest]
-#        GitHubOAuthToken: !Ref GitHubOAuthToken
-#        CodeBuildImageNodeSSH: !Ref CodeBuildImageNodeSSH
-#        CiKeysAccessRoleArn: !Ref CiKeysAccessRoleArn
-#        CiKeysBucketName: !Ref CiKeysBucketName
-#        ProjectName: !Ref ProjectName
+  CI:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://raw.githubusercontent.com/Giftbit/giftbit-cards-search/2271464/infrastructure/ci.yaml
+      Parameters:
+        ProjectParameterOverrides: !Sub
+          - >
+            {
+              "SecureConfigBucket": "${SecureConfigBucket}",
+              "SecureConfigKmsArn": "${SecureConfigKmsArn}",
+              "SecureConfigKeyJwt": "${SecureConfigKeyJwt}",
+              "SecureConfigKeyRoleDefinitions": "${SecureConfigKeyRoleDefinitions}",
+              "SecureConfigKeyDataDog": "${SecureConfigKeyDataDog}",
+              "KinesisStreamArn": "${KinesisStreamArn}",
+              "MessageBucket": "${MessageBucket}",
+              "MessageBucketKmsArn": "${MessageBucketKmsArn}",
+              "ElasticSearchInstanceCount": "${ElasticSearchInstanceCount}",
+              "ElasticSearchInstanceType": "${ElasticSearchInstanceType}",
+              "ElasticSearchMasterInstanceType": "${ElasticSearchMasterInstanceType}"
+            }
+          -
+            ElasticSearchInstanceCount:
+              !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", ElasticSearchInstanceCount]
+            ElasticSearchInstanceType:
+              !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", ElasticSearchInstanceType]
+            ElasticSearchMasterInstanceType:
+              !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", ElasticSearchMasterInstanceType]
+        GitHubBranch: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", GitHubBranch]
+        GitHubBranchDest: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", GitHubBranchDest]
+        GitHubOAuthToken: !Ref GitHubOAuthToken
+        CodeBuildImageNodeSSH: !Ref CodeBuildImageNodeSSH
+        CiKeysAccessRoleArn: !Ref CiKeysAccessRoleArn
+        CiKeysBucketName: !Ref CiKeysBucketName
+        ProjectName: !Ref ProjectName
 
 Outputs:
   RoleName:
