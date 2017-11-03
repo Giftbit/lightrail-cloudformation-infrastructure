@@ -57,7 +57,7 @@ Mappings:
       ReactBuildArtifactBucketOverride: dev-lightrailreact-1xyn4dsi4a-buildartifactbucket-17n7679jwqtyw
       SesDomainArns: ""
   SecureConfig:
-    FileNames:
+    Keys:
       JWT: authentication_badge_key.json
       DataDog: datadog.json
       RoleDefinitions: RoleDefinitions.json
@@ -142,44 +142,6 @@ Mappings:
       GitHubBranchDest: ""
       RoleName: production-Credentials-RestBadgeValidationLambdaRo-WESN8D943Y8F
       Endpoint: bklze8sby7.execute-api.us-west-2.amazonaws.com
-  SimpleRollup:
-    Dev-us-west-2:
-      GitHubBranch: dev-ci
-      GitHubBranchDest: ""
-      Capacity: low
-      RoleName: dev-SimpleRollup-RestFunctionRole-UY3YFU4XT00Q
-      Endpoint: s6tkfuiyga.execute-api.us-west-2.amazonaws.com
-    Staging-us-west-2:
-      GitHubBranch: staging
-      GitHubBranchDest: master
-      Capacity: low
-      RoleName: staging-SimpleRollup-RestFunctionRole-UMGA0LJAWL37
-      Endpoint: qq578kbti9.execute-api.us-west-2.amazonaws.com
-    Production-us-west-2:
-      GitHubBranch: master
-      GitHubBranchDest: ""
-      Capacity: high
-      RoleName: production-SimpleRollup-RestFunctionRole-1WHS2OKB6RF1L
-      Endpoint: cky1xydze9.execute-api.us-west-2.amazonaws.com
-  Reactions:
-    Dev-us-west-2:
-      GitHubBranch: dev-ci
-      GitHubBranchDest: ""
-      Capacity: low
-      RoleNames: dev-Reactions-IngressFunctionRole-1WSWAQEXFYBFD,dev-Reactions-LogsRestFunctionRole-DO9D51OBRJIX,dev-Reactions-QueueConsumerFunctionRole-1MJU3O9YZ1S1K,dev-Reactions-ReactionWorkerFunctionRole-1FPY0LCYJGYQ4,dev-Reactions-ReactionsRestFunctionRole-1RA07KXUTJX9R
-      Endpoint: serkjs3ing.execute-api.us-west-2.amazonaws.com
-    Staging-us-west-2:
-      GitHubBranch: staging
-      GitHubBranchDest: master
-      Capacity: low
-      RoleNames: ""
-      Endpoint: ""
-    Production-us-west-2:
-      GitHubBranch: master
-      GitHubBranchDest: ""
-      Capacity: high
-      RoleNames: ""
-      Endpoint: ""
   S3EventTranscoder:
     Dev-us-west-2:
       GitHubBranch: dev-ci
@@ -252,12 +214,12 @@ Resources:
         WebsiteEndpoint: !GetAtt LightrailWebsite.Outputs.Domain
         ReactEndpoint: !GetAtt LightrailReact.Outputs.ReactDomainName
         ServicesEndpoint: !GetAtt LightrailLoadBalancer.Outputs.DNSName
-        StatsEndpoint: !FindInMap [SimpleRollup, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], Endpoint]
+        StatsEndpoint: !GetAtt LightrailSimpleRollup.Outputs.Endpoint
         BatchEndpoint: !GetAtt LightrailLoadBalancer.Outputs.DNSName
         CardsSearchEndpoint: !GetAtt LightrailCardsSearch.Outputs.Endpoint
         KvsEndpoint: !GetAtt LightrailKvs.Outputs.Endpoint
         TurnkeyEndpoint: !GetAtt LightrailTurnkey.Outputs.Endpoint
-        ReactionsEndpoint: !FindInMap [Reactions, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], Endpoint]
+        ReactionsEndpoint: !GetAtt LightrailReactions.Outputs.Endpoint
   LightrailWebsite:
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2
@@ -406,11 +368,11 @@ Resources:
           - !FindInMap [CredentialsRevocation, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
           - !FindInMap [Services, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
           - !FindInMap [Batch, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
-          - !FindInMap [SimpleRollup, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
+          - !GetAtt LightrailSimpleRollup.Outputs.RoleName
           - !GetAtt LightrailCardsSearch.Outputs.RoleName
           - !GetAtt LightrailKvs.Outputs.RoleName
           - !GetAtt LightrailTurnkey.Outputs.RoleNames
-          - !FindInMap [Reactions, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleNames]
+          - !GetAtt LightrailReactions.Outputs.RoleNames
           - !FindInMap [S3EventTranscoder, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
           - !GetAtt LightrailLogoUpload.Outputs.RoleName
   LightrailSecureConfigPolicyAdminAccessRoleIdGrants:
@@ -553,7 +515,7 @@ Resources:
         EnvironmentName: !Ref EnvironmentName
         ParentStackName: !Ref "AWS::StackName"
         ConfigurationBucketArn: !GetAtt LightrailSecureConfig.Outputs.BucketArn
-        ConfigurationBucketKeyArn: !GetAtt LightrailSecureConfig.Outputs.EncryptionKeyArn
+        SecureConfigKmsArn: !GetAtt LightrailSecureConfig.Outputs.EncryptionKeyArn
         SecureDownloadBucketArn: !GetAtt LightrailSecureDownload.Outputs.BucketArn
         SecureDownloadBucketKeyArn: !GetAtt LightrailSecureDownload.Outputs.EncryptionKeyArn
         EmailDomainName: !FindInMap [Common, !Ref EnvironmentName, EmailDomainName]
@@ -595,7 +557,7 @@ Resources:
         EnvironmentName: !Ref EnvironmentName
         ParentStackName: !Ref "AWS::StackName"
         ConfigurationBucketArn: !GetAtt LightrailSecureConfig.Outputs.BucketArn
-        ConfigurationBucketKeyArn: !GetAtt LightrailSecureConfig.Outputs.EncryptionKeyArn
+        SecureConfigKmsArn: !GetAtt LightrailSecureConfig.Outputs.EncryptionKeyArn
         SecureDownloadBucketArn: !GetAtt LightrailSecureDownload.Outputs.BucketArn
         SecureDownloadBucketKeyArn: !GetAtt LightrailSecureDownload.Outputs.EncryptionKeyArn
         EmailDomainName: !FindInMap [Common, !Ref EnvironmentName, EmailDomainName]
@@ -642,28 +604,17 @@ Resources:
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2
     Properties:
-      TemplateURL: https://raw.githubusercontent.com/Giftbit/giftbit-simple-rollup/d958a08/infrastructure/ci.yaml
+      TemplateURL: ./modules/simple-rollup.yaml
       Parameters:
-        ProjectParameterOverrides: !Sub
-          - >
-            {
-              "SecureConfigBucket": "${LightrailSecureConfig.Outputs.BucketName}",
-              "SecureConfigKmsArn": "${LightrailSecureConfig.Outputs.EncryptionKeyArn}",
-              "SecureConfigKeyJwt": "${SecureConfigFileNameJwt}",
-              "SecureConfigKeyRoleDefinitions": "${SecureConfigFileNameRoleDefinitions}",
-              "SecureConfigKeyDataDog": "${SecureConfigFileNameDataDog}",
-              "KinesisStreamArn": "${LightrailEventStream.Outputs.KinesisStreamArn}",
-              "MessageBucket": "${LightrailEventStream.Outputs.DataBucketName}",
-              "MessageBucketKmsArn": "${LightrailEventStream.Outputs.EncryptionKeyArn}",
-              "Capacity": "${Capacity}"
-            }
-          -
-            SecureConfigFileNameJwt: !FindInMap [SecureConfig, FileNames, JWT]
-            SecureConfigFileNameRoleDefinitions: !FindInMap [SecureConfig, FileNames, RoleDefinitions]
-            SecureConfigFileNameDataDog: !FindInMap [SecureConfig, FileNames, DataDog]
-            Capacity: !FindInMap [SimpleRollup, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], Capacity]
-        GitHubBranch: !FindInMap [SimpleRollup, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], GitHubBranch]
-        GitHubBranchDest: !FindInMap [SimpleRollup, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], GitHubBranchDest]
+        EnvironmentName: !Ref EnvironmentName
+        SecureConfigBucket: !GetAtt LightrailSecureConfig.Outputs.BucketName
+        SecureConfigKmsArn: !GetAtt LightrailSecureConfig.Outputs.EncryptionKeyArn
+        SecureConfigKeyDataDog: !FindInMap [SecureConfig, Keys, DataDog]
+        SecureConfigKeyJwt: !FindInMap [SecureConfig, Keys, JWT]
+        SecureConfigKeyRoleDefinitions: !FindInMap [SecureConfig, Keys, RoleDefinitions]
+        KinesisStreamArn: !GetAtt LightrailEventStream.Outputs.KinesisStreamArn
+        MessageBucket: !GetAtt LightrailEventStream.Outputs.DataBucketName
+        MessageBucketKmsArn: !GetAtt LightrailEventStream.Outputs.EncryptionKeyArn
         GitHubOAuthToken: !GetAtt GitHubOAuthToken.DecryptedValue
         CodeBuildImageNodeSSH: !GetAtt CIResources.Outputs.CodebuildImageNodeSSH
         CiKeysAccessRoleArn: !GetAtt CIResources.Outputs.KeysAccessRoleArn
@@ -684,14 +635,14 @@ Resources:
             {
               "SecureConfigBucket": "${LightrailSecureConfig.Outputs.BucketName}",
               "SecureConfigKmsArn": "${LightrailSecureConfig.Outputs.EncryptionKeyArn}",
-              "SecureConfigKeyDataDog": "${SecureConfigFileNameDataDog}",
+              "SecureConfigKeyDataDog": "${SecureConfigKeyDataDog}",
               "S3EventSourceBucket": "${LightrailEventStream.Outputs.DataBucketName}",
               "S3EventSourceBucketKmsArn": "${LightrailEventStream.Outputs.EncryptionKeyArn}",
               "S3EventDestinationBucket": "${LightrailAthena.Outputs.DataBucketName}",
               "S3EventDestinationBucketKmsArn": "${LightrailAthena.Outputs.EncryptionKeyArn}"
             }
           -
-            SecureConfigFileNameDataDog: !FindInMap [SecureConfig, FileNames, DataDog]
+            SecureConfigKeyDataDog: !FindInMap [SecureConfig, Keys, DataDog]
         GitHubBranch: !FindInMap [S3EventTranscoder, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], GitHubBranch]
         GitHubBranchDest: !FindInMap [S3EventTranscoder, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], GitHubBranchDest]
         GitHubOAuthToken: !GetAtt GitHubOAuthToken.DecryptedValue
@@ -711,11 +662,11 @@ Resources:
       Parameters:
         EnvironmentName: !Ref EnvironmentName
         ProjectName: !Sub "${AWS::StackName}-CardsSearch"
-        ConfigurationBucketName: !GetAtt LightrailSecureConfig.Outputs.BucketName
-        ConfigurationBucketKeyArn: !GetAtt LightrailSecureConfig.Outputs.EncryptionKeyArn
-        DataDogConfigurationFileName: !FindInMap [SecureConfig, FileNames, DataDog]
-        JwtConfigurationFileName: !FindInMap [SecureConfig, FileNames, JWT]
-        RoleDefintionsConfigurationFileName: !FindInMap [SecureConfig, FileNames, RoleDefinitions]
+        SecureConfigBucket: !GetAtt LightrailSecureConfig.Outputs.BucketName
+        SecureConfigKmsArn: !GetAtt LightrailSecureConfig.Outputs.EncryptionKeyArn
+        SecureConfigKeyDataDog: !FindInMap [SecureConfig, Keys, DataDog]
+        SecureConfigKeyJwt: !FindInMap [SecureConfig, Keys, JWT]
+        SecureConfigKeyRoleDefinitions: !FindInMap [SecureConfig, Keys, RoleDefinitions]
         KinesisStreamArn: !GetAtt LightrailEventStream.Outputs.KinesisStreamArn
         MessageBucket: !GetAtt LightrailEventStream.Outputs.DataBucketName
         MessageBucketKmsArn: !GetAtt LightrailEventStream.Outputs.EncryptionKeyArn
@@ -735,10 +686,10 @@ Resources:
       Parameters:
         EnvironmentName: !Ref EnvironmentName
         ProjectName: !Sub "${AWS::StackName}-Kvs"
-        ConfigurationBucketName: !GetAtt LightrailSecureConfig.Outputs.BucketName
-        ConfigurationBucketKeyArn: !GetAtt LightrailSecureConfig.Outputs.EncryptionKeyArn
-        JwtConfigurationFileName: !FindInMap [SecureConfig, FileNames, JWT]
-        RoleDefintionsConfigurationFileName: !FindInMap [SecureConfig, FileNames, RoleDefinitions]
+        SecureConfigBucket: !GetAtt LightrailSecureConfig.Outputs.BucketName
+        SecureConfigKmsArn: !GetAtt LightrailSecureConfig.Outputs.EncryptionKeyArn
+        SecureConfigKeyJwt: !FindInMap [SecureConfig, Keys, JWT]
+        SecureConfigKeyRoleDefinitions: !FindInMap [SecureConfig, Keys, RoleDefinitions]
         GitHubOAuthToken: !GetAtt GitHubOAuthToken.DecryptedValue
         CodeBuildImageNodeSSH: !GetAtt CIResources.Outputs.CodebuildImageNodeSSH
         CiKeysAccessRoleArn: !GetAtt CIResources.Outputs.KeysAccessRoleArn
@@ -757,11 +708,11 @@ Resources:
         ProjectName: !Sub "${AWS::StackName}-Turnkey"
         LightrailDomain: !Sub "api.${LightrailDns.Outputs.HostedDomainName}"
         LightrailWebappDomain: !Sub "www.${LightrailDns.Outputs.HostedDomainName}"
-        ConfigurationBucketName: !GetAtt LightrailSecureConfig.Outputs.BucketName
-        ConfigurationBucketKeyArn: !GetAtt LightrailSecureConfig.Outputs.EncryptionKeyArn
-        JwtConfigurationFileName: !FindInMap [SecureConfig, FileNames, JWT]
-        RoleDefintionsConfigurationFileName: !FindInMap [SecureConfig, FileNames, RoleDefinitions]
-        StripeConfigurationFileName: !FindInMap [SecureConfig, FileNames, StripeConnect]
+        SecureConfigBucket: !GetAtt LightrailSecureConfig.Outputs.BucketName
+        SecureConfigKmsArn: !GetAtt LightrailSecureConfig.Outputs.EncryptionKeyArn
+        SecureConfigKeyJwt: !FindInMap [SecureConfig, Keys, JWT]
+        SecureConfigKeyRoleDefinitions: !FindInMap [SecureConfig, Keys, RoleDefinitions]
+        SecureConfigKeyStripe: !FindInMap [SecureConfig, Keys, StripeConnect]
         GitHubOAuthToken: !GetAtt GitHubOAuthToken.DecryptedValue
         CodeBuildImageNodeSSH: !GetAtt CIResources.Outputs.CodebuildImageNodeSSH
         CiKeysAccessRoleArn: !GetAtt CIResources.Outputs.KeysAccessRoleArn
@@ -774,26 +725,15 @@ Resources:
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2
     Properties:
-      TemplateURL: https://raw.githubusercontent.com/Giftbit/giftbit-reactions/2f23b11f58b17d11fea0bc619b8123025fa15355/infrastructure/ci.yaml
+      TemplateURL: ./modules/reactions.yaml
       Parameters:
-        ProjectParameterOverrides: !Sub
-          - >
-            {
-              "SecureConfigBucket": "${LightrailSecureConfig.Outputs.BucketName}",
-              "SecureConfigKmsArn": "${LightrailSecureConfig.Outputs.EncryptionKeyArn}",
-              "SecureConfigKeyJwt": "${SecureConfigFileNameJwt}",
-              "SecureConfigKeyRoleDefinitions": "${SecureConfigFileNameRoleDefinitions}",
-              "SecureConfigKeyDataDog": "${SecureConfigFileNameDataDog}",
-              "Capacity": "${Capacity}",
-              "RestRootUrl": "https://api.${LightrailDns.Outputs.HostedDomainName}/v1/"
-            }
-          -
-            SecureConfigFileNameJwt: !FindInMap [SecureConfig, FileNames, JWT]
-            SecureConfigFileNameRoleDefinitions: !FindInMap [SecureConfig, FileNames, RoleDefinitions]
-            SecureConfigFileNameDataDog: !FindInMap [SecureConfig, FileNames, DataDog]
-            Capacity: !FindInMap [Reactions, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], Capacity]
-        GitHubBranch: !FindInMap [Reactions, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], GitHubBranch]
-        GitHubBranchDest: !FindInMap [Reactions, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], GitHubBranchDest]
+        EnvironmentName: !Ref EnvironmentName
+        LightrailDomain: !Sub "api.${LightrailDns.Outputs.HostedDomainName}"
+        SecureConfigBucket: !GetAtt LightrailSecureConfig.Outputs.BucketName
+        SecureConfigKmsArn: !GetAtt LightrailSecureConfig.Outputs.EncryptionKeyArn
+        SecureConfigKeyDataDog: !FindInMap [SecureConfig, Keys, DataDog]
+        SecureConfigKeyJwt: !FindInMap [SecureConfig, Keys, JWT]
+        SecureConfigKeyRoleDefinitions: !FindInMap [SecureConfig, Keys, RoleDefinitions]
         GitHubOAuthToken: !GetAtt GitHubOAuthToken.DecryptedValue
         CodeBuildImageNodeSSH: !GetAtt CIResources.Outputs.CodebuildImageNodeSSH
         CiKeysAccessRoleArn: !GetAtt CIResources.Outputs.KeysAccessRoleArn
@@ -811,10 +751,10 @@ Resources:
       Parameters:
         EnvironmentName: !Ref EnvironmentName
         ProjectName: !Sub "${AWS::StackName}-LogoUpload"
-        ConfigurationBucketName: !GetAtt LightrailSecureConfig.Outputs.BucketName
-        ConfigurationBucketKeyArn: !GetAtt LightrailSecureConfig.Outputs.EncryptionKeyArn
-        JwtConfigurationFileName: !FindInMap [SecureConfig, FileNames, JWT]
-        RoleDefintionsConfigurationFileName: !FindInMap [SecureConfig, FileNames, RoleDefinitions]
+        SecureConfigBucket: !GetAtt LightrailSecureConfig.Outputs.BucketName
+        SecureConfigKmsArn: !GetAtt LightrailSecureConfig.Outputs.EncryptionKeyArn
+        SecureConfigKeyJwt: !FindInMap [SecureConfig, Keys, JWT]
+        SecureConfigKeyRoleDefinitions: !FindInMap [SecureConfig, Keys, RoleDefinitions]
         GitHubOAuthToken: !GetAtt GitHubOAuthToken.DecryptedValue
         CodeBuildImageNodeSSH: !GetAtt CIResources.Outputs.CodebuildImageNodeSSH
         CiKeysAccessRoleArn: !GetAtt CIResources.Outputs.KeysAccessRoleArn

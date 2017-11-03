@@ -16,7 +16,7 @@ Parameters:
     Type: String
     Description: The ARN of the Configuration Bucket
     AllowedPattern: arn:aws:s3:::[A-Za-z0-9._-]+
-  ConfigurationBucketKeyArn:
+  SecureConfigKmsArn:
     Type: String
     Description: The ARN of the Configuration Bucket Encryption Key
     AllowedPattern: arn:aws:kms:[a-z0-9-]+:\d{12}:key/[a-z0-9-]+
@@ -166,7 +166,7 @@ Resources:
                   - kms:DescribeKey
                   - kms:Decrypt
                 Resource:
-                  - !Ref ConfigurationBucketKeyArn
+                  - !Ref SecureConfigKmsArn
               - !If  # SES Access
                 - ShouldConfigureSes
                 -
