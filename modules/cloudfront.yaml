@@ -263,7 +263,7 @@ Resources:
                 OriginSSLProtocols:
                   - TLSv1.1
                   - TLSv1.2
-                OriginProtocolPolicy: https-only
+                OriginProtocolPolicy: http-only
                 HTTPSPort: 443
                 HTTPPort: 80
             - !Ref AWS::NoValue
