@@ -746,7 +746,7 @@ Resources:
               PathPattern: "/logo/*"
               TargetOriginId: LogoServingEndpointOrigin
               ViewerProtocolPolicy: "redirect-to-https"
-              Compress: false
+              Compress: true
               MinTTL: 0
               MaxTTL: 31536000
               DefaultTTL: 86400
