@@ -638,7 +638,7 @@ Resources:
                   Forward: all
             - !Ref AWS::NoValue
           - !If
-            - ReactionsEndpointSet
+            - LogoAuthServiceEndpointSet
             -
               PathPattern: "/v1/logo"
               TargetOriginId: LogoAuthServiceEndpointOrigin
