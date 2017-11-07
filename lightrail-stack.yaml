@@ -592,14 +592,18 @@ Resources:
     Properties:
       TemplateURL: https://raw.githubusercontent.com/Giftbit/credentials/5b24a34/infrastructure/ci.yaml
       Parameters:
-        ProjectParameterOverrides: !Sub >
-          {
-            "SecureConfigBucket": "${LightrailSecureConfig.Outputs.BucketName}",
-            "SecureConfigKMSArn": "${LightrailSecureConfig.Outputs.EncryptionKeyArn}",
-            "SecureConfigKeyRoleDefinitions": !FindInMap [SecureConfig, Keys, RoleDefinitions]
-            "SecureConfigKeyAssumeStorageScopeToken": !FindInMap [SecureConfig, Keys, AssumeStorageScopeToken]
-            "MerchantKeyURI": !Sub "${LightrailCloudfront.Outputs.ApiDomain}/v1/storage/jwtSecret"
-          }
+        ProjectParameterOverrides: !Sub
+          - >
+            {
+              "SecureConfigBucket": "${LightrailSecureConfig.Outputs.BucketName}",
+              "SecureConfigKMSArn": "${LightrailSecureConfig.Outputs.EncryptionKeyArn}",
+              "SecureConfigKeyRoleDefinitions": "${SecureConfigKeyRoleDefinitions}",
+              "SecureConfigKeyAssumeStorageScopeToken": "${SecureConfigKeyAssumeStorageScopeToken}",
+              "MerchantKeyURI": "${LightrailCloudfront.Outputs.ApiDomain}/v1/storage/jwtSecret"
+            }
+          -
+            SecureConfigKeyRoleDefinitions: !FindInMap [SecureConfig, Keys, RoleDefinitions]
+            SecureConfigKeyAssumeStorageScopeToken: !FindInMap [SecureConfig, Keys, AssumeStorageScopeToken]
         GitHubBranch: !FindInMap [CredentialsRevocation, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], GitHubBranch]
         GitHubBranchDest: !FindInMap [CredentialsRevocation, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], GitHubBranchDest]
         GitHubOAuthToken: !GetAtt GitHubOAuthToken.DecryptedValue
