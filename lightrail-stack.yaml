@@ -62,6 +62,7 @@ Mappings:
       DataDog: datadog.json
       RoleDefinitions: RoleDefinitions.json
       StripeConnect: stripe_connect.json
+      AssumeStorageScopeToken: assumeStorageScopeToken.json
   Common:
     Dev:
       DomainName: lightraildev.net
@@ -592,14 +593,17 @@ Resources:
         ProjectParameterOverrides: !Sub >
           {
             "SecureConfigBucket": "${LightrailSecureConfig.Outputs.BucketName}",
-            "SecureConfigKMSArn": "${LightrailSecureConfig.Outputs.EncryptionKeyArn}"
+            "SecureConfigKMSArn": "${LightrailSecureConfig.Outputs.EncryptionKeyArn}",
+            "SecureConfigKeyRoleDefinitions": !FindInMap [SecureConfig, Keys, RoleDefinitions]
+            "SecureConfigKeyAssumeStorageScopeToken": !FindInMap [SecureConfig, Keys, AssumeStorageScopeToken]
+            "MerchantKeyURI": !Sub "${LightrailCloudfront.Outputs.ApiDomain}"
           }
         GitHubBranchDest: !FindInMap [CredentialsRevocation, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], GitHubBranchDest]
         GitHubOAuthToken: !GetAtt GitHubOAuthToken.DecryptedValue
         CodeBuildImageNodeSSH: !GetAtt CIResources.Outputs.CodebuildImageNodeSSH
         CiKeysAccessRoleArn: !GetAtt CIResources.Outputs.KeysAccessRoleArn
         CiKeysBucketName: !GetAtt CIResources.Outputs.KeysBucketName
-        ProjectName: !Sub "${AWS::StackName}-Credentials"
+        ProjectName: !Sub "${LightrailCloudfront.Outputs.ApiDomain}/v1/storage/jwtSecret"
   LightrailSimpleRollup:
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2
