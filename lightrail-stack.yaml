@@ -129,17 +129,17 @@ Mappings:
       RoleName: production-LightrailBatch-QTEEMRIED9WI-Role-OZEW1353U10G
   CredentialsRevocation:
     Dev-us-west-2:
-      GitHubBranch: ""
+      GitHubBranch: dev-ci
       GitHubBranchDest: ""
       RoleName: dev-Credentials-RestBadgeValidationLambdaRole-PX6EAOSRMU46
       Endpoint: 16wykx9oje.execute-api.us-west-2.amazonaws.com
     Staging-us-west-2:
-      GitHubBranch: ""
+      GitHubBranch: staging
       GitHubBranchDest: ""
       RoleName: staging-Credentials-RestBadgeValidationLambdaRole-Z6A003BX7XJ4
       Endpoint: w2ntwbf0cg.execute-api.us-west-2.amazonaws.com
     Production-us-west-2:
-      GitHubBranch: ""
+      GitHubBranch: master
       GitHubBranchDest: ""
       RoleName: production-Credentials-RestBadgeValidationLambdaRo-WESN8D943Y8F
       Endpoint: bklze8sby7.execute-api.us-west-2.amazonaws.com
@@ -600,6 +600,7 @@ Resources:
             "SecureConfigKeyAssumeStorageScopeToken": !FindInMap [SecureConfig, Keys, AssumeStorageScopeToken]
             "MerchantKeyURI": !Sub "${LightrailCloudfront.Outputs.ApiDomain}/v1/storage/jwtSecret"
           }
+        GitHubBranch: !FindInMap [CredentialsRevocation, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], GitHubBranch]
         GitHubBranchDest: !FindInMap [CredentialsRevocation, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], GitHubBranchDest]
         GitHubOAuthToken: !GetAtt GitHubOAuthToken.DecryptedValue
         CodeBuildImageNodeSSH: !GetAtt CIResources.Outputs.CodebuildImageNodeSSH
