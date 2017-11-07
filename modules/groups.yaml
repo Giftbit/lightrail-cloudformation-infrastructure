@@ -45,7 +45,6 @@ Resources:
         - arn:aws:iam::aws:policy/AmazonRDSReadOnlyAccess
         - arn:aws:iam::aws:policy/AmazonEC2ReadOnlyAccess
         - arn:aws:iam::aws:policy/CloudFrontReadOnlyAccess
-        - arn:aws:iam::aws:policy/AWSHealthFullAccess
       Policies:
         - !If
           - EnvironmentIsDevelopment
@@ -85,6 +84,16 @@ Resources:
                 Resource:
                   - !Sub "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/AccountSecurity/*"
                   - !Sub "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/AccountSecurity-*/*"
+        -
+          PolicyName: AwsHealthApisAndNotifications
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              -
+                Effect: Allow
+                Action:
+                  - "health:*"
+                Resource: "*"
 
   MarkettingGroup:
     Type: AWS::IAM::Group

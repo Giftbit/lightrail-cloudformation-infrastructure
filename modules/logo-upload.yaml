@@ -74,7 +74,7 @@ Resources:
   CI:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://raw.githubusercontent.com/Giftbit/lightrail-logo-upload/5fa1d02e5454f0287ef789f9e1c0e813cbf857d1/infrastructure/ci.yaml
+      TemplateURL: https://raw.githubusercontent.com/Giftbit/lightrail-logo-upload/8cb41d7e4910e7bd241d680434b9586b211b5934/infrastructure/ci.yaml
       Parameters:
         ProjectParameterOverrides: !Sub >
           {
@@ -83,7 +83,7 @@ Resources:
             "SecureConfigKeyJwt": "${SecureConfigKeyJwt}",
             "SecureConfigKeyRoleDefinitions": "${SecureConfigKeyRoleDefinitions}",
             "WebsiteDomainUrl": "${WebsiteDomainUrl}",
-            "LogoPath": "/logo"
+            "LogoPath": "logo"
           }
         GitHubBranch: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", GitHubBranch]
         GitHubBranchDest: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", GitHubBranchDest]

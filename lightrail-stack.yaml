@@ -220,6 +220,8 @@ Resources:
         KvsEndpoint: !GetAtt LightrailKvs.Outputs.Endpoint
         TurnkeyEndpoint: !GetAtt LightrailTurnkey.Outputs.Endpoint
         ReactionsEndpoint: !GetAtt LightrailReactions.Outputs.Endpoint
+        LogoAuthServiceEndpoint: !GetAtt LightrailLogoUpload.Outputs.ServiceEndpoint
+        LogoServingEndpoint: !GetAtt LightrailLogoUpload.Outputs.BucketEndpoint
   LightrailWebsite:
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2

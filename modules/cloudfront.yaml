@@ -83,6 +83,12 @@ Parameters:
   BatchEndpoint:
     Type: String
     Description: Enter the domain that should handle the Batch requests
+  LogoAuthServiceEndpoint:
+    Type: String
+    Description: Enter the domain that should handle the Logo Authorization requests
+  LogoServingEndpoint:
+    Type: String
+    Description: Enter the domain that should handle requests for a specific logo
   ConfigureAliases:
     Type: String
     AllowedValues:
@@ -96,6 +102,8 @@ Conditions:
   ReactEndpointSet: !Not [!Equals [!Ref ReactEndpoint, ""]]
   TurnkeyEndpointSet: !Not [!Equals [!Ref TurnkeyEndpoint, ""]]
   ReactionsEndpointSet: !Not [!Equals [!Ref ReactionsEndpoint, ""]]
+  LogoAuthServiceEndpointSet: !Not [!Equals [!Ref LogoAuthServiceEndpoint, ""]]
+  LogoServingEndpointSet: !Not [!Equals [!Ref LogoServingEndpoint, ""]]
 Resources:
   AppZoneRecord:
     Type: AWS::Route53::RecordSet
@@ -229,6 +237,33 @@ Resources:
                   - TLSv1.1
                   - TLSv1.2
                 OriginProtocolPolicy: https-only
+                HTTPSPort: 443
+                HTTPPort: 80
+            - !Ref AWS::NoValue
+          - !If
+            - LogoAuthServiceEndpointSet
+            -
+              DomainName: !Ref LogoAuthServiceEndpoint
+              Id: LogoAuthServiceEndpointOrigin
+              OriginPath: /Prod
+              CustomOriginConfig:
+                OriginSSLProtocols:
+                  - TLSv1.1
+                  - TLSv1.2
+                OriginProtocolPolicy: https-only
+                HTTPSPort: 443
+                HTTPPort: 80
+            - !Ref AWS::NoValue
+          - !If
+            - LogoServingEndpointSet
+            -
+              DomainName: !Ref LogoServingEndpoint
+              Id: LogoServingEndpointOrigin
+              CustomOriginConfig:
+                OriginSSLProtocols:
+                  - TLSv1.1
+                  - TLSv1.2
+                OriginProtocolPolicy: http-only
                 HTTPSPort: 443
                 HTTPPort: 80
             - !Ref AWS::NoValue
@@ -602,6 +637,39 @@ Resources:
                 Cookies:
                   Forward: all
             - !Ref AWS::NoValue
+          - !If
+            - LogoAuthServiceEndpointSet
+            -
+              PathPattern: "/v1/logo"
+              TargetOriginId: LogoAuthServiceEndpointOrigin
+              ViewerProtocolPolicy: "redirect-to-https"
+              Compress: false
+              MinTTL: 0
+              MaxTTL: 31536000
+              DefaultTTL: 0
+              AllowedMethods:
+                - GET
+                - HEAD
+                - OPTIONS
+                - PUT
+                - POST
+                - PATCH
+                - DELETE
+              CachedMethods:
+                - GET
+                - HEAD
+              ForwardedValues:
+                QueryString: true
+                Headers:
+                  - Authorization
+                  - Content-Length
+                  - Content-Type
+                  - Content-MD5
+                  - Range
+                  - X-Requested-With
+                Cookies:
+                  Forward: all
+            - !Ref AWS::NoValue
           -
             PathPattern: "/v1/*"
             TargetOriginId: ServicesEndpointOrigin
@@ -661,6 +729,27 @@ Resources:
               MinTTL: 0
               MaxTTL: 60
               DefaultTTL: 5
+              AllowedMethods:
+                - GET
+                - HEAD
+              CachedMethods:
+                - GET
+                - HEAD
+              ForwardedValues:
+                QueryString: true
+                Cookies:
+                  Forward: none
+            - !Ref AWS::NoValue
+          - !If
+            - LogoServingEndpointSet
+            -
+              PathPattern: "/logo/*"
+              TargetOriginId: LogoServingEndpointOrigin
+              ViewerProtocolPolicy: "redirect-to-https"
+              Compress: true
+              MinTTL: 0
+              MaxTTL: 31536000
+              DefaultTTL: 86400
               AllowedMethods:
                 - GET
                 - HEAD
