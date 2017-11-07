@@ -597,6 +597,7 @@ Resources:
             {
               "SecureConfigBucket": "${LightrailSecureConfig.Outputs.BucketName}",
               "SecureConfigKMSArn": "${LightrailSecureConfig.Outputs.EncryptionKeyArn}",
+              "SecureConfigAuthBadgeKey": "${SecureConfigAuthBadgeKey}",
               "SecureConfigKeyRoleDefinitions": "${SecureConfigKeyRoleDefinitions}",
               "SecureConfigKeyAssumeStorageScopeToken": "${SecureConfigKeyAssumeStorageScopeToken}",
               "MerchantKeyURI": "${LightrailCloudfront.Outputs.ApiDomain}/v1/storage/jwtSecret"
@@ -604,6 +605,7 @@ Resources:
           -
             SecureConfigKeyRoleDefinitions: !FindInMap [SecureConfig, Keys, RoleDefinitions]
             SecureConfigKeyAssumeStorageScopeToken: !FindInMap [SecureConfig, Keys, AssumeStorageScopeToken]
+            SecureConfigAuthBadgeKey: !FindInMap [SecureConfig, Keys, JWT]
         GitHubBranch: !FindInMap [CredentialsRevocation, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], GitHubBranch]
         GitHubBranchDest: !FindInMap [CredentialsRevocation, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], GitHubBranchDest]
         GitHubOAuthToken: !GetAtt GitHubOAuthToken.DecryptedValue
