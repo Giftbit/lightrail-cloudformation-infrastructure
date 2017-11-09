@@ -83,12 +83,12 @@ Parameters:
   BatchEndpoint:
     Type: String
     Description: Enter the domain that should handle the Batch requests
-  LogoAuthServiceEndpoint:
+  UserImageUploadAuthServiceEndpoint:
     Type: String
-    Description: Enter the domain that should handle the Logo Authorization requests
-  LogoServingEndpoint:
+    Description: Enter the domain that should handle the User Image Upload Authorization requests
+  UserImageServingEndpoint:
     Type: String
-    Description: Enter the domain that should handle requests for a specific logo
+    Description: Enter the domain that should handle requests for a specific user images
   ConfigureAliases:
     Type: String
     AllowedValues:
@@ -102,8 +102,8 @@ Conditions:
   ReactEndpointSet: !Not [!Equals [!Ref ReactEndpoint, ""]]
   TurnkeyEndpointSet: !Not [!Equals [!Ref TurnkeyEndpoint, ""]]
   ReactionsEndpointSet: !Not [!Equals [!Ref ReactionsEndpoint, ""]]
-  LogoAuthServiceEndpointSet: !Not [!Equals [!Ref LogoAuthServiceEndpoint, ""]]
-  LogoServingEndpointSet: !Not [!Equals [!Ref LogoServingEndpoint, ""]]
+  UserImageUploadAuthServiceEndpointSet: !Not [!Equals [!Ref UserImageUploadAuthServiceEndpoint, ""]]
+  UserImageServingEndpointSet: !Not [!Equals [!Ref UserImageServingEndpoint, ""]]
 Resources:
   AppZoneRecord:
     Type: AWS::Route53::RecordSet
@@ -241,10 +241,10 @@ Resources:
                 HTTPPort: 80
             - !Ref AWS::NoValue
           - !If
-            - LogoAuthServiceEndpointSet
+            - UserImageUploadAuthServiceEndpointSet
             -
-              DomainName: !Ref LogoAuthServiceEndpoint
-              Id: LogoAuthServiceEndpointOrigin
+              DomainName: !Ref UserImageUploadAuthServiceEndpoint
+              Id: UserImageUploadAuthServiceEndpointOrigin
               OriginPath: /Prod
               CustomOriginConfig:
                 OriginSSLProtocols:
@@ -255,10 +255,10 @@ Resources:
                 HTTPPort: 80
             - !Ref AWS::NoValue
           - !If
-            - LogoServingEndpointSet
+            - UserImageServingEndpointSet
             -
-              DomainName: !Ref LogoServingEndpoint
-              Id: LogoServingEndpointOrigin
+              DomainName: !Ref UserImageServingEndpoint
+              Id: UserImageServingEndpointOrigin
               CustomOriginConfig:
                 OriginSSLProtocols:
                   - TLSv1.1
@@ -638,10 +638,10 @@ Resources:
                   Forward: all
             - !Ref AWS::NoValue
           - !If
-            - LogoAuthServiceEndpointSet
+            - UserImageUploadAuthServiceEndpointSet
             -
-              PathPattern: "/v1/logo"
-              TargetOriginId: LogoAuthServiceEndpointOrigin
+              PathPattern: "/v1/userImage"
+              TargetOriginId: UserImageUploadAuthServiceEndpointOrigin
               ViewerProtocolPolicy: "redirect-to-https"
               Compress: false
               MinTTL: 0
@@ -741,10 +741,10 @@ Resources:
                   Forward: none
             - !Ref AWS::NoValue
           - !If
-            - LogoServingEndpointSet
+            - UserImageServingEndpointSet
             -
-              PathPattern: "/logo/*"
-              TargetOriginId: LogoServingEndpointOrigin
+              PathPattern: "/userImages/*"
+              TargetOriginId: UserImageServingEndpointOrigin
               ViewerProtocolPolicy: "redirect-to-https"
               Compress: true
               MinTTL: 0

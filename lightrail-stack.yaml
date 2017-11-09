@@ -221,8 +221,8 @@ Resources:
         KvsEndpoint: !GetAtt LightrailKvs.Outputs.Endpoint
         TurnkeyEndpoint: !GetAtt LightrailTurnkey.Outputs.Endpoint
         ReactionsEndpoint: !GetAtt LightrailReactions.Outputs.Endpoint
-        LogoAuthServiceEndpoint: !GetAtt LightrailLogoUpload.Outputs.ServiceEndpoint
-        LogoServingEndpoint: !GetAtt LightrailLogoUpload.Outputs.BucketEndpoint
+        UserImageUploadAuthServiceEndpoint: !GetAtt LightrailUserImageUpload.Outputs.ServiceEndpoint
+        UserImageServingEndpoint: !GetAtt LightrailUserImageUpload.Outputs.BucketEndpoint
   LightrailWebsite:
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2
@@ -377,7 +377,7 @@ Resources:
           - !GetAtt LightrailTurnkey.Outputs.RoleNames
           - !GetAtt LightrailReactions.Outputs.RoleNames
           - !FindInMap [S3EventTranscoder, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
-          - !GetAtt LightrailLogoUpload.Outputs.RoleName
+          - !GetAtt LightrailUserImageUpload.Outputs.RoleName
   LightrailSecureConfigPolicyAdminAccessRoleIdGrants:
     Type: AWS::CloudFormation::CustomResource
     Version: 1.0
@@ -756,14 +756,14 @@ Resources:
         -
           Key: Service
           Value: Reactions
-  LightrailLogoUpload:
+  LightrailUserImageUpload:
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2
     Properties:
-      TemplateURL: ./modules/logo-upload.yaml
+      TemplateURL: ./modules/user-image-upload.yaml
       Parameters:
         EnvironmentName: !Ref EnvironmentName
-        ProjectName: !Sub "${AWS::StackName}-LogoUpload"
+        ProjectName: !Sub "${AWS::StackName}-UserImageUpload"
         SecureConfigBucket: !GetAtt LightrailSecureConfig.Outputs.BucketName
         SecureConfigKmsArn: !GetAtt LightrailSecureConfig.Outputs.EncryptionKeyArn
         SecureConfigKeyJwt: !FindInMap [SecureConfig, Keys, JWT]
@@ -776,7 +776,7 @@ Resources:
       Tags:
         -
           Key: Service
-          Value: LogoUpload
+          Value: UserImageUpload
   LightrailDevArtifacts:
     Type: AWS::CloudFormation::Stack
     Condition: EnvIsDevAndRegionIsUSWest2
