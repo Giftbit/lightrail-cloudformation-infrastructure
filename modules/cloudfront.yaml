@@ -640,7 +640,7 @@ Resources:
           - !If
             - UserImageUploadAuthServiceEndpointSet
             -
-              PathPattern: "/v1/userImage"
+              PathPattern: "/v1/userImages"
               TargetOriginId: UserImageUploadAuthServiceEndpointOrigin
               ViewerProtocolPolicy: "redirect-to-https"
               Compress: false
@@ -743,7 +743,7 @@ Resources:
           - !If
             - UserImageServingEndpointSet
             -
-              PathPattern: "/userImages/*"
+              PathPattern: "/v1/userImages/*"
               TargetOriginId: UserImageServingEndpointOrigin
               ViewerProtocolPolicy: "redirect-to-https"
               Compress: true
