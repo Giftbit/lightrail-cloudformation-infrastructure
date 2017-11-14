@@ -684,6 +684,27 @@ Resources:
                 - GET
                 - HEAD
             - !Ref AWS::NoValue
+          - !If
+            - UserImageServingEndpointSet
+            -
+              PathPattern: "/v1/userImages/*"
+              TargetOriginId: UserImageServingEndpointOrigin
+              ViewerProtocolPolicy: "redirect-to-https"
+              Compress: true
+              MinTTL: 0
+              MaxTTL: 31536000
+              DefaultTTL: 86400
+              AllowedMethods:
+                - GET
+                - HEAD
+              CachedMethods:
+                - GET
+                - HEAD
+              ForwardedValues:
+                QueryString: true
+                Cookies:
+                  Forward: none
+            - !Ref AWS::NoValue
           -
             PathPattern: "/v1/*"
             TargetOriginId: ServicesEndpointOrigin
@@ -743,27 +764,6 @@ Resources:
               MinTTL: 0
               MaxTTL: 60
               DefaultTTL: 5
-              AllowedMethods:
-                - GET
-                - HEAD
-              CachedMethods:
-                - GET
-                - HEAD
-              ForwardedValues:
-                QueryString: true
-                Cookies:
-                  Forward: none
-            - !Ref AWS::NoValue
-          - !If
-            - UserImageServingEndpointSet
-            -
-              PathPattern: "/v1/userImages/*"
-              TargetOriginId: UserImageServingEndpointOrigin
-              ViewerProtocolPolicy: "redirect-to-https"
-              Compress: true
-              MinTTL: 0
-              MaxTTL: 31536000
-              DefaultTTL: 86400
               AllowedMethods:
                 - GET
                 - HEAD
