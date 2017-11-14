@@ -670,6 +670,20 @@ Resources:
                 Cookies:
                   Forward: all
             - !Ref AWS::NoValue
+          - !If
+            - UserImageUploadAuthServiceEndpointSet
+            -
+              PathPattern: "/v1/userImages/healthCheck"
+              TargetOriginId: UserImageUploadAuthServiceEndpointOrigin
+              ViewerProtocolPolicy: "redirect-to-https"
+              Compress: false
+              MinTTL: 0
+              MaxTTL: 31536000
+              DefaultTTL: 0
+              AllowedMethods:
+                - GET
+                - HEAD
+            - !Ref AWS::NoValue
           -
             PathPattern: "/v1/*"
             TargetOriginId: ServicesEndpointOrigin

@@ -83,7 +83,7 @@ Resources:
             "SecureConfigKeyJwt": "${SecureConfigKeyJwt}",
             "SecureConfigKeyRoleDefinitions": "${SecureConfigKeyRoleDefinitions}",
             "WebsiteDomainUrl": "${WebsiteDomainUrl}",
-            "UserImagePath": "userImages"
+            "UserImagePath": "v1/userImages"
           }
         GitHubBranch: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", GitHubBranch]
         GitHubBranchDest: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", GitHubBranchDest]
