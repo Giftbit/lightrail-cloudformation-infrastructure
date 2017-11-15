@@ -21,7 +21,7 @@ phases:
       - bash auto.sh package all
   post_build:
     commands:
-      - printf '{"commitId":"%s"}' $CODEBUILD_RESOLVED_SOURCE_VERSION > build.json
+      - printf '{"commitId":"%s"}' $CODEBUILD_RESOLVED_SOURCE_VERSION > build/build.json
 artifacts:
   files:
     - '**/*'
