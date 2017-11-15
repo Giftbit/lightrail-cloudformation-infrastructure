@@ -52,9 +52,9 @@ Mappings:
     us-west-2:
       GitHubBranch: dev-ci
       GitHubBranchDest: ""
-      RoleName: dev-LogoUpload-LogoUploadAuthorizerFunctionRole-1FI4MCOFGM8W7
-      ServiceEndpoint: j3wmt0ddki.execute-api.us-west-2.amazonaws.com
-      BucketEndpoint: dev-logoupload-logobucket-520up48h1gdh.s3-website-us-west-2.amazonaws.com
+      RoleName: dev-UserImageUpload-UserImageUploadAuthorizerFunct-1A6P5R057WL3S
+      ServiceEndpoint: vqoidwy5sh.execute-api.us-west-2.amazonaws.com
+      BucketEndpoint: dev-userimageupload-userimagebucket-20d0e1r9jz38.s3-website-us-west-2.amazonaws.com
   Staging:
     us-west-2:
       GitHubBranch: staging
@@ -74,7 +74,7 @@ Resources:
   CI:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://raw.githubusercontent.com/Giftbit/lightrail-logo-upload/8cb41d7e4910e7bd241d680434b9586b211b5934/infrastructure/ci.yaml
+      TemplateURL: https://raw.githubusercontent.com/Giftbit/lightrail-user-image-upload/01bba0d93be129ae8630285642830d189279dc74/infrastructure/ci.yaml
       Parameters:
         ProjectParameterOverrides: !Sub >
           {
@@ -83,7 +83,7 @@ Resources:
             "SecureConfigKeyJwt": "${SecureConfigKeyJwt}",
             "SecureConfigKeyRoleDefinitions": "${SecureConfigKeyRoleDefinitions}",
             "WebsiteDomainUrl": "${WebsiteDomainUrl}",
-            "LogoPath": "logo"
+            "UserImagePath": "v1/userImages"
           }
         GitHubBranch: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", GitHubBranch]
         GitHubBranchDest: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", GitHubBranchDest]
@@ -95,7 +95,7 @@ Resources:
       Tags:
         -
           Key: Service
-          Value: LogoUpload
+          Value: UserImageUpload
 
 Outputs:
   RoleName:
