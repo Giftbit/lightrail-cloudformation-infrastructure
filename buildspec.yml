@@ -20,7 +20,7 @@ phases:
     commands:
       - bash auto.sh package all
   post_build:
-    commands:
+    commands: - printf '{"commitId":"%s"}' $CODEBUILD_RESOLVED_SOURCE_VERSION > build.json
 artifacts:
   files:
     - '**/*'

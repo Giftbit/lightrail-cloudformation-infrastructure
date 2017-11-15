@@ -255,9 +255,11 @@ Resources:
           Type: KMS
       Name: !Ref "AWS::StackName"
       Stages:
-        - Name: Source
+        -
+          Name: Source
           Actions:
-            - Name: Source
+            -
+              Name: Source
               ActionTypeId:
                 Category: Source
                 Owner: ThirdParty
@@ -271,9 +273,11 @@ Resources:
                 Branch: !Ref GithubRepoBranch
                 OAuthToken: !Ref GitHubOAuthToken
               RunOrder: 1
-        - Name: Build
+        -
+          Name: Build
           Actions:
-            - Name: CodeBuild
+            -
+              Name: CodeBuild
               ActionTypeId:
                 Category: Build
                 Owner: AWS
@@ -286,12 +290,31 @@ Resources:
               Configuration:
                 ProjectName: !Ref ProjectName
               RunOrder: 1
+            -
+              Name: UploadTemplate
+              ActionTypeId:
+                Category: Invoke
+                Owner: AWS
+                Version: 1
+                Provider: Lambda
+              InputArtifacts:
+                - Name: BuildOutputArtifact
+              Configuration:
+                FunctionName: !Ref CodePipelineS3PutActionFunction
+                UserParameters: !Sub >
+                  {
+                    "ObjectPath": "BuildOutputArtifact::lightrail-stack.yaml",
+                    "BucketName": "${DeploymentArtifactBucket}",
+                    "ObjectKey": "templates/template-${!BuildOutputArtifact::build.json::commitId}.yaml"
+                  }
+              RunOrder: 2
         - !If
           - DevAccountIsEnabled
           -
             Name: Dev
             Actions:
-              - Name: CreateChangeSet
+              -
+                Name: CreateChangeSet
                 ActionTypeId:
                   Category: Deploy
                   Owner: AWS
@@ -318,7 +341,8 @@ Resources:
                   RoleArn: !Sub "arn:aws:iam::${DevAccountId}:role/${ProjectName}-CloudFormationServiceRole"
                 RoleArn: !Sub "arn:aws:iam::${DevAccountId}:role/${ProjectName}-CloudFormationExecutorRole"
                 RunOrder: 1
-              - Name: ApprovalForRelease
+              -
+                Name: ApprovalForRelease
                 ActionTypeId:
                   Category: Approval
                   Owner: AWS
@@ -327,7 +351,8 @@ Resources:
                 Configuration:
                   NotificationArn: !Ref CodePipelineApprovalSNSTopic
                 RunOrder: 2
-              - Name: ExecuteChangeSet
+              -
+                Name: ExecuteChangeSet
                 ActionTypeId:
                   Category: Deploy
                   Owner: AWS
@@ -340,7 +365,8 @@ Resources:
                   RoleArn: !Sub "arn:aws:iam::${DevAccountId}:role/${ProjectName}-CloudFormationServiceRole"
                 RoleArn: !Sub "arn:aws:iam::${DevAccountId}:role/${ProjectName}-CloudFormationExecutorRole"
                 RunOrder: 3
-              - Name: UpdateRevisionState
+              -
+                Name: UpdateRevisionState
                 ActionTypeId:
                   Category: Invoke
                   Owner: AWS
@@ -355,7 +381,8 @@ Resources:
           -
             Name: Staging
             Actions:
-              - Name: CreateChangeSet
+              -
+                Name: CreateChangeSet
                 ActionTypeId:
                   Category: Deploy
                   Owner: AWS
@@ -382,7 +409,8 @@ Resources:
                   RoleArn: !Sub "arn:aws:iam::${StagingAccountId}:role/${ProjectName}-CloudFormationServiceRole"
                 RoleArn: !Sub "arn:aws:iam::${StagingAccountId}:role/${ProjectName}-CloudFormationExecutorRole"
                 RunOrder: 1
-              - Name: ApprovalForRelease
+              -
+                Name: ApprovalForRelease
                 ActionTypeId:
                   Category: Approval
                   Owner: AWS
@@ -391,7 +419,8 @@ Resources:
                 Configuration:
                   NotificationArn: !Ref CodePipelineApprovalSNSTopic
                 RunOrder: 2
-              - Name: ExecuteChangeSet
+              -
+                Name: ExecuteChangeSet
                 ActionTypeId:
                   Category: Deploy
                   Owner: AWS
@@ -404,7 +433,8 @@ Resources:
                   RoleArn: !Sub "arn:aws:iam::${StagingAccountId}:role/${ProjectName}-CloudFormationServiceRole"
                 RoleArn: !Sub "arn:aws:iam::${StagingAccountId}:role/${ProjectName}-CloudFormationExecutorRole"
                 RunOrder: 3
-              - Name: UpdateRevisionState
+              -
+                Name: UpdateRevisionState
                 ActionTypeId:
                   Category: Invoke
                   Owner: AWS
@@ -419,7 +449,8 @@ Resources:
           -
             Name: Production
             Actions:
-              - Name: CreateChangeSet
+              -
+                Name: CreateChangeSet
                 ActionTypeId:
                   Category: Deploy
                   Owner: AWS
@@ -446,7 +477,8 @@ Resources:
                   RoleArn: !Sub "arn:aws:iam::${ProductionAccountId}:role/${ProjectName}-CloudFormationServiceRole"
                 RoleArn: !Sub "arn:aws:iam::${ProductionAccountId}:role/${ProjectName}-CloudFormationExecutorRole"
                 RunOrder: 1
-              - Name: ApprovalForRelease
+              -
+                Name: ApprovalForRelease
                 ActionTypeId:
                   Category: Approval
                   Owner: AWS
@@ -455,7 +487,8 @@ Resources:
                 Configuration:
                   NotificationArn: !Ref CodePipelineApprovalSNSTopic
                 RunOrder: 2
-              - Name: ExecuteChangeSet
+              -
+                Name: ExecuteChangeSet
                 ActionTypeId:
                   Category: Deploy
                   Owner: AWS
@@ -468,7 +501,8 @@ Resources:
                   RoleArn: !Sub "arn:aws:iam::${ProductionAccountId}:role/${ProjectName}-CloudFormationServiceRole"
                 RoleArn: !Sub "arn:aws:iam::${ProductionAccountId}:role/${ProjectName}-CloudFormationExecutorRole"
                 RunOrder: 3
-              - Name: UpdateRevisionState
+              -
+                Name: UpdateRevisionState
                 ActionTypeId:
                   Category: Invoke
                   Owner: AWS
@@ -612,6 +646,62 @@ Resources:
                 - lambda.amazonaws.com
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+  CodePipelineS3PutActionFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Description: Backs the CodePipeline S3 Put Custom Action
+      Role: !GetAtt CodePipelineS3PutActionRole.Arn
+      Handler: index.handler
+      Runtime: nodejs6.10
+      Timeout: 30
+      Code: ../res/codepipeline-s3-put-action-0.1.0.zip
+  CodePipelineS3PutActionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - sts:AssumeRole
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+      Policies:
+        -
+          PolicyName: CodePipelineS3PutActionPolicy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              -
+                Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: "arn:aws:logs:*:*:*"
+              -
+                Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:GetObjectVersion
+                Resource:
+                  - !Sub "arn:aws:s3:::codepipeline-${AWS::Region}-*/*"
+                  - !Sub "arn:aws:s3:::${DeploymentArtifactBucket}/*"
+              -
+                Effect: Allow
+                Action:
+                  - s3:PutObject
+                Resource:
+                  - !Sub "arn:aws:s3:::${DeploymentArtifactBucket}/templates/*"
+              -
+                Effect: Allow
+                Action:
+                  - kms:DescribeKey
+                  - kms:GenerateDataKey*
+                  - kms:Decrypt
+                Resource: !GetAtt DeploymentArtifactKey.Arn
 
   CodeBuildProject:
     Type: AWS::CodeBuild::Project
