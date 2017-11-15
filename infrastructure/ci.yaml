@@ -600,6 +600,7 @@ Resources:
             Action: lambda:InvokeFunction
             Resource:
               - !GetAtt CodePipelineStageRevisionUpdater.Arn
+              - !GetAtt CodePipelineS3PutActionFunction.Arn
   CodepipelineServiceRolePolicyDelay:
     # We went with an arbitrary delay on this because this change should happen so rarely, assuming the role, which
     # was the only other solution we could think of has serious security implications.
