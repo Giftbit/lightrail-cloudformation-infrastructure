@@ -334,13 +334,7 @@ Resources:
                         "TemplateUrl": "https://${DeploymentArtifactBucket}/templates/template-${!BuildOutputArtifact::build.json::commitId}.yaml",
                         "RoleArn": "arn:aws:iam::${DevAccountId}:role/${ProjectName}-CloudFormationServiceRole",
                         "ParameterOverrides": {
-                          "EnvironmentName":"Dev",
-                          "ProductionAccountId": "${ProductionAccountId}",
-                          "StagingAccountId": "${StagingAccountId}",
-                          "DevAccountId": "${DevAccountId}",
-                          "DecryptionLambdaArn": "${DecryptionLambda.Arn}",
-                          "EncryptedGitHubOAuthToken": "${EncryptedDownstreamGitHubOAuthToken.CipherText}",
-                          "CloudFormationServiceRoleName": "${ProjectName}-CloudFormationServiceRole"
+                          "EnvironmentName":"Dev"
                         }
                       }
                     }
@@ -751,6 +745,14 @@ Resources:
       Runtime: nodejs6.10
       Timeout: 30
       Code: ../res/codepipeline-cloudformation-create-change-set-s3-action-0.1.0.zip
+      Environment:
+        Variables:
+          Param_ProductionAccountId: !Ref ProductionAccountId
+          Param_StagingAccountId: !Ref StagingAccountId
+          Param_DevAccountId: !Ref DevAccountId
+          Param_DecryptionLambdaArn: !GetAtt DecryptionLambda.Arn
+          Param_EncryptedGetHubOAuthToken: !GetAtt EncryptedDownstreamGitHubOAuthToken.CipherText
+          Param_CloudFormationServiceRoleName: !Sub "${ProjectName}-CloudFormationServiceRole"
   CodePipelineCloudformationCreateChangeSetS3Role:
     Type: AWS::IAM::Role
     Properties:
