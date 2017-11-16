@@ -76,6 +76,7 @@ Resources:
               Principal:
                 AWS:
                   - !Sub "arn:aws:iam::${CodePipelineAccountId}:role/${ProjectName}-CodePipelineServiceRole"
+                  - !Sub "arn:aws:iam::${CodePipelineAccountId}:role/${ProjectName}-CP-CF-CreateChangeSetS3Role"
             - !Ref AWS::NoValue
       Policies:
         -

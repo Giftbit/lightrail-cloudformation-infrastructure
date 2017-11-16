@@ -316,31 +316,63 @@ Resources:
               -
                 Name: CreateChangeSet
                 ActionTypeId:
-                  Category: Deploy
+                  Category: Invoke
                   Owner: AWS
                   Version: 1
-                  Provider: CloudFormation
+                  Provider: Lambda
                 InputArtifacts:
                   - Name: BuildOutputArtifact
                 Configuration:
-                  ActionMode: CHANGE_SET_REPLACE
-                  ChangeSetName: !Sub "${ProjectName}-dev"
-                  Capabilities: CAPABILITY_NAMED_IAM
-                  StackName: "dev"
-                  ParameterOverrides: !Sub >
+                  FunctionName: !Ref CodePipelineCloudformationCreateChangeSetS3Function
+                  UserParameters: !Sub >
                     {
-                      "EnvironmentName":"Dev",
-                      "ProductionAccountId": "${ProductionAccountId}",
-                      "StagingAccountId": "${StagingAccountId}",
-                      "DevAccountId": "${DevAccountId}",
-                      "EncryptedGitHubOAuthToken": "${EncryptedDownstreamGitHubOAuthToken.CipherText}",
-                      "DecryptionLambdaArn": "${DecryptionLambda.Arn}",
-                      "CloudFormationServiceRoleName": "${ProjectName}-CloudFormationServiceRole"
+                      "RoleArn": "arn:aws:iam::${DevAccountId}:role/${ProjectName}-CloudFormationExecutorRole",
+                      "Configuration": {
+                        "ChangeSetName": "${ProjectName}-dev",
+                        "Capabilities": "CAPABILITY_NAMED_IAM",
+                        "StackName": "dev",
+                        "TemplateUrl": "https://${DeploymentArtifactBucket}/templates/template-${!BuildOutputArtifact::build.json::commitId}.yaml",
+                        "RoleArn": "arn:aws:iam::${DevAccountId}:role/${ProjectName}-CloudFormationServiceRole",
+                        "ParameterOverrides": {
+                          "EnvironmentName":"Dev",
+                          "ProductionAccountId": "${ProductionAccountId}",
+                          "StagingAccountId": "${StagingAccountId}",
+                          "DevAccountId": "${DevAccountId}",
+                          "DecryptionLambdaArn": "${DecryptionLambda.Arn}",
+                          "EncryptedGitHubOAuthToken": "${EncryptedDownstreamGitHubOAuthToken.CipherText}",
+                          "CloudFormationServiceRoleName": "${ProjectName}-CloudFormationServiceRole"
+                        }
+                      }
                     }
-                  TemplatePath: BuildOutputArtifact::lightrail-stack.yaml
-                  RoleArn: !Sub "arn:aws:iam::${DevAccountId}:role/${ProjectName}-CloudFormationServiceRole"
-                RoleArn: !Sub "arn:aws:iam::${DevAccountId}:role/${ProjectName}-CloudFormationExecutorRole"
                 RunOrder: 1
+#              -
+#                Name: CreateChangeSet
+#                ActionTypeId:
+#                  Category: Deploy
+#                  Owner: AWS
+#                  Version: 1
+#                  Provider: CloudFormation
+#                InputArtifacts:
+#                  - Name: BuildOutputArtifact
+#                Configuration:
+#                  ActionMode: CHANGE_SET_REPLACE
+#                  ChangeSetName: !Sub "${ProjectName}-dev"
+#                  Capabilities: CAPABILITY_NAMED_IAM
+#                  StackName: "dev"
+#                  ParameterOverrides: !Sub >
+#                    {
+#                      "EnvironmentName":"Dev",
+#                      "ProductionAccountId": "${ProductionAccountId}",
+#                      "StagingAccountId": "${StagingAccountId}",
+#                      "DevAccountId": "${DevAccountId}",
+#                      "EncryptedGitHubOAuthToken": "${EncryptedDownstreamGitHubOAuthToken.CipherText}",
+#                      "DecryptionLambdaArn": "${DecryptionLambda.Arn}",
+#                      "CloudFormationServiceRoleName": "${ProjectName}-CloudFormationServiceRole"
+#                    }
+#                  TemplatePath: BuildOutputArtifact::lightrail-stack.yaml
+#                  RoleArn: !Sub "arn:aws:iam::${DevAccountId}:role/${ProjectName}-CloudFormationServiceRole"
+#                RoleArn: !Sub "arn:aws:iam::${DevAccountId}:role/${ProjectName}-CloudFormationExecutorRole"
+#                RunOrder: 1
               -
                 Name: ApprovalForRelease
                 ActionTypeId:
@@ -703,7 +735,91 @@ Resources:
                   - kms:GenerateDataKey*
                   - kms:Decrypt
                 Resource: !GetAtt DeploymentArtifactKey.Arn
-
+              -
+                Effect: Allow
+                Action:
+                  - codepipeline:GetJobDetails
+                  - codepipeline:PutJobSuccessResult
+                  - codepipeline:PutJobFailureResult
+                Resource: "*"
+  CodePipelineCloudformationCreateChangeSetS3Function:
+    Type: AWS::Lambda::Function
+    Properties:
+      Description: Backs the CodePipeline CloudFormation Create Change Set Action
+      Role: !GetAtt CodePipelineCloudformationCreateChangeSetS3Role.Arn
+      Handler: index.handler
+      Runtime: nodejs6.10
+      Timeout: 30
+      Code: ../res/codepipeline-cloudformation-create-change-set-s3-action-0.1.0.zip
+  CodePipelineCloudformationCreateChangeSetS3Role:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${ProjectName}-CP-CF-CreateChangeSetS3Role"
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - sts:AssumeRole
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+      Policies:
+        -
+          PolicyName: CodePipelineCloudformationCreateChangeSet
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              -
+                Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: "arn:aws:logs:*:*:*"
+              -
+                Effect: Allow
+                Action:
+                  - codepipeline:GetJobDetails
+                  - codepipeline:PutJobSuccessResult
+                  - codepipeline:PutJobFailureResult
+                Resource: "*"
+              -
+                Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:GetObjectVersion
+                Resource:
+                  - !Sub "arn:aws:s3:::codepipeline-${AWS::Region}-*/*"
+                  - !Sub "arn:aws:s3:::${DeploymentArtifactBucket}/*"
+              -
+                Effect: Allow
+                Action:
+                  - kms:DescribeKey
+                  - kms:GenerateDataKey*
+                  - kms:Decrypt
+                Resource: !GetAtt DeploymentArtifactKey.Arn
+              - !If
+                - AnAccountIsEnabled
+                -
+                  Effect: Allow
+                  Action:
+                    - sts:AssumeRole
+                  Resource:
+                    - !If
+                      - DevAccountIsEnabled
+                      - !Sub "arn:aws:iam::${DevAccountId}:role/${ProjectName}-CloudFormationExecutorRole"
+                      - !Ref "AWS::NoValue"
+                    - !If
+                      - StagingAccountIsEnabled
+                      - !Sub "arn:aws:iam::${StagingAccountId}:role/${ProjectName}-CloudFormationExecutorRole"
+                      - !Ref "AWS::NoValue"
+                    - !If
+                      - ProductionAccountIsEnabled
+                      - !Sub "arn:aws:iam::${ProductionAccountId}:role/${ProjectName}-CloudFormationExecutorRole"
+                      - !Ref "AWS::NoValue"
+                - !Ref AWS::NoValue
   CodeBuildProject:
     Type: AWS::CodeBuild::Project
     Properties:
@@ -787,6 +903,7 @@ Resources:
     Type: "AWS::CloudFormation::Stack"
     DependsOn:
       - CodePipelineServiceRole
+      - CodePipelineCloudformationCreateChangeSetS3Role
     Properties:
       TemplateURL: ./ci-roles.yaml
       Parameters:
