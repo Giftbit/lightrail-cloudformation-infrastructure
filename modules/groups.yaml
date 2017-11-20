@@ -268,13 +268,6 @@ Resources:
         - !Ref AllEmployees
         - !Ref DevelopersGroup
         - !Ref BastionHostAccessGroup
-  MohammadJ:
-    Type: AWS::IAM::User
-    Properties:
-      UserName: mohammad.j
-      Groups:
-        - !Ref AllEmployees
-        - !Ref DevelopersGroup
   TanaJ:
     Type: AWS::IAM::User
     Properties:
