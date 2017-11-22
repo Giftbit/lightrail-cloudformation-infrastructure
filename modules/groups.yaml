@@ -268,6 +268,13 @@ Resources:
         - !Ref AllEmployees
         - !Ref DevelopersGroup
         - !Ref BastionHostAccessGroup
+  JeffM:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: jeff.m
+      Groups:
+        - !Ref AllEmployees
+        - !Ref DevelopersGroup
   TanaJ:
     Type: AWS::IAM::User
     Properties:
