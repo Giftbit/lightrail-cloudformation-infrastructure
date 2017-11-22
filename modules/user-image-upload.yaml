@@ -74,7 +74,7 @@ Resources:
   CI:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://raw.githubusercontent.com/Giftbit/lightrail-user-image-upload/53e91df4d69dd8ad52d14140dbad63437a6e0969/infrastructure/ci.yaml
+      TemplateURL: https://raw.githubusercontent.com/Giftbit/lightrail-user-image-upload/08fb0d61fe924cb04627b18c4cf9ca36c72a0280/infrastructure/ci.yaml
       Parameters:
         ProjectParameterOverrides: !Sub >
           {
