@@ -52,23 +52,23 @@ Mappings:
     us-west-2:
       GitHubBranch: dev-ci
       GitHubBranchDest: ""
-      RoleName: dev-UserImageUpload-UserImageUploadAuthorizerFunct-1A6P5R057WL3S
+      RoleName: dev-UserImageUpload-AuthorizerFunctionRole-ESMV3IR1M5IZ
       ServiceEndpoint: vqoidwy5sh.execute-api.us-west-2.amazonaws.com
       BucketEndpoint: dev-userimageupload-userimagebucket-20d0e1r9jz38.s3-website-us-west-2.amazonaws.com
   Staging:
     us-west-2:
       GitHubBranch: staging
       GitHubBranchDest: master
-      RoleName: ""
-      ServiceEndpoint: ""
-      BucketEndpoint: ""
+      RoleName: staging-UserImageUpload-AuthorizerFunctionRole-1OGBVLBYCVP1K
+      ServiceEndpoint: 7fdmwnogwi.execute-api.us-west-2.amazonaws.com
+      BucketEndpoint: staging-userimageupload-userimagebucket-efdf8b7y93ey.s3-website-us-west-2.amazonaws.com
   Production:
     us-west-2:
       GitHubBranch: master
       GitHubBranchDest: ""
-      RoleName: ""
-      ServiceEndpoint: ""
-      BucketEndpoint: ""
+      RoleName: production-UserImageUpload-AuthorizerFunctionRole-14AV7TUKTY45C
+      ServiceEndpoint: 16i4dgia7c.execute-api.us-west-2.amazonaws.com
+      BucketEndpoint: production-userimageupload-userimagebucket-jp5zlpd8s8lp.s3-website-us-west-2.amazonaws.com
 
 Resources:
   CI:
