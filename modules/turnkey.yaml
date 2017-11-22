@@ -58,7 +58,7 @@ Mappings:
     us-west-2:
       GitHubBranch: dev-ci
       GitHubBranchDest: ""
-      RoleNames: dev-Turnkey-GiftcardPurchaseFunctionRole-1KGBM93LPXQFP,dev-Turnkey-StripeFunctionRole-1G73BZDEQRT90,dev-Turnkey-EmailFunctionRole-FXQOUXCWSPLM
+      RoleNames: dev-Turnkey-GiftcardPurchaseFunctionRole-1KGBM93LPXQFP,dev-Turnkey-StripeFunctionRole-1G73BZDEQRT90
       Endpoint: vjn3uqm8ok.execute-api.us-west-2.amazonaws.com
   Staging:
     us-west-2:
