@@ -147,8 +147,8 @@ Mappings:
     Dev-us-west-2:
       GitHubBranch: dev-ci
       GitHubBranchDest: ""
-      LambdaArn: "arn:aws:lambda:us-west-2:757264843183:function:dev-S3EventTranscoder-s3EventTranscoderFunction-14UBP7097F4WC"
-      RoleName: "dev-S3EventTranscoder-s3EventTranscoderFunctionRol-HDCE8T5DY5R1"
+      LambdaArn: ""
+      RoleName: ""
     Staging-us-west-2:
       GitHubBranch: staging
       GitHubBranchDest: ""
@@ -662,7 +662,7 @@ Resources:
         CodeBuildImageNodeSSH: !GetAtt CIResources.Outputs.CodebuildImageNodeSSH
         CiKeysAccessRoleArn: !GetAtt CIResources.Outputs.KeysAccessRoleArn
         CiKeysBucketName: !GetAtt CIResources.Outputs.KeysBucketName
-        ProjectName: !Sub "${AWS::StackName}-S3EventTranscoder"
+        ProjectName: !Sub "${AWS::StackName}-S3ETranscoder"
       Tags:
         -
           Key: Service
