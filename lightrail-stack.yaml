@@ -147,18 +147,18 @@ Mappings:
     Dev-us-west-2:
       GitHubBranch: dev-ci
       GitHubBranchDest: ""
-      LambdaArn: ""
-      RoleName: ""
+      LambdaArn: "arn:aws:lambda:us-west-2:757264843183:function:dev-S3ETranscoder-s3EventTranscoderFunction-1M8Y21WO4B9X2"
+      RoleName: "dev-S3ETranscoder-s3EventTranscoderFunctionRole-1FKGLPRAQHYQ0"
     Staging-us-west-2:
       GitHubBranch: staging
       GitHubBranchDest: ""
-      LambdaArn: ""
-      RoleName: ""
+      LambdaArn: "arn:aws:lambda:us-west-2:757264843183:function:staging-S3ETranscoder-s3EventTranscoderFunction-SAT0DAWO8IBJ"
+      RoleName: "staging-S3ETranscoder-s3EventTranscoderFunctionRol-TUAKA7GPHWCL"
     Production-us-west-2:
       GitHubBranch: master
       GitHubBranchDest: ""
-      LambdaArn: ""
-      RoleName: ""
+      LambdaArn: "arn:aws:lambda:us-west-2:757264843183:function:production-S3ETranscoder-s3EventTranscoderFunction-WY0Q4N7H7F8P"
+      RoleName: "production-S3ETranscoder-s3EventTranscoderFunction-X56R2J5DHYS2"
 
 Conditions:
   RegionIsUSWest2: !Equals [!Ref "AWS::Region", us-west-2]
