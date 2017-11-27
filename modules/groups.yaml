@@ -28,7 +28,52 @@ Resources:
         - arn:aws:iam::aws:policy/IAMUserChangePassword
         - arn:aws:iam::aws:policy/IAMUserSSHKeys
 
-  DevelopersGroup:
+  FrontEndDevelopersGroup:
+    Type: AWS::IAM::Group
+    Properties:
+      ManagedPolicyArns:
+        - !If
+          - EnvironmentIsDevelopment
+          - arn:aws:iam::aws:policy/PowerUserAccess
+          - !Ref "AWS::NoValue"
+        - arn:aws:iam::aws:policy/AWSCloudFormationReadOnlyAccess
+        - arn:aws:iam::aws:policy/CloudFrontReadOnlyAccess
+      Policies:
+        -
+          PolicyName: NoCloudtrail
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              -
+                Effect: Deny
+                Action:
+                  - "cloudtrail:*"
+                Resource: "*"
+        -
+          PolicyName: NoAccountSecurityChanges
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              -
+                Effect: Deny
+                NotAction:
+                  - cloudformation:Describe*
+                  - cloudformation:List*
+                Resource:
+                  - !Sub "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/AccountSecurity/*"
+                  - !Sub "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/AccountSecurity-*/*"
+        -
+          PolicyName: AwsHealthApisAndNotifications
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              -
+                Effect: Allow
+                Action:
+                  - "health:*"
+                Resource: "*"
+
+  BackEndDevelopersGroup:
     Type: AWS::IAM::Group
     Properties:
       ManagedPolicyArns:
@@ -107,7 +152,8 @@ Resources:
       PolicyName: BasicCloudformationAccess
       Groups:
         - !Ref MarkettingGroup
-        - !Ref DevelopersGroup
+        - !Ref BackEndDevelopersGroup
+        - !Ref FrontEndDevelopersGroup
       PolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -132,7 +178,7 @@ Resources:
     Properties:
       PolicyName: EC2ContainerServiceReadOnly
       Groups:
-        - !Ref DevelopersGroup
+        - !Ref BackEndDevelopersGroup
       PolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -148,7 +194,7 @@ Resources:
     Properties:
       PolicyName: BillingReadAccess
       Groups:
-        - !Ref DevelopersGroup
+        - !Ref AllEmployees
       PolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -165,7 +211,7 @@ Resources:
     Properties:
       PolicyName: ApiGatewayReadOnly
       Groups:
-        - !Ref DevelopersGroup
+        - !Ref BackEndDevelopersGroup
       PolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -179,7 +225,7 @@ Resources:
     Type: AWS::IAM::Policy
     Properties:
       Groups:
-        - !Ref DevelopersGroup
+        - !Ref BackEndDevelopersGroup
       PolicyName: CodePipelineDeployRestartAccess
       PolicyDocument:
         Version: 2012-10-17
@@ -196,7 +242,7 @@ Resources:
     Type: AWS::IAM::Policy
     Properties:
       Groups:
-        - !Ref DevelopersGroup
+        - !Ref BackEndDevelopersGroup
       PolicyName: CloudFormationChangeSetReadAccess
       PolicyDocument:
         Version: 2012-10-17
@@ -212,7 +258,7 @@ Resources:
     Properties:
       PolicyName: ElasticsearchServiceReadOnly
       Groups:
-        - !Ref DevelopersGroup
+        - !Ref BackEndDevelopersGroup
       PolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -236,14 +282,14 @@ Resources:
       UserName: dan.o
       Groups:
         - !Ref AllEmployees
-        - !Ref DevelopersGroup
+        - !Ref FrontEndDevelopersGroup
   GrahamB:
     Type: AWS::IAM::User
     Properties:
       UserName: graham.b
       Groups:
         - !Ref AllEmployees
-        - !Ref DevelopersGroup
+        - !Ref BackEndDevelopersGroup
         - !Ref BastionHostAccessGroup
   JamieS:
     Type: AWS::IAM::User
@@ -251,7 +297,8 @@ Resources:
       UserName: jamie.s
       Groups:
         - !Ref AllEmployees
-        - !Ref DevelopersGroup
+        - !Ref BackEndDevelopersGroup
+        - !Ref FrontEndDevelopersGroup
         - !Ref BastionHostAccessGroup
   JamieT:
     Type: AWS::IAM::User
@@ -259,14 +306,14 @@ Resources:
       UserName: jamie.t
       Groups:
         - !Ref AllEmployees
-        - !Ref DevelopersGroup
+        - !Ref FrontEndDevelopersGroup
   JeffG:
     Type: AWS::IAM::User
     Properties:
       UserName: jeff.g
       Groups:
         - !Ref AllEmployees
-        - !Ref DevelopersGroup
+        - !Ref BackEndDevelopersGroup
         - !Ref BastionHostAccessGroup
   JeffM:
     Type: AWS::IAM::User
@@ -274,21 +321,20 @@ Resources:
       UserName: jeff.m
       Groups:
         - !Ref AllEmployees
-        - !Ref DevelopersGroup
+        - !Ref FrontEndDevelopersGroup
   TanaJ:
     Type: AWS::IAM::User
     Properties:
       UserName: tana.j
       Groups:
         - !Ref AllEmployees
-        - !Ref DevelopersGroup
   TimJ:
     Type: AWS::IAM::User
     Properties:
       UserName: tim.j
       Groups:
         - !Ref AllEmployees
-        - !Ref DevelopersGroup
+        - !Ref BackEndDevelopersGroup
         - !Ref BastionHostAccessGroup
   MattB:
     Type: AWS::IAM::User
@@ -298,9 +344,13 @@ Resources:
         - !Ref BastionHostAccessGroup
 
 Outputs:
-  DevelopersGroupName:
-    Description: The Name of the Developers Group
-    Value: !Ref DevelopersGroup
+
+  BackEndDevelopersGroupName:
+    Description: The Name of the Back End Developers Group
+    Value: !Ref BackEndDevelopersGroup
+  FrontEndDevelopersGroupName:
+    Description: The Name of the Front End Developers Group
+    Value: !Ref FrontEndDevelopersGroup
   MarkettingGroupName:
     Description: The Name of the Marketting Group
     Value: !Ref MarkettingGroup

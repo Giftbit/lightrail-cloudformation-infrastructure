@@ -1,0 +1,170 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Lightrail Widgets
+
+Parameters:
+  EnvironmentName:
+    Type: String
+    Description: The Name of the Environment
+    AllowedValues:
+      - Dev
+      - Staging
+      - Production
+  AccountsToGrantBuildArtifactReadAccess:
+    Type: String
+    Description: Comma separated list of AWS Account IDs to grant Build Artifact Access
+    Default: ""
+    AllowedPattern: (\d{12}(,\d{12})*)?
+  GroupsToGrantWidgetsReadWrite:
+    Type: String
+    Description: The name of the groups to grant Widgets read write access
+    AllowedPattern: "([a-zA-Z0-9+=.@_-]+(,[a-zA-Z0-9+=.@_-]+)*)?"
+  GroupsToGrantWidgetsBuildArtifactReadOnly:
+    Type: String
+    Description: The name of the groups to grant Widgets read access
+    AllowedPattern: "([a-zA-Z0-9+=.@_-]+(,[a-zA-Z0-9+=.@_-]+)*)?"
+  GroupsToGrantWidgetsBuildArtifactReadWrite:
+    Type: String
+    Description: The name of the groups to grant Widgets read/write access
+    AllowedPattern: "([a-zA-Z0-9+=.@_-]+(,[a-zA-Z0-9+=.@_-]+)*)?"
+  BuildArtifactBucketOverride:
+    Type: String
+    Description: (Optional) The Widgets BuildArtifactBucket we should configure
+    Default: ""
+
+Conditions:
+  ShouldConfigureBuildArtifactReadAccess: !Not [!Equals [!Ref AccountsToGrantBuildArtifactReadAccess, ""]]
+  ShouldConfigureWidgetsReadWriteAccess: !Not [!Equals [!Ref GroupsToGrantWidgetsReadWrite, ""]]
+  ShouldConfigureWidgetsBuildArtifactReadOnlyAccess: !Not [!Equals [!Ref GroupsToGrantWidgetsBuildArtifactReadOnly, ""]]
+  ShouldConfigureWidgetsBuildArtifactReadWriteAccess: !Not [!Equals [!Ref GroupsToGrantWidgetsBuildArtifactReadWrite, ""]]
+  OverrideBuildArtifactBucketIsSet: !Not [!Equals [!Ref BuildArtifactBucketOverride, ""]]
+
+Resources:
+  WidgetsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      AccessControl: Private
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: error.html
+  WidgetsBucketPublicPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref WidgetsBucket
+      PolicyDocument:
+        Statement:
+          -  # Allow Public Reading of all resources
+            Effect: Allow
+            Action:
+              - s3:Get*
+            Resource:
+              - !Sub "arn:aws:s3:::${WidgetsBucket}/*"
+            Principal: "*"
+  WidgetsBucketUpdatePolicy:
+    Type: AWS::IAM::Policy
+    Condition: ShouldConfigureWidgetsReadWriteAccess
+    Properties:
+      PolicyName: WidgetsBucketReadWrite
+      Groups: !Split [",", !Ref GroupsToGrantWidgetsReadWrite]
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - s3:ListBucket
+              - s3:GetBucket*
+              - s3:GetObject*
+              - s3:PutObject*
+              - s3:DeleteObject*
+              - s3:ListBucketMultipartUploads
+            Resource:
+              - !Sub "arn:aws:s3:::${WidgetsBucket}"
+              - !Sub "arn:aws:s3:::${WidgetsBucket}/*"
+  BuildArtifactBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      AccessControl: Private
+  BuildArtifactBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Condition: ShouldConfigureBuildArtifactReadAccess
+    Properties:
+      Bucket: !Ref BuildArtifactBucket
+      PolicyDocument:
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - s3:ListBucket
+              - s3:GetObject*
+              - s3:GetBucketLocation
+            Principal:
+              AWS: !Split [",", !Ref AccountsToGrantBuildArtifactReadAccess]
+            Resource:
+              - !Sub "arn:aws:s3:::${BuildArtifactBucket}"
+              - !Sub "arn:aws:s3:::${BuildArtifactBucket}/*"
+  WidgetsBuildArtifactReadWriteAccessPolicy:
+    Type: AWS::IAM::Policy
+    Condition: ShouldConfigureWidgetsBuildArtifactReadWriteAccess
+    Properties:
+      PolicyName: WidgetsBuildArtifactBucketRead
+      Groups: !Split [",", !Ref GroupsToGrantWidgetsBuildArtifactReadWrite]
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - s3:ListBucket
+              - s3:GetBucket*
+              - s3:GetObject*
+              - s3:PutObject*
+              - s3:DeleteObject*
+              - s3:ListBucketMultipartUploads
+            Resource:
+              - !Sub "arn:aws:s3:::${BuildArtifactBucket}"
+              - !Sub "arn:aws:s3:::${BuildArtifactBucket}/*"
+              - !If
+                - OverrideBuildArtifactBucketIsSet
+                - !Sub "arn:aws:s3:::${BuildArtifactBucketOverride}"
+                - !Ref AWS::NoValue
+              - !If
+                - OverrideBuildArtifactBucketIsSet
+                - !Sub "arn:aws:s3:::${BuildArtifactBucketOverride}/*"
+                - !Ref AWS::NoValue
+  WidgetsBuildArtifactReadAccessPolicy:
+    Type: AWS::IAM::Policy
+    Condition: ShouldConfigureWidgetsBuildArtifactReadOnlyAccess
+    Properties:
+      PolicyName: WidgetsBuildArtifactBucketRead
+      Groups: !Split [",", !Ref GroupsToGrantWidgetsBuildArtifactReadOnly]
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - s3:ListBucket
+              - s3:GetBucket*
+              - s3:GetObject*
+            Resource:
+              - !Sub "arn:aws:s3:::${BuildArtifactBucket}"
+              - !Sub "arn:aws:s3:::${BuildArtifactBucket}/*"
+              - !If
+                - OverrideBuildArtifactBucketIsSet
+                - !Sub "arn:aws:s3:::${BuildArtifactBucketOverride}"
+                - !Ref AWS::NoValue
+              - !If
+                - OverrideBuildArtifactBucketIsSet
+                - !Sub "arn:aws:s3:::${BuildArtifactBucketOverride}/*"
+                - !Ref AWS::NoValue
+
+Outputs:
+  WidgetsBucketName:
+    Description: The name of the Widgets Bucket
+    Value: !Ref WidgetsBucket
+  WidgetsDomainName:
+    Description: The Domain name to use for serving the Widgets resources
+    Value: !Sub "${WidgetsBucket}.s3-website-${AWS::Region}.amazonaws.com"
+  ArtifactBucketName:
+    Description: The name of the Build Artifact Bucket
+    Value: !If [OverrideBuildArtifactBucketIsSet, !Ref BuildArtifactBucketOverride, !Ref BuildArtifactBucket]
