@@ -50,14 +50,14 @@ Mappings:
     us-west-2:
       CombinedEnvRegion: Staging-us-west-2
       ReactBuildArtifactBucketOverride: dev-lightrailreact-1xyn4dsi4a-buildartifactbucket-17n7679jwqtyw
-      WidgetsBuildArtifactBucketOverride: dev-lightrailwidgets-t2fyo9ec-buildartifactbucket-156az1fug34cn
+      WidgetsBuildArtifactBucketOverride: dev-lightrailwidgets-elm57e2j-buildartifactbucket-k3bupw61zw36
       SesDomainArns: ""
       CloudFormationACMCertificateArn: ""
   Production:
     us-west-2:
       CombinedEnvRegion: Production-us-west-2
       ReactBuildArtifactBucketOverride: dev-lightrailreact-1xyn4dsi4a-buildartifactbucket-17n7679jwqtyw
-      WidgetsBuildArtifactBucketOverride: dev-lightrailwidgets-t2fyo9ec-buildartifactbucket-156az1fug34cn
+      WidgetsBuildArtifactBucketOverride: dev-lightrailwidgets-elm57e2j-buildartifactbucket-k3bupw61zw36
       SesDomainArns: ""
   SecureConfig:
     Keys:
