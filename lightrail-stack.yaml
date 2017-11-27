@@ -44,17 +44,20 @@ Mappings:
     us-west-2:
       CombinedEnvRegion: Dev-us-west-2
       ReactBuildArtifactBucketOverride: ""
+      WidgetsBuildArtifactBucketOverride: ""
       SesDomainArns: ""
   Staging:
     us-west-2:
       CombinedEnvRegion: Staging-us-west-2
       ReactBuildArtifactBucketOverride: dev-lightrailreact-1xyn4dsi4a-buildartifactbucket-17n7679jwqtyw
+      WidgetsBuildArtifactBucketOverride: dev-lightrailwidgets-elm57e2j-buildartifactbucket-k3bupw61zw36
       SesDomainArns: ""
       CloudFormationACMCertificateArn: ""
   Production:
     us-west-2:
       CombinedEnvRegion: Production-us-west-2
       ReactBuildArtifactBucketOverride: dev-lightrailreact-1xyn4dsi4a-buildartifactbucket-17n7679jwqtyw
+      WidgetsBuildArtifactBucketOverride: dev-lightrailwidgets-elm57e2j-buildartifactbucket-k3bupw61zw36
       SesDomainArns: ""
   SecureConfig:
     Keys:
@@ -234,7 +237,7 @@ Resources:
           - ","
           -
             - !GetAtt Groups.Outputs.MarkettingGroupName
-            - !GetAtt Groups.Outputs.DevelopersGroupName
+            - !GetAtt Groups.Outputs.FrontEndDevelopersGroupName
   LightrailReact:
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2
@@ -249,7 +252,7 @@ Resources:
         GroupsToGrantReactReadWrite: !Join
           - ","
           -
-            - !GetAtt Groups.Outputs.DevelopersGroupName
+            - !GetAtt Groups.Outputs.FrontEndDevelopersGroupName
         AccountsToGrantBuildArtifactReadAccess: !Join
           - ","
           -
@@ -267,11 +270,49 @@ Resources:
               - !Ref AWS::NoValue
         GroupsToGrantReactBuildArtifactReadOnly: !If
           - EnvIsNotDevAndRegionIsUSWest2
-          - !GetAtt Groups.Outputs.DevelopersGroupName
+          - !GetAtt Groups.Outputs.FrontEndDevelopersGroupName
           - ""
         GroupsToGrantReactBuildArtifactReadWrite: !If
           - EnvIsDevAndRegionIsUSWest2
-          - !GetAtt Groups.Outputs.DevelopersGroupName
+          - !GetAtt Groups.Outputs.FrontEndDevelopersGroupName
+          - ""
+  LightrailWidgets:
+    Type: AWS::CloudFormation::Stack
+    Condition: RegionIsUSWest2
+    Properties:
+      TemplateURL: ./modules/widgets.yaml
+      Parameters:
+        EnvironmentName: !Ref EnvironmentName
+        BuildArtifactBucketOverride: !FindInMap
+          - !Ref EnvironmentName
+          - !Ref "AWS::Region"
+          - WidgetsBuildArtifactBucketOverride
+        GroupsToGrantWidgetsReadWrite: !Join
+          - ","
+          -
+            - !GetAtt Groups.Outputs.FrontEndDevelopersGroupName
+        AccountsToGrantBuildArtifactReadAccess: !Join
+          - ","
+          -
+            - !If
+              - ProductionAccountIdProvided
+              - !Ref ProductionAccountId
+              - !Ref AWS::NoValue
+            - !If
+              - StagingAccountIdProvided
+              - !Ref StagingAccountId
+              - !Ref AWS::NoValue
+            - !If
+              - DevAccountIdProvided
+              - !Ref DevAccountId
+              - !Ref AWS::NoValue
+        GroupsToGrantWidgetsBuildArtifactReadOnly: !If
+          - EnvIsNotDevAndRegionIsUSWest2
+          - !GetAtt Groups.Outputs.FrontEndDevelopersGroupName
+          - ""
+        GroupsToGrantWidgetsBuildArtifactReadWrite: !If
+          - EnvIsDevAndRegionIsUSWest2
+          - !GetAtt Groups.Outputs.FrontEndDevelopersGroupName
           - ""
   LightrailVPC:
     Type: AWS::CloudFormation::Stack
@@ -462,7 +503,7 @@ Resources:
       Parameters:
         EnvironmentName: !Ref EnvironmentName
         NonEmergencyAlertsSnsArn: !GetAtt LightrailAlertChannels.Outputs.NonEmergencySNSArn
-        GroupsToGrantDeployAccess: !GetAtt Groups.Outputs.DevelopersGroupName
+        GroupsToGrantDeployAccess: !GetAtt Groups.Outputs.BackEndDevelopersGroupName
         AccountsToGrantKibanaFullAccess: !If
           - EnvIsDev
           - !If
@@ -493,7 +534,7 @@ Resources:
       Parameters:
         EnvironmentName: !Ref EnvironmentName
         ParentStackName: !Ref "AWS::StackName"
-        GroupsToGrantDeployAccess: !GetAtt Groups.Outputs.DevelopersGroupName
+        GroupsToGrantDeployAccess: !GetAtt Groups.Outputs.BackEndDevelopersGroupName
         AccountsToGrantEcrReadAccess: !Join
           - ","
           -
@@ -538,7 +579,7 @@ Resources:
               - DevAccountIdProvided
               - !Ref DevAccountId
               - !Ref AWS::NoValue
-        GroupsToGrantDeployAccess: !GetAtt Groups.Outputs.DevelopersGroupName
+        GroupsToGrantDeployAccess: !GetAtt Groups.Outputs.BackEndDevelopersGroupName
         RdsInstanceClass: !FindInMap [Services, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RdsInstanceClass]
         RdsInstanceAllocation: 100
         RdsMultiAZ: !FindInMap [Services, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RdsMultiAZ]
@@ -580,7 +621,7 @@ Resources:
               - DevAccountIdProvided
               - !Ref DevAccountId
               - !Ref AWS::NoValue
-        GroupsToGrantDeployAccess: !GetAtt Groups.Outputs.DevelopersGroupName
+        GroupsToGrantDeployAccess: !GetAtt Groups.Outputs.BackEndDevelopersGroupName
         LoadBalancingServiceRoleArn: !GetAtt LightrailLoadBalancer.Outputs.EcsLoadBalancingServiceRoleArn
       Tags:
         -
@@ -793,8 +834,8 @@ Resources:
         ProductionAccountId: !Ref ProductionAccountId
         StagingAccountId: !Ref StagingAccountId
         DevAccountId: !Ref DevAccountId
-        GroupsToGrantCodePipelineApproverAccess: !GetAtt Groups.Outputs.DevelopersGroupName
-        GroupsToGrantInfrastructureAdminAccess: !If [EnvIsDevAndRegionIsUSWest2, !GetAtt Groups.Outputs.DevelopersGroupName, !Ref "AWS::NoValue"]
+        GroupsToGrantCodePipelineApproverAccess: !GetAtt Groups.Outputs.BackEndDevelopersGroupName
+        GroupsToGrantInfrastructureAdminAccess: !If [EnvIsDevAndRegionIsUSWest2, !GetAtt Groups.Outputs.BackEndDevelopersGroupName, !Ref "AWS::NoValue"]
 
   CIResources:
     Type: AWS::CloudFormation::Stack
@@ -806,7 +847,7 @@ Resources:
         ProductionAccountId: !Ref ProductionAccountId
         StagingAccountId: !Ref StagingAccountId
         DevAccountId: !Ref DevAccountId
-        GroupsToGrantImageReadWriteAccess: !GetAtt Groups.Outputs.DevelopersGroupName
+        GroupsToGrantImageReadWriteAccess: !GetAtt Groups.Outputs.BackEndDevelopersGroupName
   SSM:
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2
