@@ -14,12 +14,16 @@ Resources:
       SubjectAlternativeNames:
         - !Sub "www.${BaseDomain}"
         - !Sub "api.${BaseDomain}"
+        - !Sub "embed.${BaseDomain}"
       DomainValidationOptions:
         -
           DomainName: !Sub "www.${BaseDomain}"
           ValidationDomain: !Ref BaseDomain
         -
           DomainName: !Sub "api.${BaseDomain}"
+          ValidationDomain: !Ref BaseDomain
+        -
+          DomainName: !Sub "embed.${BaseDomain}"
           ValidationDomain: !Ref BaseDomain
 
 Outputs:

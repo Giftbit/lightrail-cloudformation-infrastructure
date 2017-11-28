@@ -29,13 +29,54 @@ if [ "$COMMAND" = "test" ]; then
     fi
 
     for filename in $TEMPLATE_FILE_NAMES; do
-        aws cloudformation validate-template --template-body file://$filename > /dev/null 2>&1
+        if [ "$(du -k $filename | cut -f1)" -le "50" ]; then
+            aws cloudformation validate-template --template-body file://$filename > /dev/null 2>&1
 
-        if [ $? -ne 0 ]; then
-            echo "$filename failed CloudFormation Template Validation."
-            echo "The error was:"
-            aws cloudformation validate-template --template-body file://$filename
-            exit 2
+            if [ $? -ne 0 ]; then
+                echo "$filename failed CloudFormation Template Validation."
+                echo "The error was:"
+                aws cloudformation validate-template --template-body file://$filename
+                exit 2
+            fi
+        else
+            if [ -z "$BUILD_ARTIFACT_BUCKET" ]; then
+                REGION=$AWS_DEFAULT_REGION
+                if [ -z "$REGION" ]; then
+                    REGION="$(aws configure get region)"
+                    if [ -z "$REGION" ]; then
+                        echo "We could not determine the region to package the resources into."
+                        echo "You can set the region in your config using 'aws configure'"
+                        echo "Or by setting the AWS_DEFAULT_REGION"
+                        exit 1
+                    fi
+                fi
+
+                echo "The BUILD_ARTIFACT_BUCKET was not set."
+                echo "Set it with 'export BUILD_ARTIFACT_BUCKET=\"<bucket_name>\"'"
+                echo ""
+                echo "Attempting to find a 'cf-template' bucket..."
+                BUILD_ARTIFACT_BUCKET="$(aws s3api list-buckets --query "Buckets[?starts_with(Name,\`cf-template\`) && ends_with(Name, \`$REGION\`)].Name" --output text)"
+                if [ $? -ne 0 ]; then
+                    echo "Unable to find 'cf-template' bucket. Failing."
+                    exit 2
+                fi
+                echo "BUILD_ARTIFACT_BUCKET=$BUILD_ARTIFACT_BUCKET"
+            fi
+
+            uuid=$(uuidgen)
+            s3Url="s3://$BUILD_ARTIFACT_BUCKET/temp/$uuid.yaml"
+
+            aws s3 cp $filename s3://$BUILD_ARTIFACT_BUCKET/temp/$uuid.yaml > /dev/null 2>&1
+            aws cloudformation validate-template --template-url http://$BUILD_ARTIFACT_BUCKET.s3.amazonaws.com/temp/$uuid.yaml > /dev/null 2>&1
+
+            if [ $? -ne 0 ]; then
+                echo "$filename failed CloudFormation Template Validation."
+                echo "The error was:"
+                aws cloudformation validate-template --template-url http://$BUILD_ARTIFACT_BUCKET.s3.amazonaws.com/temp/$uuid.yaml
+                exit 2
+            fi
+
+            aws s3 rm s3://$BUILD_ARTIFACT_BUCKET/temp/$uuid.yaml > /dev/null 2>&1
         fi
     done
 
@@ -68,18 +109,18 @@ elif [ "$COMMAND" = "deploy" ]; then
     fi
 elif [ "$COMMAND" = "package" ]; then
 
-    REGION=$AWS_DEFAULT_REGION
-    if [ -z "$REGION" ]; then
-        REGION="$(aws configure get region)"
-        if [ -z "$REGION" ]; then
-            echo "We could not determine the region to package the resources into."
-            echo "You can set the region in your config using 'aws configure'"
-            echo "Or by setting the AWS_DEFAULT_REGION"
-            exit 1
-        fi
-    fi
-
     if [ -z "$BUILD_ARTIFACT_BUCKET" ]; then
+        REGION=$AWS_DEFAULT_REGION
+        if [ -z "$REGION" ]; then
+            REGION="$(aws configure get region)"
+            if [ -z "$REGION" ]; then
+                echo "We could not determine the region to package the resources into."
+                echo "You can set the region in your config using 'aws configure'"
+                echo "Or by setting the AWS_DEFAULT_REGION"
+                exit 1
+            fi
+        fi
+
         echo "The BUILD_ARTIFACT_BUCKET was not set."
         echo "Set it with 'export BUILD_ARTIFACT_BUCKET=\"<bucket_name>\"'"
         echo ""

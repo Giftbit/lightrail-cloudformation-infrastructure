@@ -83,6 +83,10 @@ Parameters:
   BatchEndpoint:
     Type: String
     Description: Enter the domain that should handle the Batch requests
+  WidgetsEndpoint:
+    Type: String
+    Description: Enter the domain that should handle the Widgets requests
+    Default: ""
   UserImageUploadAuthServiceEndpoint:
     Type: String
     Description: Enter the domain that should handle the User Image Upload Authorization requests
@@ -104,6 +108,7 @@ Conditions:
   ReactionsEndpointSet: !Not [!Equals [!Ref ReactionsEndpoint, ""]]
   UserImageUploadAuthServiceEndpointSet: !Not [!Equals [!Ref UserImageUploadAuthServiceEndpoint, ""]]
   UserImageServingEndpointSet: !Not [!Equals [!Ref UserImageServingEndpoint, ""]]
+  WidgetsEndpointSet: !Not [!Equals [!Ref WidgetsEndpoint, ""]]
 Resources:
   AppZoneRecord:
     Type: AWS::Route53::RecordSet
@@ -1324,6 +1329,544 @@ Resources:
                 Forward: all
         DefaultCacheBehavior:
           TargetOriginId: ApiRedirectOrigin
+          ViewerProtocolPolicy: redirect-to-https
+          AllowedMethods:
+            - GET
+            - HEAD
+          CachedMethods:
+            - GET
+            - HEAD
+          MinTTL: 0
+          MaxTTL: 31536000
+          DefaultTTL: 0
+          ForwardedValues:
+            QueryString: true
+            Cookies:
+              Forward: none
+  EmbedZoneRecord:
+    Type: AWS::Route53::RecordSet
+    Condition: WidgetsEndpointSet
+    Properties:
+      HostedZoneName: !Sub "${BaseDomainName}."
+      Name: !Sub "embed.${BaseDomainName}."
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt EmbedDistribution.DomainName
+        HostedZoneId: Z2FDTNDATAQYW2  # This is the Route53 HostedZoneId for CloudFront. See http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-route53-aliastarget.html
+  EmbedDistribution:
+    Type: AWS::CloudFront::Distribution
+    Condition: WidgetsEndpointSet
+    Properties:
+      DistributionConfig:
+        Aliases:
+          - !If [ShouldConfigureAliases, !Sub "embed.${BaseDomainName}", !Ref "AWS::NoValue"]
+        Enabled: true
+        Comment: !Sub "Managed with CloudFormation Stack ${AWS::StackName}"
+        PriceClass: !Ref PriceClass
+        DefaultRootObject: index.html
+        ViewerCertificate:
+          AcmCertificateArn: !If [ViewerCertificateArnSet, !Ref ViewerCertificateArn, !Ref "AWS::NoValue"]
+          CloudFrontDefaultCertificate: !If [ViewerCertificateArnNotSet, true, !Ref "AWS::NoValue"]
+          SslSupportMethod: !If [ViewerCertificateArnSet, "sni-only", !Ref "AWS::NoValue"]
+          MinimumProtocolVersion: TLSv1
+        CustomErrorResponses:
+          # By Default, CloudFront caches the following Error codes for 5 Minutes: 400, 403, 404, 405, 414, 500, 501, 502, 503, 504
+          # See http://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/HTTPStatusCodes.html#HTTPStatusCodes-cached-errors
+          -
+            ErrorCode: 404
+            ErrorCachingMinTTL: 0  # By default, CloudFront will cache
+        Origins:
+          -
+            DomainName: !Ref WidgetsEndpoint
+            Id: WidgetsEndpointOrigin
+            CustomOriginConfig:
+              OriginSSLProtocols:
+                - TLSv1.1
+                - TLSv1.2
+              OriginProtocolPolicy: http-only
+              HTTPSPort: 443
+              HTTPPort: 80
+          -
+            DomainName: !Ref ServicesEndpoint
+            Id: ServicesEndpointOrigin
+            CustomOriginConfig:
+              OriginSSLProtocols:
+                - TLSv1.1
+                - TLSv1.2
+              OriginProtocolPolicy: https-only
+              HTTPSPort: 443
+              HTTPPort: 80
+          -
+            DomainName: !Ref StatsEndpoint
+            Id: StatsEndpointOrigin
+            OriginPath: /Prod
+            CustomOriginConfig:
+              OriginSSLProtocols:
+                - TLSv1.1
+                - TLSv1.2
+              OriginProtocolPolicy: https-only
+              HTTPSPort: 443
+              HTTPPort: 80
+          -
+            DomainName: !Ref BatchEndpoint
+            Id: BatchEndpointOrigin
+            CustomOriginConfig:
+              OriginSSLProtocols:
+                - TLSv1.1
+                - TLSv1.2
+              OriginProtocolPolicy: https-only
+              HTTPSPort: 443
+              HTTPPort: 80
+          -
+            DomainName: !Ref CardsSearchEndpoint
+            Id: CardsSearchEndpointOrigin
+            OriginPath: /Prod
+            CustomOriginConfig:
+              OriginSSLProtocols:
+                - TLSv1.1
+                - TLSv1.2
+              OriginProtocolPolicy: https-only
+              HTTPSPort: 443
+              HTTPPort: 80
+          -
+            DomainName: !Ref KvsEndpoint
+            Id: KvsEndpointOrigin
+            OriginPath: /Prod
+            CustomOriginConfig:
+              OriginSSLProtocols:
+                - TLSv1.1
+                - TLSv1.2
+              OriginProtocolPolicy: https-only
+              HTTPSPort: 443
+              HTTPPort: 80
+          - !If
+            - TurnkeyEndpointSet
+            -
+              DomainName: !Ref TurnkeyEndpoint
+              Id: TurnkeyEndpointOrigin
+              OriginPath: /Prod
+              CustomOriginConfig:
+                OriginSSLProtocols:
+                  - TLSv1.1
+                  - TLSv1.2
+                OriginProtocolPolicy: https-only
+                HTTPSPort: 443
+                HTTPPort: 80
+            - !Ref AWS::NoValue
+          - !If
+            - ReactionsEndpointSet
+            -
+              DomainName: !Ref ReactionsEndpoint
+              Id: ReactionsEndpointOrigin
+              OriginPath: /Prod
+              CustomOriginConfig:
+                OriginSSLProtocols:
+                  - TLSv1.1
+                  - TLSv1.2
+                OriginProtocolPolicy: https-only
+                HTTPSPort: 443
+                HTTPPort: 80
+            - !Ref AWS::NoValue
+        CacheBehaviors:
+          -
+            PathPattern: "/v1/search/cards"
+            TargetOriginId: CardsSearchEndpointOrigin
+            ViewerProtocolPolicy: "redirect-to-https"
+            Compress: false
+            MinTTL: 0
+            MaxTTL: 31536000
+            DefaultTTL: 0
+            AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+              - PUT
+              - POST
+              - PATCH
+              - DELETE
+            CachedMethods:
+              - GET
+              - HEAD
+            ForwardedValues:
+              QueryString: true
+              Headers:
+                - Authorization
+                - Content-Length
+                - Content-Type
+                - Content-MD5
+                - Range
+                - X-Requested-With
+              Cookies:
+                Forward: all
+          -
+            PathPattern: "/v1/search/cards/*"
+            TargetOriginId: CardsSearchEndpointOrigin
+            ViewerProtocolPolicy: "redirect-to-https"
+            Compress: false
+            MinTTL: 0
+            MaxTTL: 31536000
+            DefaultTTL: 0
+            AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+              - PUT
+              - POST
+              - PATCH
+              - DELETE
+            CachedMethods:
+              - GET
+              - HEAD
+            ForwardedValues:
+              QueryString: true
+              Headers:
+                - Authorization
+                - Content-Length
+                - Content-Type
+                - Content-MD5
+                - Range
+                - X-Requested-With
+              Cookies:
+                Forward: all
+          -
+            PathPattern: "/v1/search/contacts"
+            TargetOriginId: CardsSearchEndpointOrigin
+            ViewerProtocolPolicy: "redirect-to-https"
+            Compress: false
+            MinTTL: 0
+            MaxTTL: 31536000
+            DefaultTTL: 0
+            AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+              - PUT
+              - POST
+              - PATCH
+              - DELETE
+            CachedMethods:
+              - GET
+              - HEAD
+            ForwardedValues:
+              QueryString: true
+              Headers:
+                - Authorization
+                - Content-Length
+                - Content-Type
+                - Content-MD5
+                - Range
+                - X-Requested-With
+              Cookies:
+                Forward: all
+          -
+            PathPattern: "/v1/search/contacts/*"
+            TargetOriginId: CardsSearchEndpointOrigin
+            ViewerProtocolPolicy: "redirect-to-https"
+            Compress: false
+            MinTTL: 0
+            MaxTTL: 31536000
+            DefaultTTL: 0
+            AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+              - PUT
+              - POST
+              - PATCH
+              - DELETE
+            CachedMethods:
+              - GET
+              - HEAD
+            ForwardedValues:
+              QueryString: true
+              Headers:
+                - Authorization
+                - Content-Length
+                - Content-Type
+                - Content-MD5
+                - Range
+                - X-Requested-With
+              Cookies:
+                Forward: all
+          -
+            PathPattern: "/v1/storage"
+            TargetOriginId: KvsEndpointOrigin
+            ViewerProtocolPolicy: "redirect-to-https"
+            Compress: false
+            MinTTL: 0
+            MaxTTL: 31536000
+            DefaultTTL: 0
+            AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+              - PUT
+              - POST
+              - PATCH
+              - DELETE
+            CachedMethods:
+              - GET
+              - HEAD
+            ForwardedValues:
+              QueryString: true
+              Headers:
+                - Authorization
+                - Content-Length
+                - Content-Type
+                - Content-MD5
+                - Range
+                - X-Requested-With
+              Cookies:
+                Forward: all
+          -
+            PathPattern: "/v1/storage/*"
+            TargetOriginId: KvsEndpointOrigin
+            ViewerProtocolPolicy: "redirect-to-https"
+            Compress: false
+            MinTTL: 0
+            MaxTTL: 31536000
+            DefaultTTL: 0
+            AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+              - PUT
+              - POST
+              - PATCH
+              - DELETE
+            CachedMethods:
+              - GET
+              - HEAD
+            ForwardedValues:
+              QueryString: true
+              Headers:
+                - Authorization
+                - Content-Length
+                - Content-Type
+                - Content-MD5
+                - Range
+                - X-Requested-With
+              Cookies:
+                Forward: all
+          - !If
+            - TurnkeyEndpointSet
+            -
+              PathPattern: "/v1/turnkey/*"
+              TargetOriginId: TurnkeyEndpointOrigin
+              ViewerProtocolPolicy: "redirect-to-https"
+              Compress: false
+              MinTTL: 0
+              MaxTTL: 31536000
+              DefaultTTL: 0
+              AllowedMethods:
+                - GET
+                - HEAD
+                - OPTIONS
+                - PUT
+                - POST
+                - PATCH
+                - DELETE
+              CachedMethods:
+                - GET
+                - HEAD
+              ForwardedValues:
+                QueryString: true
+                Headers:
+                  - Authorization
+                  - Content-Length
+                  - Content-Type
+                  - Content-MD5
+                  - Range
+                  - X-Requested-With
+                Cookies:
+                  Forward: all
+            - !Ref AWS::NoValue
+          -
+            PathPattern: "/v1/dailystats/*"
+            TargetOriginId: StatsEndpointOrigin
+            ViewerProtocolPolicy: "redirect-to-https"
+            Compress: false
+            MinTTL: 0
+            MaxTTL: 31536000
+            DefaultTTL: 0
+            AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+              - PUT
+              - POST
+              - PATCH
+              - DELETE
+            CachedMethods:
+              - GET
+              - HEAD
+            ForwardedValues:
+              QueryString: true
+              Headers:
+                - Authorization
+                - Content-Length
+                - Content-Type
+                - Content-MD5
+                - Range
+                - X-Requested-With
+              Cookies:
+                Forward: all
+          -
+            PathPattern: "/v1/stats/*"
+            TargetOriginId: StatsEndpointOrigin
+            ViewerProtocolPolicy: "redirect-to-https"
+            Compress: false
+            MinTTL: 0
+            MaxTTL: 31536000
+            DefaultTTL: 0
+            AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+              - PUT
+              - POST
+              - PATCH
+              - DELETE
+            CachedMethods:
+              - GET
+              - HEAD
+            ForwardedValues:
+              QueryString: true
+              Headers:
+                - Authorization
+                - Content-Length
+                - Content-Type
+                - Content-MD5
+                - Range
+                - X-Requested-With
+              Cookies:
+                Forward: all
+          -
+            PathPattern: "/v1/batch/*"
+            TargetOriginId: BatchEndpointOrigin
+            ViewerProtocolPolicy: "redirect-to-https"
+            Compress: false
+            MinTTL: 0
+            MaxTTL: 31536000
+            DefaultTTL: 0
+            AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+              - PUT
+              - POST
+              - PATCH
+              - DELETE
+            CachedMethods:
+              - GET
+              - HEAD
+            ForwardedValues:
+              QueryString: true
+              Headers:
+                - Authorization
+                - Content-Length
+                - Content-Type
+                - Content-MD5
+                - Range
+                - X-Requested-With
+              Cookies:
+                Forward: all
+          - !If
+            - ReactionsEndpointSet
+            -
+              PathPattern: "/v1/react"
+              TargetOriginId: ReactionsEndpointOrigin
+              ViewerProtocolPolicy: "redirect-to-https"
+              Compress: false
+              MinTTL: 0
+              MaxTTL: 31536000
+              DefaultTTL: 0
+              AllowedMethods:
+                - GET
+                - HEAD
+                - OPTIONS
+                - PUT
+                - POST
+                - PATCH
+                - DELETE
+              CachedMethods:
+                - GET
+                - HEAD
+              ForwardedValues:
+                QueryString: true
+                Headers:
+                  - Authorization
+                  - Content-Length
+                  - Content-Type
+                  - Content-MD5
+                  - Range
+                  - X-Requested-With
+                Cookies:
+                  Forward: all
+            - !Ref AWS::NoValue
+          - !If
+            - ReactionsEndpointSet
+            -
+              PathPattern: "/v1/react/*"
+              TargetOriginId: ReactionsEndpointOrigin
+              ViewerProtocolPolicy: "redirect-to-https"
+              Compress: false
+              MinTTL: 0
+              MaxTTL: 31536000
+              DefaultTTL: 0
+              AllowedMethods:
+                - GET
+                - HEAD
+                - OPTIONS
+                - PUT
+                - POST
+                - PATCH
+                - DELETE
+              CachedMethods:
+                - GET
+                - HEAD
+              ForwardedValues:
+                QueryString: true
+                Headers:
+                  - Authorization
+                  - Content-Length
+                  - Content-Type
+                  - Content-MD5
+                  - Range
+                  - X-Requested-With
+                Cookies:
+                  Forward: all
+            - !Ref AWS::NoValue
+          -
+            PathPattern: "/v1/*"
+            TargetOriginId: ServicesEndpointOrigin
+            ViewerProtocolPolicy: "redirect-to-https"
+            Compress: false
+            MinTTL: 0
+            MaxTTL: 31536000
+            DefaultTTL: 0
+            AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+              - PUT
+              - POST
+              - PATCH
+              - DELETE
+            CachedMethods:
+              - GET
+              - HEAD
+            ForwardedValues:
+              QueryString: true
+              Headers:
+                - Authorization
+                - x-amzn-trace-id
+                - lightrailRequestId
+                - AuthorizeAs
+              Cookies:
+                Forward: all
+        DefaultCacheBehavior:
+          TargetOriginId: WidgetsEndpointOrigin
           ViewerProtocolPolicy: redirect-to-https
           AllowedMethods:
             - GET
