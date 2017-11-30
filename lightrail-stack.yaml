@@ -66,7 +66,11 @@ Mappings:
       RoleDefinitions: RoleDefinitions.json
       StripeConnect: stripe_connect.json
       AssumeStorageScopeToken: assumeStorageScopeToken.json
+      AssumeGiftCardPurchaseToken: assumeGiftcardPurchaseToken.json
+      SentryLambda: sentry_lambda_services.json
   Common:
+    All:
+      PathToMerchantSharedSecret: /v1/storage/jwtSecret
     Dev:
       DomainName: lightraildev.net
       EmailDomainName: lightraildev.net
@@ -642,12 +646,13 @@ Resources:
               "SecureConfigAuthBadgeKey": "${SecureConfigAuthBadgeKey}",
               "SecureConfigKeyRoleDefinitions": "${SecureConfigKeyRoleDefinitions}",
               "SecureConfigKeyAssumeStorageScopeToken": "${SecureConfigKeyAssumeStorageScopeToken}",
-              "MerchantKeyURI": "${LightrailCloudfront.Outputs.ApiDomain}/v1/storage/jwtSecret"
+              "MerchantKeyURI": "${LightrailCloudfront.Outputs.ApiDomain}${PathToMerchantSharedSecret}"
             }
           -
             SecureConfigKeyRoleDefinitions: !FindInMap [SecureConfig, Keys, RoleDefinitions]
             SecureConfigKeyAssumeStorageScopeToken: !FindInMap [SecureConfig, Keys, AssumeStorageScopeToken]
             SecureConfigAuthBadgeKey: !FindInMap [SecureConfig, Keys, JWT]
+            PathToMerchantSharedSecret: !FindInMap [Common, All, PathToMerchantSharedSecret]
         GitHubBranch: !FindInMap [CredentialsRevocation, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], GitHubBranch]
         GitHubBranchDest: !FindInMap [CredentialsRevocation, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], GitHubBranchDest]
         GitHubOAuthToken: !GetAtt GitHubOAuthToken.DecryptedValue
@@ -763,10 +768,16 @@ Resources:
         ProjectName: !Sub "${AWS::StackName}-Turnkey"
         LightrailDomain: !Sub "api.${LightrailDns.Outputs.HostedDomainName}"
         LightrailWebappDomain: !Sub "www.${LightrailDns.Outputs.HostedDomainName}"
+        EmailDomainName: !FindInMap [Common, !Ref EnvironmentName, EmailDomainName]
+        PathToMerchantSharedSecret: !FindInMap [Common, All, PathToMerchantSharedSecret]
         SecureConfigBucket: !GetAtt LightrailSecureConfig.Outputs.BucketName
         SecureConfigKmsArn: !GetAtt LightrailSecureConfig.Outputs.EncryptionKeyArn
         SecureConfigKeyJwt: !FindInMap [SecureConfig, Keys, JWT]
+        SecureConfigKeyAssumeGiftcardPurchaseToken: !FindInMap [SecureConfig, Keys, AssumeGiftCardPurchaseToken]
+        SecureConfigKeyAssumeStorageScopeToken: !FindInMap [SecureConfig, Keys, AssumeStorageScopeToken]
         SecureConfigKeyRoleDefinitions: !FindInMap [SecureConfig, Keys, RoleDefinitions]
+        SecureConfigKeyDataDog: !FindInMap [SecureConfig, Keys, DataDog]
+        SecureConfigKeySentry: !FindInMap [SecureConfig, Keys, SentryLambda]
         SecureConfigKeyStripe: !FindInMap [SecureConfig, Keys, StripeConnect]
         GitHubOAuthToken: !GetAtt GitHubOAuthToken.DecryptedValue
         CodeBuildImageNodeSSH: !GetAtt CIResources.Outputs.CodebuildImageNodeSSH

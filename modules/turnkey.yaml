@@ -40,6 +40,25 @@ Parameters:
     Description: GitHub oauth token.  This user must have admin access to the repo.
     Default: "****"
     NoEcho: true
+  EmailDomainName:
+    Type: String
+    Description: The lightrail email domain.
+    Default: ""
+  SecureConfigKeyAssumeGiftcardPurchaseToken:
+    Type: String
+    Description: Name of the Assume Auth token in S3 that can has the scopes required for the giftcard purchase lambda
+  SecureConfigKeyAssumeStorageScopeToken:
+    Type: String
+    Description: Name of the Assume Auth token in S3 that can be used to access merchant secret key in KVS
+  SecureConfigKeyDataDog:
+    Type: String
+    Description: Key of the DataDog API key secure config object in S3
+  SecureConfigKeySentry:
+    Type: String
+    Description: Key of the Sentry API key secure config object in S3
+  PathToMerchantSharedSecret:
+    Type: String
+    Description: Path to merchant shared jwt secret
   CodeBuildImageNodeSSH:
     Type: String
     Description: Name of the docker image to build from.
@@ -82,12 +101,18 @@ Resources:
         ProjectParameterOverrides: !Sub >
             {
               "LightrailDomain": "${LightrailDomain}",
+              "EmailDomainName": "${EmailDomainName}",
               "LightrailWebappDomain": "${LightrailWebappDomain}",
+              "PathToMerchantSharedSecret: "${PathToMerchantSharedSecret}",
               "SecureConfigBucket": "${SecureConfigBucket}",
               "SecureConfigKmsArn": "${SecureConfigKmsArn}",
               "SecureConfigKeyJwt": "${SecureConfigKeyJwt}",
               "SecureConfigKeyRoleDefinitions": "${SecureConfigKeyRoleDefinitions}",
-              "SecureConfigKeyStripe": "${SecureConfigKeyStripe}"
+              "SecureConfigKeyStripe": "${SecureConfigKeyStripe}",
+              "SecureConfigKeyAssumeGiftcardPurchaseToken": "${SecureConfigKeyAssumeGiftcardPurchaseToken}",
+              "SecureConfigKeyAssumeStorageScopeToken": "${SecureConfigKeyAssumeStorageScopeToken}",
+              "SecureConfigKeyDataDog": "${SecureConfigKeyDataDog}",
+              "SecureConfigKeySentry": "${SecureConfigKeySentry}"
             }
         GitHubBranch: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", GitHubBranch]
         GitHubBranchDest: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", GitHubBranchDest]
