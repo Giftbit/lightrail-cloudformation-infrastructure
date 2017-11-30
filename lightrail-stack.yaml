@@ -643,7 +643,8 @@ Resources:
               "SecureConfigKMSArn": "${LightrailSecureConfig.Outputs.EncryptionKeyArn}",
               "SecureConfigAuthBadgeKey": "${SecureConfigAuthBadgeKey}",
               "SecureConfigKeyRoleDefinitions": "${SecureConfigKeyRoleDefinitions}",
-              "SecureConfigKeyAssumeStorageScopeToken": "${SecureConfigKeyAssumeStorageScopeToken}"
+              "SecureConfigKeyAssumeStorageScopeToken": "${SecureConfigKeyAssumeStorageScopeToken}",
+              "MerchantKeyURI": "${LightrailCloudfront.Outputs.ApiDomain}/v1/storage/jwtSecret"  # TODO unhardcode (Jeff did this for template size reasons)
             }
           -
             SecureConfigKeyRoleDefinitions: !FindInMap [SecureConfig, Keys, RoleDefinitions]
