@@ -23,9 +23,6 @@ Parameters:
     Type: String
     Description: The ARN of the Configuration Bucket Encryption Key
     AllowedPattern: arn:aws:kms:[a-z0-9-]+:\d{12}:key/[a-z0-9-]+
-  SecureConfigKeyAssumeStorageScopeToken:
-    Type: String
-    Description: Name of the Assume Auth token in S3 that can be used to access merchant secret key in KVS
   SecureConfigKeyJwt:
     Type: String
     Description: The Name of the JWT Configuration File in the Configuration Bucket
@@ -106,7 +103,7 @@ Resources:
               "PathToMerchantSharedSecret: "/v1/storage/jwtSecret", # TODO unhardcode (Jeff did this for template size reasons)
               "SecureConfigBucket": "${SecureConfigBucket}",
               "SecureConfigKmsArn": "${SecureConfigKmsArn}",
-              "SecureConfigKeyAssumeStorageScopeToken": "${SecureConfigKeyAssumeStorageScopeToken}",
+              "SecureConfigKeyAssumeStorageScopeToken": "assumeStorageScopeToken.json", # TODO unhardcode (Jeff did this for template size reasons)
               "SecureConfigKeyJwt": "${SecureConfigKeyJwt}",
               "SecureConfigKeyRoleDefinitions": "${SecureConfigKeyRoleDefinitions}",
               "StoredItemEncryptionKeyId": "${EncryptionKey}",
