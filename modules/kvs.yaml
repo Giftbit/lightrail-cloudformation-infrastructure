@@ -100,7 +100,7 @@ Resources:
           - >
             {
               "LightrailDomain": "${LightrailDomain}",
-              "PathToMerchantSharedSecret: "/v1/storage/jwtSecret",
+              "PathToMerchantSharedSecret": "/v1/storage/jwtSecret",
               "SecureConfigBucket": "${SecureConfigBucket}",
               "SecureConfigKmsArn": "${SecureConfigKmsArn}",
               "SecureConfigKeyAssumeStorageScopeToken": "assumeStorageScopeToken.json",
