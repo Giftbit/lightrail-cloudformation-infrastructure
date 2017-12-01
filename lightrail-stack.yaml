@@ -744,7 +744,6 @@ Resources:
         EnvironmentName: !Ref EnvironmentName
         ProjectName: !Sub "${AWS::StackName}-Kvs"
         LightrailDomain: !Sub "api.${LightrailDns.Outputs.HostedDomainName}"
-        SecureConfigKeyAssumeStorageScopeToken: !FindInMap [SecureConfig, Keys, AssumeStorageScopeToken]
         SecureConfigBucket: !GetAtt LightrailSecureConfig.Outputs.BucketName
         SecureConfigKmsArn: !GetAtt LightrailSecureConfig.Outputs.EncryptionKeyArn
         SecureConfigKeyJwt: !FindInMap [SecureConfig, Keys, JWT]
