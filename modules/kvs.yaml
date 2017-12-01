@@ -100,10 +100,10 @@ Resources:
           - >
             {
               "LightrailDomain": "${LightrailDomain}",
-              "PathToMerchantSharedSecret: "/v1/storage/jwtSecret", # TODO unhardcode (Jeff did this for template size reasons)
+              "PathToMerchantSharedSecret: "/v1/storage/jwtSecret",
               "SecureConfigBucket": "${SecureConfigBucket}",
               "SecureConfigKmsArn": "${SecureConfigKmsArn}",
-              "SecureConfigKeyAssumeStorageScopeToken": "assumeStorageScopeToken.json", # TODO unhardcode (Jeff did this for template size reasons)
+              "SecureConfigKeyAssumeStorageScopeToken": "assumeStorageScopeToken.json",
               "SecureConfigKeyJwt": "${SecureConfigKeyJwt}",
               "SecureConfigKeyRoleDefinitions": "${SecureConfigKeyRoleDefinitions}",
               "StoredItemEncryptionKeyId": "${EncryptionKey}",
