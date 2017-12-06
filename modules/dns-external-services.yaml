@@ -62,21 +62,10 @@ Resources:
     Properties:
       HostedZoneName: !Sub "${BaseDomain}."
       Name: !Sub "blog.${BaseDomain}."
-      Type: A
+      Type: CNAME
       TTL: 300
       ResourceRecords:
-        - 52.0.16.118
-        - 52.1.119.170
-        - 52.1.147.205
-        - 52.1.173.203
-        - 52.4.145.119
-        - 52.4.175.111
-        - 52.4.225.124
-        - 52.4.240.221
-        - 52.4.38.70
-        - 52.5.181.79
-        - 52.6.3.192
-        - 52.6.46.142
+        - 4092757.group7.sites.hubspot.net
   BlogSSLVerification:
     Type: AWS::Route53::RecordSet
     Properties:
@@ -94,7 +83,7 @@ Resources:
       Type: CNAME
       TTL: 300
       ResourceRecords:
-        - unbouncepages.com
+        - 4092757.group7.sites.hubspot.net
   WooCommerceTest:
     Type: AWS::Route53::RecordSet
     Properties:
