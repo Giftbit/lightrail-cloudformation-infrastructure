@@ -69,6 +69,8 @@ Mappings:
       AssumeGiftCardPurchaseToken: assumeGiftcardPurchaseToken.json
       SentryLambda: sentry_lambda_services.json
   Common:
+    All:
+      PathToMerchantSharedSecret: /v1/storage/jwtSecret
     Dev:
       DomainName: lightraildev.net
       EmailDomainName: lightraildev.net
@@ -644,12 +646,13 @@ Resources:
               "SecureConfigAuthBadgeKey": "${SecureConfigAuthBadgeKey}",
               "SecureConfigKeyRoleDefinitions": "${SecureConfigKeyRoleDefinitions}",
               "SecureConfigKeyAssumeStorageScopeToken": "${SecureConfigKeyAssumeStorageScopeToken}",
-              "MerchantKeyURI": "${LightrailCloudfront.Outputs.ApiDomain}/v1/storage/jwtSecret"  # TODO unhardcode (Jeff did this for template size reasons)
+              "MerchantKeyURI": "${LightrailCloudfront.Outputs.ApiDomain}${PathToMerchantSharedSecret}"
             }
           -
             SecureConfigKeyRoleDefinitions: !FindInMap [SecureConfig, Keys, RoleDefinitions]
             SecureConfigKeyAssumeStorageScopeToken: !FindInMap [SecureConfig, Keys, AssumeStorageScopeToken]
             SecureConfigAuthBadgeKey: !FindInMap [SecureConfig, Keys, JWT]
+            PathToMerchantSharedSecret: !FindInMap [Common, All, PathToMerchantSharedSecret]
         GitHubBranch: !FindInMap [CredentialsRevocation, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], GitHubBranch]
         GitHubBranchDest: !FindInMap [CredentialsRevocation, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], GitHubBranchDest]
         GitHubOAuthToken: !GetAtt GitHubOAuthToken.DecryptedValue
@@ -744,6 +747,8 @@ Resources:
         EnvironmentName: !Ref EnvironmentName
         ProjectName: !Sub "${AWS::StackName}-Kvs"
         LightrailDomain: !Sub "api.${LightrailDns.Outputs.HostedDomainName}"
+        PathToMerchantSharedSecret: !FindInMap [Common, All, PathToMerchantSharedSecret]
+        SecureConfigKeyAssumeStorageScopeToken: !FindInMap [SecureConfig, Keys, AssumeStorageScopeToken]
         SecureConfigBucket: !GetAtt LightrailSecureConfig.Outputs.BucketName
         SecureConfigKmsArn: !GetAtt LightrailSecureConfig.Outputs.EncryptionKeyArn
         SecureConfigKeyJwt: !FindInMap [SecureConfig, Keys, JWT]
@@ -767,6 +772,7 @@ Resources:
         LightrailDomain: !Sub "api.${LightrailDns.Outputs.HostedDomainName}"
         LightrailWebappDomain: !Sub "www.${LightrailDns.Outputs.HostedDomainName}"
         EmailDomainName: !FindInMap [Common, !Ref EnvironmentName, EmailDomainName]
+        PathToMerchantSharedSecret: !FindInMap [Common, All, PathToMerchantSharedSecret]
         SecureConfigBucket: !GetAtt LightrailSecureConfig.Outputs.BucketName
         SecureConfigKmsArn: !GetAtt LightrailSecureConfig.Outputs.EncryptionKeyArn
         SecureConfigKeyJwt: !FindInMap [SecureConfig, Keys, JWT]

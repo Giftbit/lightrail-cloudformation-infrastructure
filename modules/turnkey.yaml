@@ -24,9 +24,9 @@ Parameters:
     Type: String
     Description: The domain of the Lightrail web app
     AllowedPattern: (\w+\.)+\w{3}
-#  PathToMerchantSharedSecret:
-#    Type: String
-#    Description: Path to merchant shared jwt secret
+  PathToMerchantSharedSecret:
+    Type: String
+    Description: Path to merchant shared jwt secret
   SecureConfigBucket:
     Type: String
     Description: The Name of the Configuration Bucket
@@ -105,7 +105,7 @@ Resources:
               "LightrailDomain": "${LightrailDomain}",
               "EmailDomainName": "${EmailDomainName}",
               "LightrailWebappDomain": "${LightrailWebappDomain}",
-              "PathToMerchantSharedSecret": "/v1/storage/jwtSecret",
+              "PathToMerchantSharedSecret": "${PathToMerchantSharedSecret}",
               "SecureConfigBucket": "${SecureConfigBucket}",
               "SecureConfigKmsArn": "${SecureConfigKmsArn}",
               "SecureConfigKeyJwt": "${SecureConfigKeyJwt}",
