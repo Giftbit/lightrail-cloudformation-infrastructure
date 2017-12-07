@@ -19,8 +19,6 @@ fi
 
 COMMAND="$1"
 
-set -x
-
 function ensure_artifact_bucket() {
     if [ -z "$BUILD_ARTIFACT_BUCKET" ]; then
         REGION=$AWS_DEFAULT_REGION
