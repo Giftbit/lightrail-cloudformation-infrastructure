@@ -19,96 +19,9 @@ fi
 
 COMMAND="$1"
 
-if [ "$COMMAND" = "test" ]; then
-    TEMPLATE_FILE_NAMES=$(grep -rl --include=*.yaml --exclude=./build/* AWSTemplateFormatVersion .)
-    yamllint $(echo $TEMPLATE_FILE_NAMES)
+set -x
 
-    if [ $? -ne 0 ]; then
-        echo "Project failed linting. See output above"
-        exit 1
-    fi
-
-    for filename in $TEMPLATE_FILE_NAMES; do
-        if [ "$(du -k $filename | cut -f1)" -le "50" ]; then
-            aws cloudformation validate-template --template-body file://$filename > /dev/null 2>&1
-
-            if [ $? -ne 0 ]; then
-                echo "$filename failed CloudFormation Template Validation."
-                echo "The error was:"
-                aws cloudformation validate-template --template-body file://$filename
-                exit 2
-            fi
-        else
-            if [ -z "$BUILD_ARTIFACT_BUCKET" ]; then
-                REGION=$AWS_DEFAULT_REGION
-                if [ -z "$REGION" ]; then
-                    REGION="$(aws configure get region)"
-                    if [ -z "$REGION" ]; then
-                        echo "We could not determine the region to package the resources into."
-                        echo "You can set the region in your config using 'aws configure'"
-                        echo "Or by setting the AWS_DEFAULT_REGION"
-                        exit 1
-                    fi
-                fi
-
-                echo "The BUILD_ARTIFACT_BUCKET was not set."
-                echo "Set it with 'export BUILD_ARTIFACT_BUCKET=\"<bucket_name>\"'"
-                echo ""
-                echo "Attempting to find a 'cf-template' bucket..."
-                BUILD_ARTIFACT_BUCKET="$(aws s3api list-buckets --query "Buckets[?starts_with(Name,\`cf-template\`) && ends_with(Name, \`$REGION\`)].Name" --output text)"
-                if [ $? -ne 0 ]; then
-                    echo "Unable to find 'cf-template' bucket. Failing."
-                    exit 2
-                fi
-                echo "BUILD_ARTIFACT_BUCKET=$BUILD_ARTIFACT_BUCKET"
-            fi
-
-            uuid=$(uuidgen)
-            s3Url="s3://$BUILD_ARTIFACT_BUCKET/temp/$uuid.yaml"
-
-            aws s3 cp $filename s3://$BUILD_ARTIFACT_BUCKET/temp/$uuid.yaml > /dev/null 2>&1
-            aws cloudformation validate-template --template-url http://$BUILD_ARTIFACT_BUCKET.s3.amazonaws.com/temp/$uuid.yaml > /dev/null 2>&1
-
-            if [ $? -ne 0 ]; then
-                echo "$filename failed CloudFormation Template Validation."
-                echo "The error was:"
-                aws cloudformation validate-template --template-url http://$BUILD_ARTIFACT_BUCKET.s3.amazonaws.com/temp/$uuid.yaml
-                exit 2
-            fi
-
-            aws s3 rm s3://$BUILD_ARTIFACT_BUCKET/temp/$uuid.yaml > /dev/null 2>&1
-        fi
-    done
-
-    echo "All Templates passed Linting and CloudFormation Template Validation"
-
-elif [ "$COMMAND" = "deploy" ]; then
-    ACCOUNT="$2"
-
-    if [ "$#" -lt 2 ]; then
-        echo "Invalid arguments. Deploy expects an account"
-        echo "eg: auto.sh deploy <account> [options]"
-        exit 1
-    fi
-
-    $SCRIPT_DIR/auto.sh package
-    if [ $? -ne 0 ]; then
-        exit 2
-    fi
-
-    echo "Executing aws cloudformation deploy..."
-    aws cloudformation deploy --template-file $SCRIPT_DIR/build/lightrail-stack.yaml --stack-name $ACCOUNT --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM ${@:3}
-
-    if [ $? -ne 0 ]; then
-        # Print some help on why it failed.
-        echo ""
-        echo "Printing recent CloudFormation errors..."
-        ONE_HOUR_AGO=$(date -v -1H -u +"%Y-%m-%dT%H:%M:%SZ")
-        aws cloudformation describe-stack-events --stack-name $ACCOUNT --query "reverse(StackEvents[?Timestamp > \`$ONE_HOUR_AGO\` && (ResourceStatus==\`CREATE_FAILED\`||ResourceStatus==\`UPDATE_FAILED\`)].[Timestamp,ResourceType,LogicalResourceId,ResourceStatusReason])" --output text
-        exit 4
-    fi
-elif [ "$COMMAND" = "package" ]; then
-
+function ensure_artifact_bucket() {
     if [ -z "$BUILD_ARTIFACT_BUCKET" ]; then
         REGION=$AWS_DEFAULT_REGION
         if [ -z "$REGION" ]; then
@@ -132,6 +45,124 @@ elif [ "$COMMAND" = "package" ]; then
         fi
         echo "BUILD_ARTIFACT_BUCKET=$BUILD_ARTIFACT_BUCKET"
     fi
+}
+
+function size_dependent_cf_location() {
+    filename="$1"
+
+    if [ "$(du -k $filename | cut -f1)" -le 40 ]; then
+        echo "--template-body file://$filename"
+    else
+        ensure_artifact_bucket > /dev/null 2>&1
+        if [ $? -ne 0 ]; then
+            echo "Unable to find 'cf-template' bucket. Failing."
+            exit 1
+        fi
+
+        uuid=$(uuidgen)
+        s3Url="s3://$BUILD_ARTIFACT_BUCKET/templates/$uuid.yaml"
+
+        aws s3 cp $filename s3://$BUILD_ARTIFACT_BUCKET/templates/$uuid.yaml > /dev/null 2>&1
+
+        echo "--template-url http://$BUILD_ARTIFACT_BUCKET.s3.amazonaws.com/templates/$uuid.yaml"
+    fi
+}
+
+if [ "$COMMAND" = "test" ]; then
+    TEMPLATE_FILE_NAMES=$(grep -rl --include=*.yaml --exclude=./build/* AWSTemplateFormatVersion .)
+    yamllint $(echo $TEMPLATE_FILE_NAMES)
+
+    if [ $? -ne 0 ]; then
+        echo "Project failed linting. See output above"
+        exit 1
+    fi
+
+    for filename in $TEMPLATE_FILE_NAMES; do
+
+        cf_location="$(size_dependent_cf_location $filename)"
+        if [ $? -ne 0 ]; then
+            echo "The BUILD_ARTIFACT_BUCKET was not set."
+            echo "Set it with 'export BUILD_ARTIFACT_BUCKET=\"<bucket_name>\"'"
+            exit 2
+        fi
+
+        aws cloudformation validate-template $cf_location > /dev/null 2>&1
+
+        if [ $? -ne 0 ]; then
+            echo "$filename failed CloudFormation Template Validation."
+            echo "The error was:"
+            aws cloudformation validate-template $cf_location
+            exit 3
+        fi
+    done
+
+    echo "All Templates passed Linting and CloudFormation Template Validation"
+
+elif [ "$COMMAND" = "deploy" ]; then
+    ACCOUNT="$2"
+
+    if [ "$#" -lt 2 ]; then
+        echo "Invalid arguments. Deploy expects an account"
+        echo "eg: auto.sh deploy <account> [options]"
+        exit 1
+    fi
+
+    $SCRIPT_DIR/auto.sh package
+    if [ $? -ne 0 ]; then
+        exit 2
+    fi
+
+    cf_location="$(size_dependent_cf_location $SCRIPT_DIR/build/lightrail-stack.yaml)"
+    if [ $? -ne 0 ]; then
+        echo "The BUILD_ARTIFACT_BUCKET was not set."
+        echo "Set it with 'export BUILD_ARTIFACT_BUCKET=\"<bucket_name>\"'"
+        exit 3
+    fi
+
+    # Gather Parameters
+    EXISTING_PARAM_KEYS=$(aws cloudformation describe-stacks --stack-name $ACCOUNT --query Stacks[].Parameters[].ParameterKey --output text)
+    PARAMETER_OPTIONS=""
+    for param in $EXISTING_PARAM_KEYS; do PARAMETER_OPTIONS="$PARAMETER_OPTIONS ParameterKey=$param,UsePreviousValue=true"; done
+
+    echo "Waiting for changeset to be created..."
+    change_set_name="auto-sh-deploy-$(date +%s)"
+    aws cloudformation create-change-set $cf_location --stack-name $ACCOUNT --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM --change-set-name "$change_set_name" --change-set-type UPDATE --parameters $PARAMETER_OPTIONS
+
+    if [ "$?" -ne 0 ]; then
+        echo "Change set failed to create. Exiting."
+        exit 4
+    fi
+
+    change_set_status="$(aws cloudformation describe-change-set --stack-name $ACCOUNT --change-set-name "$change_set_name" --query Status --output text)"
+    while [ "$change_set_status" == "CREATE_IN_PROGRESS" ]
+    do
+        sleep 5
+        change_set_status="$(aws cloudformation describe-change-set --stack-name $ACCOUNT --change-set-name $change_set_name --query Status --output text)"
+    done
+
+    echo "Waiting for stack update to complete"
+    aws cloudformation execute-change-set --stack-name $ACCOUNT --change-set-name $change_set_name
+
+    stack_status="$(aws cloudformation describe-stacks --stack-name $ACCOUNT --query Stacks[].StackStatus --output text)"
+    while [ "$stack_status" == "UPDATE_IN_PROGRESS" ] || [ "$stack_status" == "UPDATE_COMPLETE_CLEANUP_IN_PROGRESS" ]
+    do
+        sleep 5
+        stack_status="$(aws cloudformation describe-stacks --stack-name $ACCOUNT --query Stacks[].StackStatus --output text)"
+    done
+
+    if [ "$stack_status" != "UPDATE_COMPLETE" ]; then
+        # Print some help on why it failed.
+        echo ""
+        echo "Printing recent CloudFormation errors..."
+        ONE_HOUR_AGO=$(date -v -1H -u +"%Y-%m-%dT%H:%M:%SZ")
+        aws cloudformation describe-stack-events --stack-name $ACCOUNT --query "reverse(StackEvents[?Timestamp > \`$ONE_HOUR_AGO\` && (ResourceStatus==\`CREATE_FAILED\`||ResourceStatus==\`UPDATE_FAILED\`)].[Timestamp,ResourceType,LogicalResourceId,ResourceStatusReason])" --output text
+        exit 5
+    fi
+
+    echo "Update Complete"
+elif [ "$COMMAND" = "package" ]; then
+
+    ensure_artifact_bucket
 
     [ -d "$SCRIPT_DIR/tmp" ] || mkdir $SCRIPT_DIR/tmp
     rm -rf $SCRIPT_DIR/tmp/* > /dev/null 2>&1

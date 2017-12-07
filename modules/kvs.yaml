@@ -16,6 +16,9 @@ Parameters:
     Type: String
     Description: The domain of the Lightrail REST API
     AllowedPattern: (\w+\.)+\w{3}
+  PathToMerchantSharedSecret:
+    Type: String
+    Description: Path to merchant shared jwt secret
   SecureConfigBucket:
     Type: String
     Description: The Name of the Configuration Bucket
@@ -23,6 +26,9 @@ Parameters:
     Type: String
     Description: The ARN of the Configuration Bucket Encryption Key
     AllowedPattern: arn:aws:kms:[a-z0-9-]+:\d{12}:key/[a-z0-9-]+
+  SecureConfigKeyAssumeStorageScopeToken:
+    Type: String
+    Description: Name of the Assume Auth token in S3 that can be used to access merchant secret key in KVS
   SecureConfigKeyJwt:
     Type: String
     Description: The Name of the JWT Configuration File in the Configuration Bucket
@@ -100,10 +106,10 @@ Resources:
           - >
             {
               "LightrailDomain": "${LightrailDomain}",
-              "PathToMerchantSharedSecret": "/v1/storage/jwtSecret",
+              "PathToMerchantSharedSecret": "${PathToMerchantSharedSecret}",
               "SecureConfigBucket": "${SecureConfigBucket}",
               "SecureConfigKmsArn": "${SecureConfigKmsArn}",
-              "SecureConfigKeyAssumeStorageScopeToken": "assumeStorageScopeToken.json",
+              "SecureConfigKeyAssumeStorageScopeToken": "${SecureConfigKeyAssumeStorageScopeToken}",
               "SecureConfigKeyJwt": "${SecureConfigKeyJwt}",
               "SecureConfigKeyRoleDefinitions": "${SecureConfigKeyRoleDefinitions}",
               "StoredItemEncryptionKeyId": "${EncryptionKey}",
