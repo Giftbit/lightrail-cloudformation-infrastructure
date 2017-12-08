@@ -314,7 +314,7 @@ Resources:
             Name: Dev
             Actions:
               -
-                Name: CreateChangeSet
+                Name: ChangeSetReplace
                 ActionTypeId:
                   Category: Invoke
                   Owner: AWS
@@ -323,7 +323,7 @@ Resources:
                 InputArtifacts:
                   - Name: BuildOutputArtifact
                 Configuration:
-                  FunctionName: !Ref CodePipelineCloudformationCreateChangeSetS3Function
+                  FunctionName: !Ref CodePipelineCloudformationChangeSetReplaceS3Function
                   UserParameters: !Sub >
                     {
                       "RoleArn": "arn:aws:iam::${DevAccountId}:role/${ProjectName}-CloudFormationExecutorRole",
@@ -380,7 +380,7 @@ Resources:
             Name: Staging
             Actions:
               -
-                Name: CreateChangeSet
+                Name: ChangeSetReplace
                 ActionTypeId:
                   Category: Invoke
                   Owner: AWS
@@ -389,7 +389,7 @@ Resources:
                 InputArtifacts:
                   - Name: BuildOutputArtifact
                 Configuration:
-                  FunctionName: !Ref CodePipelineCloudformationCreateChangeSetS3Function
+                  FunctionName: !Ref CodePipelineCloudformationChangeSetReplaceS3Function
                   UserParameters: !Sub >
                     {
                       "RoleArn": "arn:aws:iam::${StagingAccountId}:role/${ProjectName}-CloudFormationExecutorRole",
@@ -446,7 +446,7 @@ Resources:
             Name: Production
             Actions:
               -
-                Name: CreateChangeSet
+                Name: ChangeSetReplace
                 ActionTypeId:
                   Category: Invoke
                   Owner: AWS
@@ -455,7 +455,7 @@ Resources:
                 InputArtifacts:
                   - Name: BuildOutputArtifact
                 Configuration:
-                  FunctionName: !Ref CodePipelineCloudformationCreateChangeSetS3Function
+                  FunctionName: !Ref CodePipelineCloudformationChangeSetReplaceS3Function
                   UserParameters: !Sub >
                     {
                       "RoleArn": "arn:aws:iam::${ProductionAccountId}:role/${ProjectName}-CloudFormationExecutorRole",
@@ -595,7 +595,7 @@ Resources:
             Resource:
               - !GetAtt CodePipelineStageRevisionUpdater.Arn
               - !GetAtt CodePipelineS3PutActionFunction.Arn
-              - !GetAtt CodePipelineCloudformationCreateChangeSetS3Function.Arn
+              - !GetAtt CodePipelineCloudformationChangeSetReplaceS3Function.Arn
   CodepipelineServiceRolePolicyDelay:
     # We went with an arbitrary delay on this because this change should happen so rarely, assuming the role, which
     # was the only other solution we could think of has serious security implications.
@@ -705,15 +705,15 @@ Resources:
                   - codepipeline:PutJobSuccessResult
                   - codepipeline:PutJobFailureResult
                 Resource: "*"
-  CodePipelineCloudformationCreateChangeSetS3Function:
+  CodePipelineCloudformationChangeSetReplaceS3Function:
     Type: AWS::Lambda::Function
     Properties:
       Description: Backs the CodePipeline CloudFormation Create Change Set Action
-      Role: !GetAtt CodePipelineCloudformationCreateChangeSetS3Role.Arn
+      Role: !GetAtt CodePipelineCloudformationChangeSetReplaceS3Role.Arn
       Handler: index.handler
       Runtime: nodejs6.10
       Timeout: 30
-      Code: ../res/codepipeline-cloudformation-create-change-set-s3-action-0.1.0.zip
+      Code: ../res/codepipeline-cloudformation-change-set-replace-s3-action-0.1.0.zip
       Environment:
         Variables:
           Param_ProductionAccountId: !Ref ProductionAccountId
@@ -723,10 +723,10 @@ Resources:
           Param_EncryptedGitHubOAuthToken: "AQICAHiZldD6KRd+/exTIuIgaQXoRSRCyN1vVSqwPQLHIZ9mIQEtQMQtW/6n/0vSZaN+nh2wAAAAhzCBhAYJKoZIhvcNAQcGoHcwdQIBADBwBgkqhkiG9w0BBwEwHgYJYIZIAWUDBAEuMBEEDCS6odHstciFlw4pVwIBEIBDnPx0lrNj/shyeeNZl8mWTz/MpdCrg7IQrxIcscFjr+vNK/IInaUiCqXjAubXhTJf5BZylpSYAWOqeMBo61w9AioqdA=="
           Param_CloudFormationServiceRoleName: !Sub "${ProjectName}-CloudFormationServiceRole"
           DEBUG: true
-  CodePipelineCloudformationCreateChangeSetS3Role:
+  CodePipelineCloudformationChangeSetReplaceS3Role:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub "${ProjectName}-CP-CF-CreateChangeSetS3Role"
+      RoleName: !Sub "${ProjectName}-CP-CF-ChangeSetReplaceS3Role"
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -739,7 +739,7 @@ Resources:
                 - lambda.amazonaws.com
       Policies:
         -
-          PolicyName: CodePipelineCloudformationCreateChangeSet
+          PolicyName: CodePipelineCloudformationChangeSetReplace
           PolicyDocument:
             Version: 2012-10-17
             Statement:
@@ -875,7 +875,7 @@ Resources:
     Type: "AWS::CloudFormation::Stack"
     DependsOn:
       - CodePipelineServiceRole
-      - CodePipelineCloudformationCreateChangeSetS3Role
+      - CodePipelineCloudformationChangeSetReplaceS3Role
     Properties:
       TemplateURL: ./ci-roles.yaml
       Parameters:
