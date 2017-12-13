@@ -140,6 +140,9 @@ Resources:
           -
             ErrorCode: 404
             ErrorCachingMinTTL: 0  # By default, CloudFront will cache
+        Logging:
+          Bucket: !GetAtt LoggingBucket.DomainName
+          Prefix: www
         Origins:
           -
             DomainName: !Ref WebsiteEndpoint
@@ -831,6 +834,9 @@ Resources:
           CloudFrontDefaultCertificate: !If [ViewerCertificateArnNotSet, true, !Ref "AWS::NoValue"]
           SslSupportMethod: !If [ViewerCertificateArnSet, "sni-only", !Ref "AWS::NoValue"]
           MinimumProtocolVersion: TLSv1
+        Logging:
+          Bucket: !GetAtt LoggingBucket.DomainName
+          Prefix: api
         CustomErrorResponses:
           # By Default, CloudFront caches the following Error codes for 5 Minutes: 400, 403, 404, 405, 414, 500, 501, 502, 503, 504
           # See http://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/HTTPStatusCodes.html#HTTPStatusCodes-cached-errors
@@ -1369,6 +1375,9 @@ Resources:
           CloudFrontDefaultCertificate: !If [ViewerCertificateArnNotSet, true, !Ref "AWS::NoValue"]
           SslSupportMethod: !If [ViewerCertificateArnSet, "sni-only", !Ref "AWS::NoValue"]
           MinimumProtocolVersion: TLSv1
+        Logging:
+          Bucket: !GetAtt LoggingBucket.DomainName
+          Prefix: embed
         CustomErrorResponses:
           # By Default, CloudFront caches the following Error codes for 5 Minutes: 400, 403, 404, 405, 414, 500, 501, 502, 503, 504
           # See http://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/HTTPStatusCodes.html#HTTPStatusCodes-cached-errors
@@ -1881,6 +1890,10 @@ Resources:
             QueryString: true
             Cookies:
               Forward: none
+  LoggingBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      AccessControl: Private
   RedirectBucket:
     Type: "AWS::S3::Bucket"
     Properties:
