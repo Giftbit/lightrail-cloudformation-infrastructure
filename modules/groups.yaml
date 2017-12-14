@@ -84,7 +84,6 @@ Resources:
         - arn:aws:iam::aws:policy/AWSCloudFormationReadOnlyAccess
         - arn:aws:iam::aws:policy/CloudWatchLogsReadOnlyAccess
         - arn:aws:iam::aws:policy/CloudWatchReadOnlyAccess
-        - arn:aws:iam::aws:policy/AWSLambdaReadOnlyAccess
         - arn:aws:iam::aws:policy/AWSCodeBuildReadOnlyAccess
         - arn:aws:iam::aws:policy/AWSCodePipelineApproverAccess
         - arn:aws:iam::aws:policy/AmazonRDSReadOnlyAccess
@@ -138,6 +137,17 @@ Resources:
                 Effect: Allow
                 Action:
                   - "health:*"
+                Resource: "*"
+        -
+          PolicyName: AwsLambdaReadOnlyAccess
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              -
+                Effect: Allow
+                Action:
+                  - lambda:Get*
+                  - lambda:List*
                 Resource: "*"
 
   MarkettingGroup:
