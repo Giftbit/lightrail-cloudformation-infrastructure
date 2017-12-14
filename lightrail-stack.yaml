@@ -142,7 +142,7 @@ Mappings:
       Endpoint: 16wykx9oje.execute-api.us-west-2.amazonaws.com
     Staging-us-west-2:
       GitHubBranch: staging
-      GitHubBranchDest: ""
+      GitHubBranchDest: master
       RoleName: staging-Credentials-RestBadgeValidationLambdaRole-Z6A003BX7XJ4
       Endpoint: w2ntwbf0cg.execute-api.us-west-2.amazonaws.com
     Production-us-west-2:
