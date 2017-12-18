@@ -52,6 +52,9 @@ Parameters:
   SecureConfigKeyStripe:
     Type: String
     Description: Key of the Stripe Connect secure config object in S3
+  SecureConfigKeyMinfraud:
+    Type: String
+    Description: Key of the Minfraud API key secure config object in S3
   SecureConfigKeySentry:
     Type: String
     Description: Key of the Sentry API key secure config object in S3
@@ -111,6 +114,7 @@ Resources:
               "SecureConfigKeyJwt": "${SecureConfigKeyJwt}",
               "SecureConfigKeyRoleDefinitions": "${SecureConfigKeyRoleDefinitions}",
               "SecureConfigKeyStripe": "${SecureConfigKeyStripe}",
+              "SecureConfigKeyMinfraud": "${SecureConfigKeyMinfraud}",
               "SecureConfigKeyAssumeGiftcardPurchaseToken": "${SecureConfigKeyAssumeGiftcardPurchaseToken}",
               "SecureConfigKeyAssumeStorageScopeToken": "${SecureConfigKeyAssumeStorageScopeToken}",
               "SecureConfigKeyDataDog": "${SecureConfigKeyDataDog}",
