@@ -65,6 +65,7 @@ Mappings:
       DataDog: datadog.json
       RoleDefinitions: RoleDefinitions.json
       StripeConnect: stripe_connect.json
+      Minfraud: minfraud.json
       AssumeStorageScopeToken: assumeStorageScopeToken.json
       AssumeGiftCardPurchaseToken: assumeGiftcardPurchaseToken.json
       SentryLambda: sentry_lambda_services.json
@@ -782,6 +783,7 @@ Resources:
         SecureConfigKeyDataDog: !FindInMap [SecureConfig, Keys, DataDog]
         SecureConfigKeySentry: !FindInMap [SecureConfig, Keys, SentryLambda]
         SecureConfigKeyStripe: !FindInMap [SecureConfig, Keys, StripeConnect]
+        SecureConfigKeyMinfraud: !FindInMap [SecureConfig, Keys, Minfraud]
         GitHubOAuthToken: !GetAtt GitHubOAuthToken.DecryptedValue
         CodeBuildImageNodeSSH: !GetAtt CIResources.Outputs.CodebuildImageNodeSSH
         CiKeysAccessRoleArn: !GetAtt CIResources.Outputs.KeysAccessRoleArn
