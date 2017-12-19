@@ -320,6 +320,14 @@ Resources:
       ToPort: 61000
       IpProtocol: tcp
       DestinationSecurityGroupId: !Ref EcsClusterInstanceSecurityGroup
+  AlbDemoStoreAccess:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties:
+      GroupId: !Ref AlbSecurityGroup
+      FromPort: 32768
+      ToPort: 61000
+      IpProtocol: tcp
+      DestinationSecurityGroupId: !Ref DemoStoreSecurityGroup
 
   # Application Security Groups
   EcsClusterInstanceSecurityGroup:
@@ -381,6 +389,32 @@ Resources:
         -
           Key: Name
           Value: !Sub "${EnvironmentName} Lightrail RDS Instances"
+
+  # Demo Store Security Groups
+  DemoStoreSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub "Lightrail-${EnvironmentName}-DemoStore"
+      GroupDescription: !Sub "Lightrail ${EnvironmentName} Demo Store for VPC ${VPC}"
+      VpcId: !Ref VPC
+      SecurityGroupEgress:
+        -  # Access to the Internet
+          FromPort: 0
+          ToPort: 65535
+          IpProtocol: tcp
+          CidrIp: 0.0.0.0/0
+      Tags:
+        -
+          Key: Name
+          Value: !Sub "${EnvironmentName} Lightrail Demo Store"
+  DemoAlbAccessGrant:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref DemoStoreSecurityGroup
+      FromPort: 32768
+      ToPort: 61000
+      IpProtocol: tcp
+      SourceSecurityGroupId: !Ref AlbSecurityGroup
 
   # Redis Security Groups
   RedisSecurityGroup:
@@ -464,7 +498,6 @@ Resources:
     Properties:
       RouteTableId: !Ref PublicSubnetRouteTable
       SubnetId: !Ref SubnetPublicC
-
 
   # Private Subnets
   SubnetPrivateA:
@@ -559,6 +592,67 @@ Resources:
           Key: Name
           Value: !Sub "${EnvironmentName} Lightrail RDS Subnet c. (${AWS::StackName})"
 
+  # Demo Store Subnets
+  SubnetDemoStoreA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Sub "10.${VPCUniqueNumber}.241.0/24"
+      AvailabilityZone: !Sub "${AWS::Region}a"
+      Tags:
+        -
+          Key: Name
+          Value: !Sub "${EnvironmentName} Lightrail Demo Store Subnet a. (${AWS::StackName})"
+  SubnetDemoStoreB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Sub "10.${VPCUniqueNumber}.242.0/24"
+      AvailabilityZone: !Sub "${AWS::Region}b"
+      Tags:
+        -
+          Key: Name
+          Value: !Sub "${EnvironmentName} Lightrail Demo Store Subnet b. (${AWS::StackName})"
+  SubnetDemoStoreC:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Sub "10.${VPCUniqueNumber}.243.0/24"
+      AvailabilityZone: !Sub "${AWS::Region}c"
+      Tags:
+        -
+          Key: Name
+          Value: !Sub "${EnvironmentName} Lightrail Demo Store Subnet c. (${AWS::StackName})"
+  DemoStoreSubnetRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        -
+          Key: Name
+          Value: !Sub "${EnvironmentName} DemoStore Subnet Routing for VPC ${VPC}"
+  DemoStoreSubnetRouting:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref DemoStoreSubnetRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      InstanceId: !Ref NatInstance
+  DemoStoreSubnetARouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref DemoStoreSubnetRouteTable
+      SubnetId: !Ref SubnetDemoStoreA
+  DemoStoreSubnetBRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref DemoStoreSubnetRouteTable
+      SubnetId: !Ref SubnetDemoStoreB
+  DemoStoreSubnetCRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref DemoStoreSubnetRouteTable
+      SubnetId: !Ref SubnetDemoStoreC
+
 Outputs:
   # VPC Outputs
   VpcId:
@@ -581,6 +675,9 @@ Outputs:
   RedisSecurityGroupId:
     Description: Id for the Redis Security Group
     Value: !Ref RedisSecurityGroup
+  DemoStoreSecurityGroupId:
+    Description: Id for the Demo Store Security Group
+    Value: !Ref DemoStoreSecurityGroup
 
   # Subnet Outputs
   PublicSubnetIds:
@@ -592,3 +689,6 @@ Outputs:
   RdsSubnetIds:
     Description: The Subnet IDs for RDS
     Value: !Join [',', [!Ref SubnetRdsA, !Ref SubnetRdsB, !Ref SubnetRdsC]]
+  DemoStoreSubnetIds:
+    Description: The Subnet IDs for the Demo Store Subnets
+    Value: !Join [',', [!Ref SubnetDemoStoreA, !Ref SubnetDemoStoreB, !Ref SubnetDemoStoreC]]
