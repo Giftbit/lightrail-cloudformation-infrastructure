@@ -192,6 +192,22 @@ Resources:
         -
           Key: Name
           Value: !Sub "${EnvironmentName} Lightrail NAT"
+  NatDemoStoreHttpsAccess:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref NatSecurityGroup
+      FromPort: 443
+      ToPort: 443
+      IpProtocol: tcp
+      SourceSecurityGroupId: !Ref DemoStoreSecurityGroup
+  NatDemoStoreHttpAccess:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref NatSecurityGroup
+      FromPort: 80
+      ToPort: 80
+      IpProtocol: tcp
+      SourceSecurityGroupId: !Ref DemoStoreSecurityGroup
 
   # Bastion Host
   BastionHostInstance:
@@ -324,8 +340,8 @@ Resources:
     Type: AWS::EC2::SecurityGroupEgress
     Properties:
       GroupId: !Ref AlbSecurityGroup
-      FromPort: 32768
-      ToPort: 61000
+      FromPort: 3000
+      ToPort: 3000
       IpProtocol: tcp
       DestinationSecurityGroupId: !Ref DemoStoreSecurityGroup
 
@@ -411,8 +427,8 @@ Resources:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
       GroupId: !Ref DemoStoreSecurityGroup
-      FromPort: 32768
-      ToPort: 61000
+      FromPort: 3000
+      ToPort: 3000
       IpProtocol: tcp
       SourceSecurityGroupId: !Ref AlbSecurityGroup
 

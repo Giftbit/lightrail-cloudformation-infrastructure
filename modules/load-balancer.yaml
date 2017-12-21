@@ -269,7 +269,8 @@ Resources:
       HealthCheckPath: /
       HealthyThresholdCount: !If [EnvIsDev, 3, 5]
       UnhealthyThresholdCount: 3
-      HealthCheckIntervalSeconds: 30
+      HealthCheckIntervalSeconds: 15
+      TargetType: ip
       TargetGroupAttributes:
         -
           Key: deregistration_delay.timeout_seconds
@@ -316,5 +317,7 @@ Outputs:
     Value: !Ref ServicesTargetGroup
   BatchTargetGroupArn:
     Value: !Ref BatchTargetGroup
+  DemoStoreTargetGroupArn:
+    Value: !Ref DemoStoreTargetGroup
   EcsLoadBalancingServiceRoleArn:
     Value: !GetAtt EcsLoadBalancingServiceRole.Arn

@@ -380,6 +380,7 @@ Resources:
             - !GetAtt LightrailLogstash.Outputs.EcrRepoArn
             - !GetAtt LightrailDatadog.Outputs.EcrRepoArn
             - !GetAtt LightrailBatch.Outputs.EcrRepoArn
+            - !GetAtt LightrailDemoStore.Outputs.EcrRepoArn
   LightrailLoadBalancer:
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2
@@ -633,6 +634,35 @@ Resources:
         -
           Key: Service
           Value: Batch
+  LightrailDemoStore:
+    Type: AWS::CloudFormation::Stack
+    Condition: RegionIsUSWest2
+    Properties:
+      TemplateURL: ./modules/demo-store.yaml
+      Parameters:
+        EnvironmentName: !Ref EnvironmentName
+        ParentStackName: !Ref "AWS::StackName"
+        AccountsToGrantEcrReadAccess: !Join
+          - ","
+          -
+            - !If
+              - ProductionAccountIdProvided
+              - !Ref ProductionAccountId
+              - !Ref AWS::NoValue
+            - !If
+              - StagingAccountIdProvided
+              - !Ref StagingAccountId
+              - !Ref AWS::NoValue
+            - !If
+              - DevAccountIdProvided
+              - !Ref DevAccountId
+              - !Ref AWS::NoValue
+        GroupsToGrantDeployAccess: !GetAtt Groups.Outputs.BackEndDevelopersGroupName
+        LoadBalancingServiceRoleArn: !GetAtt LightrailLoadBalancer.Outputs.EcsLoadBalancingServiceRoleArn
+      Tags:
+        -
+          Key: Service
+          Value: DemoStore
   LightrailCredentials:
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2
