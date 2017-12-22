@@ -16,6 +16,10 @@ Parameters:
     Type: String
     Description: The lightrail email domain.
     Default: ""
+  KinesisStreamArn:
+    Type: String
+    Description: ARN of the Kinesis stream
+    AllowedPattern: arn:aws:kinesis:[a-z0-9-]+:\d{12}:stream/[A-Za-z0-9._-]+
   LightrailDomain:
     Type: String
     Description: The domain of the Lightrail REST API
@@ -107,6 +111,7 @@ Resources:
             {
               "LightrailDomain": "${LightrailDomain}",
               "EmailDomainName": "${EmailDomainName}",
+              "KinesisStreamArn": "${KinesisStreamArn}",
               "LightrailWebappDomain": "${LightrailWebappDomain}",
               "PathToMerchantSharedSecret": "${PathToMerchantSharedSecret}",
               "SecureConfigBucket": "${SecureConfigBucket}",
