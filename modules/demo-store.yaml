@@ -47,6 +47,8 @@ Conditions:
   ShouldConfigureDeployAccess: !Not [!Equals [!Ref GroupsToGrantDeployAccess, ""]]
 
 Resources:
+  # This KMS Key will be used in the SSM Parameter Store in AWS to store the Lightrail API Key, Shared Secret,
+  # and Stripe Public and Private keys.
   ParameterEncryptionKey:
     Type: AWS::KMS::Key
     Properties:
