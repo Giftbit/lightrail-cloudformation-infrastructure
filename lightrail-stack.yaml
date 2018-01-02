@@ -380,7 +380,10 @@ Resources:
             - !GetAtt LightrailLogstash.Outputs.EcrRepoArn
             - !GetAtt LightrailDatadog.Outputs.EcrRepoArn
             - !GetAtt LightrailBatch.Outputs.EcrRepoArn
-            - !GetAtt LightrailDemoStore.Outputs.EcrRepoArn
+            - !If
+              - EnvIsDevAndRegionIsUSWest2
+              - !GetAtt LightrailDemoStore.Outputs.EcrRepoArn
+              - !Ref AWS::NoValue
   LightrailLoadBalancer:
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2
@@ -636,7 +639,7 @@ Resources:
           Value: Batch
   LightrailDemoStore:
     Type: AWS::CloudFormation::Stack
-    Condition: RegionIsUSWest2
+    Condition: EnvIsDevAndRegionIsUSWest2
     Properties:
       TemplateURL: ./modules/demo-store.yaml
       Parameters:
