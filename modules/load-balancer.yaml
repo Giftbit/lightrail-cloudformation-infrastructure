@@ -57,33 +57,49 @@ Resources:
       Port: 443
       Protocol: HTTPS
       Certificates:
-        - CertificateArn: !Ref Certificate
+        - CertificateArn: !Ref AlbCertificate
       DefaultActions:
         -
           Type: forward
           TargetGroupArn: !Ref DefaultTargetGroup
-  Certificate:
+  AdditionalCertificates:
+    Type: AWS::ElasticLoadBalancingV2::ListenerCertificate
+    Properties:
+      ListenerArn: !Ref Listener
+      Certificates:
+        - CertificateArn: !Ref DemoStoreCertificate
+
+  AlbCertificate:
     Type: AWS::CertificateManager::Certificate
     Properties:
       DomainName: !Sub "alb.${BaseDomain}"
-      SubjectAlternativeNames:
-        - !Sub "api.${BaseDomain}"  # These are just temporary, but we need to have them for the transition period, where CloudFront will still be using the Host header
-        - !Sub "www.${BaseDomain}"
       DomainValidationOptions:
         -
           DomainName: !Sub "alb.${BaseDomain}"
-          ValidationDomain: !Ref BaseDomain
-        -
-          DomainName: !Sub "www.${BaseDomain}"
-          ValidationDomain: !Ref BaseDomain
-        -
-          DomainName: !Sub "api.${BaseDomain}"
           ValidationDomain: !Ref BaseDomain
   AlbZoneRecord:
     Type: AWS::Route53::RecordSet
     Properties:
       HostedZoneName: !Sub "${BaseDomain}."
       Name: !Sub "alb.${BaseDomain}."
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt LoadBalancer.DNSName
+        HostedZoneId: !FindInMap [TargetHostedZoneIds, !Ref "AWS::Region", ALB]
+
+  DemoStoreCertificate:
+    Type: AWS::CertificateManager::Certificate
+    Properties:
+      DomainName: !Sub "demo.${BaseDomain}"
+      DomainValidationOptions:
+        -
+          DomainName: !Sub "demo.${BaseDomain}"
+          ValidationDomain: !Ref BaseDomain
+  DemoStoreZoneRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneName: !Sub "${BaseDomain}."
+      Name: !Sub "demo.${BaseDomain}."
       Type: A
       AliasTarget:
         DNSName: !GetAtt LoadBalancer.DNSName
@@ -122,6 +138,10 @@ Resources:
           Field: path-pattern
           Values:
             - /v1/batch/*
+        -
+          Field: host-header
+          Values:
+            - !Sub "alb.${BaseDomain}"
   BatchListenerSlash:
     Type: AWS::ElasticLoadBalancingV2::ListenerRule
     Properties:
@@ -136,6 +156,10 @@ Resources:
           Field: path-pattern
           Values:
             - /v1/batch/
+        -
+          Field: host-header
+          Values:
+            - !Sub "alb.${BaseDomain}"
   BatchListenerBare:
     Type: AWS::ElasticLoadBalancingV2::ListenerRule
     Properties:
@@ -150,6 +174,10 @@ Resources:
           Field: path-pattern
           Values:
             - /v1/batch
+        -
+          Field: host-header
+          Values:
+            - !Sub "alb.${BaseDomain}"
 
   # Services Configuration
   ServicesTargetGroup:
@@ -190,6 +218,10 @@ Resources:
           Field: path-pattern
           Values:
             - /v1/*
+        -
+          Field: host-header
+          Values:
+            - !Sub "alb.${BaseDomain}"
   ServicesListenerSlash:
     Type: AWS::ElasticLoadBalancingV2::ListenerRule
     Properties:
@@ -204,6 +236,10 @@ Resources:
           Field: path-pattern
           Values:
             - /v1/
+        -
+          Field: host-header
+          Values:
+            - !Sub "alb.${BaseDomain}"
   ServicesListenerBare:
     Type: AWS::ElasticLoadBalancingV2::ListenerRule
     Properties:
@@ -218,6 +254,45 @@ Resources:
           Field: path-pattern
           Values:
             - /v1
+        -
+          Field: host-header
+          Values:
+            - !Sub "alb.${BaseDomain}"
+
+  # Demo Store Configuration
+  DemoStoreTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Port: 80
+      Protocol: HTTP
+      VpcId: !Ref VpcId
+      HealthCheckPath: /
+      HealthyThresholdCount: !If [EnvIsDev, 3, 5]
+      UnhealthyThresholdCount: 3
+      HealthCheckIntervalSeconds: 15
+      TargetType: ip
+      TargetGroupAttributes:
+        -
+          Key: deregistration_delay.timeout_seconds
+          Value: !If [EnvIsDev, 15, 60]
+      Tags:
+        -
+          Key: Service
+          Value: DemoStore
+  DemoStoreListener:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      Priority: 31
+      ListenerArn: !Ref Listener
+      Actions:
+        -
+          Type: forward
+          TargetGroupArn: !Ref DemoStoreTargetGroup
+      Conditions:
+        -
+          Field: host-header
+          Values:
+            - !Sub "demo.${BaseDomain}"
 
   EcsLoadBalancingServiceRole:
     Type: AWS::IAM::Role
@@ -242,5 +317,7 @@ Outputs:
     Value: !Ref ServicesTargetGroup
   BatchTargetGroupArn:
     Value: !Ref BatchTargetGroup
+  DemoStoreTargetGroupArn:
+    Value: !Ref DemoStoreTargetGroup
   EcsLoadBalancingServiceRoleArn:
     Value: !GetAtt EcsLoadBalancingServiceRole.Arn

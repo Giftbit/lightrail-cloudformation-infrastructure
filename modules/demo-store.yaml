@@ -1,0 +1,248 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Lightrail Demo Store
+
+Parameters:
+  EnvironmentName:
+    Type: String
+    Description: The Name of the Environment
+    AllowedValues:
+      - Dev
+      - Staging
+      - Production
+  ParentStackName:
+    Type: String
+    Description: The Name of the parent stack. This is normally dev, staging or production.
+  AccountsToGrantEcrReadAccess:
+    Type: String
+    Description: Comma separated list of AWS Account IDs to grant ECR Read Access
+    Default: ""
+    AllowedPattern: (\d{12}(,\d{12})*)?
+  GroupsToGrantDeployAccess:
+    Type: String
+    Description: A Comma Separated List of Groups to grant ability to deploy this service
+    AllowedPattern: ((^|,)[a-zA-Z0-9+=.@_-]+)*
+  LoadBalancingServiceRoleArn:
+    Type: String
+    Description: The Service Role Arn for load balancing
+    AllowedPattern: arn:aws:iam::\d{12}:role/[A-Za-z0-9._-]+
+
+Mappings:
+  Dev:
+    us-west-2:
+      EcrRepoOverride: ""  # Intentionally left blank, required but should not be used
+      EcrRepoArnOverride: ""  # Intentionally left blank, required but should not be used
+  Staging:
+    us-west-2:
+      EcrRepoOverride: ""
+      EcrRepoArnOverride: ""
+  Production:
+    us-west-2:
+      EcrRepoOverride: ""
+      EcrRepoArnOverride: ""
+
+Conditions:
+  ShouldCreateECRRepository: !Equals [!Ref EnvironmentName, Dev]
+  ShouldUseEcrRepoOverride: !Not [!Equals [!Ref EnvironmentName, Dev]]
+  ShouldConfigureAccountECRAccess: !Not [!Equals [!Ref AccountsToGrantEcrReadAccess, ""]]
+  ShouldConfigureDeployAccess: !Not [!Equals [!Ref GroupsToGrantDeployAccess, ""]]
+
+Resources:
+  # This KMS Key will be used in the SSM Parameter Store in AWS to store the Lightrail API Key, Shared Secret,
+  # and Stripe Public and Private keys.
+  ParameterEncryptionKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: !Sub "Lightrail ${EnvironmentName} Demo Store Parameter Encryption Key"
+      KeyPolicy:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Principal:
+              AWS:
+                !Sub "arn:aws:iam::${AWS::AccountId}:root"
+            Action:
+              - kms:*
+            Resource: "*"
+  RdsEncryptionKeyAlias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: !Sub "alias/${AWS::StackName}-DemoStore-ParameterKey"
+      TargetKeyId: !Ref ParameterEncryptionKey
+  EcrRepo:
+    Type: AWS::ECR::Repository
+    Condition: ShouldCreateECRRepository
+    Properties:
+      RepositoryPolicyText: !If
+        - ShouldConfigureAccountECRAccess
+        -
+          Version: 2012-10-17
+          Statement:
+            -
+              Sid: RepositoryAccess
+              Effect: Allow
+              Principal:
+                AWS: !Split [",", !Ref AccountsToGrantEcrReadAccess]
+              Action:
+                - ecr:GetDownloadUrlForLayer
+                - ecr:BatchGetImage
+                - ecr:BatchCheckLayerAvailability
+                - ecr:DescribeRepositories
+                - ecr:ListImages
+        - !Ref AWS::NoValue
+  Role:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - sts:AssumeRole
+            Principal:
+              Service:
+                - ecs-tasks.amazonaws.com
+      Policies:
+        -
+          PolicyName: DemoStoreAccess
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              -  # Configuration Access
+                Effect: Allow
+                Action:
+                  - ssm:GetParameters
+                Resource:
+                  - !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/lightrail/demo-store/*"
+              -  # Configuration Key Access
+                Effect: Allow
+                Action:
+                  - kms:DescribeKey
+                  - kms:Decrypt
+                Resource:
+                  - !GetAtt ParameterEncryptionKey.Arn
+  DeploymentRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - sts:AssumeRole
+            Principal:
+              AWS:
+                - !Ref "AWS::AccountId"  # Allow this role to be assumed from the Current Account with MFA
+            Condition:
+              Bool:
+                "aws:MultiFactorAuthPresent": true
+      Policies:
+        -
+          PolicyName: CloudFormationUpdateAccess
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              -
+                Effect: Allow
+                Action:
+                  - ecr:GetAuthorizationToken
+                Resource: "*"
+              -
+                Effect: Allow
+                Action:
+                  - cloudformation:CreateChangeSet
+                  - cloudformation:ExecuteChangeSet
+                  - cloudformation:UpdateStack
+                  - cloudformation:DescribeStackEvents
+                  - cloudformation:DeleteStack
+                  - cloudformation:DescribeChangeSet
+                Resource:
+                  - !Sub "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${ParentStackName}-DemoStore/*"
+              -
+                Effect: Allow
+                Action:
+                  - ecr:GetDownloadUrlForLayer
+                  - ecr:BatchGetImage
+                  - ecr:BatchCheckLayerAvailability
+                  - ecr:DescribeRepositories
+                  - ecr:ListImages
+                Resource:
+                  - !If
+                    - ShouldUseEcrRepoOverride
+                    - !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", EcrRepoArnOverride]
+                    - !Sub "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/${EcrRepo}"
+              -
+                Effect: Allow
+                Action:
+                  - cloudformation:DescribeStacks
+                Resource: "*"
+              -
+                Effect: Allow
+                Action:
+                  - cloudformation:DescribeStackResource
+                Resource:
+                  - !Sub "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${ParentStackName}/*"
+              -
+                Effect: Allow
+                Action:
+                  - ecs:RegisterTaskDefinition
+                  - ecs:DeregisterTaskDefinition
+                  - ecs:Describe*
+                  - ecs:CreateService
+                  - ecs:UpdateService
+                  - ecs:DeleteService
+                Resource: "*"
+              -
+                Effect: Allow
+                Action:
+                  - iam:PassRole
+                Resource:
+                  - !GetAtt Role.Arn
+                  - !Ref LoadBalancingServiceRoleArn
+
+  DeploymentAccessPolicy:
+    Type: AWS::IAM::Policy
+    Condition: ShouldConfigureDeployAccess
+    Properties:
+      Groups: !Split [",", !Ref GroupsToGrantDeployAccess]
+      PolicyName: DemoStoreDeployAccess
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - sts:AssumeRole
+            Resource:
+              - !GetAtt DeploymentRole.Arn
+          -
+            Effect: Allow
+            Action:
+              - ecr:ListImages
+            Resource:
+              - !If
+                - ShouldUseEcrRepoOverride
+                - !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", EcrRepoArnOverride]
+                - !Sub "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/${EcrRepo}"
+
+Outputs:
+  EcrRepo:
+    Description: The Codebuild accessible docker image reference
+    Value: !If
+      - ShouldCreateECRRepository
+      - !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${EcrRepo}"
+      - !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", EcrRepoOverride]
+  EcrRepoArn:
+    Description: The Codebuild accessible docker image reference
+    Value: !If
+      - ShouldCreateECRRepository
+      - !Sub "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/${EcrRepo}"
+      - !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", EcrRepoArnOverride]
+  TaskRoleArn:
+    Description: The ARN of the Tasks IAM Role
+    Value: !GetAtt Role.Arn
+  DeploymentRoleArn:
+    Description: The Arn of the Deployment Role
+    Value: !GetAtt DeploymentRole.Arn
