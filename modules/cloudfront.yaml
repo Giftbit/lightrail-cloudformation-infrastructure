@@ -794,27 +794,25 @@ Resources:
                 Cookies:
                   Forward: none
             - !Ref AWS::NoValue
-          - !If
-            - ReactEndpointSet
-            -
-              PathPattern: "/docs/reference*"
-              TargetOriginId: WebsiteEndpointOrigin
-              ViewerProtocolPolicy: "redirect-to-https"
-              Compress: false
-              MinTTL: 0
-              MaxTTL: 60
-              DefaultTTL: 5
-              AllowedMethods:
-                - GET
-                - HEAD
-              CachedMethods:
-                - GET
-                - HEAD
-              ForwardedValues:
-                QueryString: true
-                Cookies:
-                  Forward: none
-            - !Ref AWS::NoValue
+          -
+            PathPattern: "/docs/reference*"
+            TargetOriginId: WebsiteEndpointOrigin
+            ViewerProtocolPolicy: "redirect-to-https"
+            Compress: false
+            MinTTL: 0
+            MaxTTL: 60
+            DefaultTTL: 5
+            AllowedMethods:
+              - GET
+              - HEAD
+            CachedMethods:
+              - GET
+              - HEAD
+            ForwardedValues:
+              QueryString: true
+              Cookies:
+                Forward: none
+          - !Ref AWS::NoValue
           - !If
             - ReactEndpointSet
             -
