@@ -812,7 +812,6 @@ Resources:
               QueryString: true
               Cookies:
                 Forward: none
-          - !Ref AWS::NoValue
           - !If
             - ReactEndpointSet
             -
