@@ -41,7 +41,6 @@ Conditions:
   ProductionAccountIsEnabled: !Not [!Equals [!Ref ProductionAccountId, ""]]
   StagingAccountIsEnabled: !Not [!Equals [!Ref StagingAccountId, ""]]
 
-
 Resources:
   CodePipelineApprover:
     Type: "AWS::IAM::Role"
@@ -124,6 +123,8 @@ Resources:
             Condition:
               Bool:
                 aws:MultiFactorAuthPresent: true
+              NumericLessThan:
+                aws:MultiFactorAuthAge: 3600
   InfrastructureAdminRestrictionPolicy:
     Type: AWS::IAM::Policy
     Properties:
@@ -175,3 +176,5 @@ Resources:
             Condition:
               Bool:
                 aws:MultiFactorAuthPresent: true
+              NumericLessThan:
+                aws:MultiFactorAuthAge: 3600
