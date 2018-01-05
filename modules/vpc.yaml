@@ -44,7 +44,7 @@ Mappings:
   #  --output text
   RegionBastionHostImageMap:
     us-west-2:
-      "64": ami-3234a652
+      "64": ami-864ce7fe
     us-east-1:
       "64": ami-fd8617eb
 
