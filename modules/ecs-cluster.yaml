@@ -157,7 +157,7 @@ Resources:
     Type: AWS::AutoScaling::LifecycleHook
     Properties:
       AutoScalingGroupName: !Ref ClusterAutoScalingGroup
-      DefaultResult: ABANDON
+      DefaultResult: CONTINUE
       HeartbeatTimeout: 900
       LifecycleTransition: autoscaling:EC2_INSTANCE_TERMINATING
       NotificationTargetARN: !Ref ClusterSnsTopic
