@@ -346,6 +346,7 @@ Resources:
         - !Ref AllEmployees
         - !Ref BackEndDevelopersGroup
         - !Ref BastionHostAccessGroup
+        - !Ref FrontEndDevelopersGroup
   MattB:
     Type: AWS::IAM::User
     Properties:
