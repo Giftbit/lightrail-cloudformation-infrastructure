@@ -151,6 +151,106 @@ Resources:
           - AlarmNotification
           - ScheduledActions
         WaitOnResourceSignals: true
+  ClusterSnsTopic:
+    Type: AWS::SNS::Topic
+  ClusterTerminateHook:
+    Type: AWS::AutoScaling::LifecycleHook
+    Properties:
+      AutoScalingGroupName: !Ref ClusterAutoScalingGroup
+      DefaultResult: ABANDON
+      HeartbeatTimeout: 900
+      LifecycleTransition: autoscaling:EC2_INSTANCE_TERMINATING
+      NotificationTargetARN: !Ref ClusterSnsTopic
+      RoleARN: !GetAtt AutoScalingSnsNotificationRole.Arn
+  AutoScalingSnsNotificationRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - sts:AssumeRole
+            Principal:
+              Service:
+                - autoscaling.amazonaws.com
+      Policies:
+        -
+          PolicyName: SnsPublishAccess
+          PolicyDocument:
+            Statement:
+              -
+                Effect: Allow
+                Action:
+                  - sns:Publish
+                Resource:
+                  - !Ref ClusterSnsTopic
+  ClusterTerminationDrainingFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      # We're using a version of this that reposts to the same SNS topic when not yet complete
+      # https://github.com/awslabs/ecs-cid-sample/pull/14
+      # The original master doesn't page subscriptions properly
+      Code: ../res/autoscaling-instance-draining.zip
+      Description: Lambda code for the autoscaling hook triggers invoked when autoscaling instance terminating occurs
+      Handler: index.lambda_handler
+      Runtime: python2.7
+      Timeout: 300
+      Role: !GetAtt ClusterTerminationDrainingRole.Arn
+  ClusterTerminationDrainingRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - sts:AssumeRole
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+      Policies:
+        -
+          PolicyName: ClusterInstanceAccess
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              -
+                Effect: Allow
+                Action:
+                  - autoscaling:CompleteLifecycleAction
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                  - ec2:DescribeInstances
+                  - ec2:DescribeInstanceAttribute
+                  - ec2:DescribeInstanceStatus
+                  - ec2:DescribeHosts
+                  - ecs:ListContainerInstances
+                  - ecs:SubmitContainerStateChange
+                  - ecs:SubmitTaskStateChange
+                  - ecs:DescribeContainerInstances
+                  - ecs:UpdateContainerInstancesState
+                  - ecs:ListTasks
+                  - ecs:DescribeTasks
+                  - sns:Publish
+                  - sns:ListSubscriptions
+                Resource: "*"
+  SnsLambdaInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref ClusterTerminationDrainingFunction
+      Action: lambda:InvokeFunction
+      Principal: sns.amazonaws.com
+      SourceArn: !Ref ClusterSnsTopic
+  LambdaSnsTopicSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Endpoint: !GetAtt ClusterTerminationDrainingFunction.Arn
+      Protocol: lambda
+      TopicArn: !Ref ClusterSnsTopic
   ClusterScaleUpSchedule:
     Type: AWS::AutoScaling::ScheduledAction
     Condition: ShouldScheduleClusterScaleUp
