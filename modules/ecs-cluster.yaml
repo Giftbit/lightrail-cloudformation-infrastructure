@@ -269,6 +269,55 @@ Resources:
       MaxSize: 0
       MinSize: 0
       Recurrence: !Ref ClusterScaleDownRecurrence
+  ClusterScaleUpPolicy:
+    Type: AWS::AutoScaling::ScalingPolicy
+    Properties:
+      AdjustmentType: ChangeInCapacity
+      AutoScalingGroupName: !Ref ClusterAutoScalingGroup
+      Cooldown: 300
+      ScalingAdjustment: 1
+  ClusterMemoryUtilizationHigh:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      EvaluationPeriods: 5
+      Statistic: Average
+      Threshold: 60
+      AlarmDescription: Alarm if Memory Reservation too high (unsure if we can add another service)
+      Period: 60
+      AlarmActions:
+        - !Ref ClusterScaleUpPolicy
+      Namespace: AWS/ECS
+      Dimensions:
+        -
+          Name: ClusterName
+          Value: !Ref Cluster
+      ComparisonOperator: GreaterThanThreshold
+      MetricName: MemoryReservation
+  ClusterScaleDownPolicy:
+    Type: AWS::AutoScaling::ScalingPolicy
+    Properties:
+      AdjustmentType: ChangeInCapacity
+      AutoScalingGroupName: !Ref ClusterAutoScalingGroup
+      Cooldown: 300
+      ScalingAdjustment: -1
+  ClusterMemoryUtilizationLow:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      EvaluationPeriods: 5
+      Statistic: Average
+      Threshold: 40
+      AlarmDescription: Alarm if Memory Reservation too low (unnecessary instances)
+        is down
+      Period: 60
+      AlarmActions:
+        - !Ref ClusterScaleDownPolicy
+      Namespace: AWS/ECS
+      Dimensions:
+        -
+          Name: ClusterName
+          Value: !Ref Cluster
+      ComparisonOperator: LessThanThreshold
+      MetricName: MemoryReservation
   ClusterLaunchConfiguration:
     Type: AWS::AutoScaling::LaunchConfiguration
     Properties:
