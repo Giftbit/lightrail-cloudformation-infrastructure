@@ -44,24 +44,12 @@ Parameters:
   SecureConfigKeyAssumeGiftcardPurchaseToken:
     Type: String
     Description: Name of the Assume Auth token in S3 that can has the scopes required for the giftcard purchase lambda
-  SecureConfigKeyDataDog:
-    Type: String
-    Description: Key of the DataDog API key secure config object in S3
   SecureConfigKeyJwt:
     Type: String
     Description: The Name of the JWT Configuration File in the Configuration Bucket
   SecureConfigKeyRoleDefinitions:
     Type: String
     Description: The Name of the Role Defintions Configuration File in the Configuration Bucket
-  SecureConfigKeyStripe:
-    Type: String
-    Description: Key of the Stripe Connect secure config object in S3
-  SecureConfigKeyMinfraud:
-    Type: String
-    Description: Key of the Minfraud API key secure config object in S3
-  SecureConfigKeySentry:
-    Type: String
-    Description: Key of the Sentry API key secure config object in S3
   # CI config
   GitHubOAuthToken:
     Type: String
@@ -118,12 +106,8 @@ Resources:
               "SecureConfigKmsArn": "${SecureConfigKmsArn}",
               "SecureConfigKeyJwt": "${SecureConfigKeyJwt}",
               "SecureConfigKeyRoleDefinitions": "${SecureConfigKeyRoleDefinitions}",
-              "SecureConfigKeyStripe": "${SecureConfigKeyStripe}",
-              "SecureConfigKeyMinfraud": "${SecureConfigKeyMinfraud}",
               "SecureConfigKeyAssumeGiftcardPurchaseToken": "${SecureConfigKeyAssumeGiftcardPurchaseToken}",
               "SecureConfigKeyAssumeStorageScopeToken": "${SecureConfigKeyAssumeStorageScopeToken}",
-              "SecureConfigKeyDataDog": "${SecureConfigKeyDataDog}",
-              "SecureConfigKeySentry": "${SecureConfigKeySentry}"
             }
         GitHubBranch: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", GitHubBranch]
         GitHubBranchDest: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", GitHubBranchDest]
