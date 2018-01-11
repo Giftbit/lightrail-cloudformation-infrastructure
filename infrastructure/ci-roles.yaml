@@ -76,7 +76,7 @@ Resources:
               Principal:
                 AWS:
                   - !Sub "arn:aws:iam::${CodePipelineAccountId}:role/${ProjectName}-CodePipelineServiceRole"
-                  - !Sub "arn:aws:iam::${CodePipelineAccountId}:role/${ProjectName}-CP-CF-CreateChangeSetS3Role"
+                  - !Sub "arn:aws:iam::${CodePipelineAccountId}:role/${ProjectName}-CP-CF-ChangeSetReplaceS3Role"
             - !Ref AWS::NoValue
       Policies:
         -
@@ -100,6 +100,7 @@ Resources:
                   - "cloudformation:CreateChangeSet"
                   - "cloudformation:ExecuteChangeSet"
                   - "cloudformation:DeleteChangeSet"
+                  - "cloudformation:ListChangeSets"
                   - "cloudformation:DescribeChangeSet"
                   - "cloudformation:ValidateTemplate"
                 Resource: !Sub "arn:aws:cloudformation:us-west-2:${AWS::AccountId}:stack/${StackName}/*"
