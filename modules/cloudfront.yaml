@@ -110,13 +110,15 @@ Conditions:
   UserImageServingEndpointSet: !Not [!Equals [!Ref UserImageServingEndpoint, ""]]
   WidgetsEndpointSet: !Not [!Equals [!Ref WidgetsEndpoint, ""]]
 Resources:
-  NewAppDistribution:
+  AppApiDistribution:
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: ./cloudfront-api-distribution-template.yaml
       Parameters:
         # Default Distribution Endpoint
         DefaultEndpoint: !Ref WebsiteEndpoint
+        # Distribution Specific Config
+        # AliasSubDomain: www
         # Distribution Specific Endpoints
         AppEndpoint: !Ref ReactEndpoint
         DocsEndpoint: !Ref ReactEndpoint
@@ -136,7 +138,7 @@ Resources:
         BaseDomainName: !Ref BaseDomainName
         # ViewerCertificateArn: !Ref ViewerCertificateArn
         LoggingBucketDomainName: !GetAtt LoggingBucket.DomainName
-  NewApiDistribution:
+  ApiApiDistribution:
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: ./cloudfront-api-distribution-template.yaml
@@ -156,7 +158,7 @@ Resources:
         BaseDomainName: !Ref BaseDomainName
         # ViewerCertificateArn: !Ref ViewerCertificateArn
         LoggingBucketDomainName: !GetAtt LoggingBucket.DomainName
-  NewEmbedDistribution:
+  EmbedApiDistribution:
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: ./cloudfront-api-distribution-template.yaml
