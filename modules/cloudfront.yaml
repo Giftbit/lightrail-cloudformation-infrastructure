@@ -145,6 +145,8 @@ Resources:
       Parameters:
         # Default Distribution Endpoint
         DefaultEndpoint: !Sub "${ApiRedirectBucket}.s3-website-${AWS::Region}.amazonaws.com"
+        # Distribution Specific Config
+        # AliasSubDomain: api
         # Common Endpoints
         BatchEndpoint: !Ref BatchEndpoint
         CardsSearchEndpoint: !Ref CardsSearchEndpoint
@@ -165,6 +167,8 @@ Resources:
       Parameters:
         # Default Distribution Endpoint
         DefaultEndpoint: !Ref WidgetsEndpoint
+        # Distribution Specific Config
+        # AliasSubDomain: embed
         # Common Endpoints
         BatchEndpoint: !Ref BatchEndpoint
         CardsSearchEndpoint: !Ref CardsSearchEndpoint
