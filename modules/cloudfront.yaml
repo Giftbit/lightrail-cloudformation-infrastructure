@@ -110,6 +110,84 @@ Conditions:
   UserImageServingEndpointSet: !Not [!Equals [!Ref UserImageServingEndpoint, ""]]
   WidgetsEndpointSet: !Not [!Equals [!Ref WidgetsEndpoint, ""]]
 Resources:
+  NewAppDistribution:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: ./cloudfront-api-distribution-template.yaml
+      Parameters:
+        # Default Distribution Endpoint
+        DefaultEndpoint: !Ref WebsiteEndpoint
+        # Distribution Specific Endpoints
+        AppEndpoint: !Ref ReactEndpoint
+        DocsEndpoint: !Ref ReactEndpoint
+        UserImageServingEndpoint: !Ref UserImageServingEndpoint
+        UserImageUploadAuthServiceEndpoint: !Ref UserImageUploadAuthServiceEndpoint
+        ReferenceDocsEndpoint: !Ref WebsiteEndpoint
+        # Common Endpoints
+        BatchEndpoint: !Ref BatchEndpoint
+        CardsSearchEndpoint: !Ref CardsSearchEndpoint
+        KvsEndpoint: !Ref KvsEndpoint
+        ReactionsEndpoint: !Ref ReactionsEndpoint
+        ServicesEndpoint: !Ref ServicesEndpoint
+        StatsEndpoint: !Ref StatsEndpoint
+        TurnkeyEndpoint: !Ref TurnkeyEndpoint
+        # Common Distribution Configurations
+        EnvironmentName: !Ref EnvironmentName
+        BaseDomainName: !Ref BaseDomainName
+        # ViewerCertificateArn: !Ref ViewerCertificateArn
+        LoggingBucketDomainName: !GetAtt LoggingBucket.DomainName
+  NewApiDistribution:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: ./cloudfront-api-distribution-template.yaml
+      Parameters:
+        # Default Distribution Endpoint
+        DefaultEndpoint: !Sub "${ApiRedirectBucket}.s3-website-${AWS::Region}.amazonaws.com"
+        # Common Endpoints
+        BatchEndpoint: !Ref BatchEndpoint
+        CardsSearchEndpoint: !Ref CardsSearchEndpoint
+        KvsEndpoint: !Ref KvsEndpoint
+        ReactionsEndpoint: !Ref ReactionsEndpoint
+        ServicesEndpoint: !Ref ServicesEndpoint
+        StatsEndpoint: !Ref StatsEndpoint
+        TurnkeyEndpoint: !Ref TurnkeyEndpoint
+        # Common Distribution Configurations
+        EnvironmentName: !Ref EnvironmentName
+        BaseDomainName: !Ref BaseDomainName
+        # ViewerCertificateArn: !Ref ViewerCertificateArn
+        LoggingBucketDomainName: !GetAtt LoggingBucket.DomainName
+  NewEmbedDistribution:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: ./cloudfront-api-distribution-template.yaml
+      Parameters:
+        # Default Distribution Endpoint
+        DefaultEndpoint: !Ref WidgetsEndpoint
+        # Common Endpoints
+        BatchEndpoint: !Ref BatchEndpoint
+        CardsSearchEndpoint: !Ref CardsSearchEndpoint
+        KvsEndpoint: !Ref KvsEndpoint
+        ReactionsEndpoint: !Ref ReactionsEndpoint
+        ServicesEndpoint: !Ref ServicesEndpoint
+        StatsEndpoint: !Ref StatsEndpoint
+        TurnkeyEndpoint: !Ref TurnkeyEndpoint
+        # Common Distribution Configurations
+        EnvironmentName: !Ref EnvironmentName
+        BaseDomainName: !Ref BaseDomainName
+        # ViewerCertificateArn: !Ref ViewerCertificateArn
+        LoggingBucketDomainName: !GetAtt LoggingBucket.DomainName
+  ApiRedirectBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: error.html
+        RoutingRules:
+          -
+            RedirectRule:
+              HostName: !Sub "www.${BaseDomainName}"
+              ReplaceKeyWith: docs/
+              Protocol: https
   AppZoneRecord:
     Type: AWS::Route53::RecordSet
     Properties:
@@ -1934,7 +2012,7 @@ Resources:
     Properties:
       AccessControl: Private
   RedirectBucket:
-    Type: "AWS::S3::Bucket"
+    Type: AWS::S3::Bucket
     Properties:
       AccessControl: Private
       WebsiteConfiguration:
@@ -1942,7 +2020,7 @@ Resources:
           HostName: !Sub "www.${BaseDomainName}"
           Protocol: https
   RedirectDistribution:
-    Type: "AWS::CloudFront::Distribution"
+    Type: AWS::CloudFront::Distribution
     Properties:
       DistributionConfig:
         Aliases:
