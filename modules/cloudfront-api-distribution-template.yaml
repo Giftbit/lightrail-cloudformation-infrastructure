@@ -847,6 +847,6 @@ Resources:
               Forward: none
 
 Outputs:
-  DistributionDomain:
+  DomainName:
     Description: The Domain for the Lightrail CloudFront Distribution
     Value: !GetAtt Distribution.DomainName
