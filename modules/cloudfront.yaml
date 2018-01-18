@@ -118,7 +118,7 @@ Resources:
         # Default Distribution Endpoint
         DefaultEndpoint: !Ref WebsiteEndpoint
         # Distribution Specific Config
-        # AliasSubDomain: www
+        AliasSubDomain: www
         # Distribution Specific Endpoints
         AppEndpoint: !Ref ReactEndpoint
         DocsEndpoint: !Ref ReactEndpoint
@@ -136,7 +136,7 @@ Resources:
         # Common Distribution Configurations
         EnvironmentName: !Ref EnvironmentName
         BaseDomainName: !Ref BaseDomainName
-        # ViewerCertificateArn: !Ref ViewerCertificateArn
+        ViewerCertificateArn: !Ref ViewerCertificateArn
         LoggingBucketDomainName: !GetAtt LoggingBucket.DomainName
   ApiApiDistribution:
     Type: AWS::CloudFormation::Stack
@@ -146,7 +146,7 @@ Resources:
         # Default Distribution Endpoint
         DefaultEndpoint: !Sub "${ApiRedirectBucket}.s3-website-${AWS::Region}.amazonaws.com"
         # Distribution Specific Config
-        # AliasSubDomain: api
+        AliasSubDomain: api
         # Common Endpoints
         BatchEndpoint: !Ref BatchEndpoint
         CardsSearchEndpoint: !Ref CardsSearchEndpoint
@@ -158,7 +158,7 @@ Resources:
         # Common Distribution Configurations
         EnvironmentName: !Ref EnvironmentName
         BaseDomainName: !Ref BaseDomainName
-        # ViewerCertificateArn: !Ref ViewerCertificateArn
+        ViewerCertificateArn: !Ref ViewerCertificateArn
         LoggingBucketDomainName: !GetAtt LoggingBucket.DomainName
   EmbedApiDistribution:
     Type: AWS::CloudFormation::Stack
@@ -168,7 +168,7 @@ Resources:
         # Default Distribution Endpoint
         DefaultEndpoint: !Ref WidgetsEndpoint
         # Distribution Specific Config
-        # AliasSubDomain: embed
+        AliasSubDomain: embed
         # Common Endpoints
         BatchEndpoint: !Ref BatchEndpoint
         CardsSearchEndpoint: !Ref CardsSearchEndpoint
@@ -180,7 +180,7 @@ Resources:
         # Common Distribution Configurations
         EnvironmentName: !Ref EnvironmentName
         BaseDomainName: !Ref BaseDomainName
-        # ViewerCertificateArn: !Ref ViewerCertificateArn
+        ViewerCertificateArn: !Ref ViewerCertificateArn
         LoggingBucketDomainName: !GetAtt LoggingBucket.DomainName
   ApiRedirectBucket:
     Type: AWS::S3::Bucket
