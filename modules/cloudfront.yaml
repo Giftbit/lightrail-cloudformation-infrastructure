@@ -136,7 +136,7 @@ Resources:
         # Common Distribution Configurations
         EnvironmentName: !Ref EnvironmentName
         BaseDomainName: !Ref BaseDomainName
-        # ViewerCertificateArn: !Ref ViewerCertificateArn
+        ViewerCertificateArn: !Ref ViewerCertificateArn
         LoggingBucketDomainName: !GetAtt LoggingBucket.DomainName
   ApiApiDistribution:
     Type: AWS::CloudFormation::Stack
@@ -158,7 +158,7 @@ Resources:
         # Common Distribution Configurations
         EnvironmentName: !Ref EnvironmentName
         BaseDomainName: !Ref BaseDomainName
-        # ViewerCertificateArn: !Ref ViewerCertificateArn
+        ViewerCertificateArn: !Ref ViewerCertificateArn
         LoggingBucketDomainName: !GetAtt LoggingBucket.DomainName
   EmbedApiDistribution:
     Type: AWS::CloudFormation::Stack
@@ -180,7 +180,7 @@ Resources:
         # Common Distribution Configurations
         EnvironmentName: !Ref EnvironmentName
         BaseDomainName: !Ref BaseDomainName
-        # ViewerCertificateArn: !Ref ViewerCertificateArn
+        ViewerCertificateArn: !Ref ViewerCertificateArn
         LoggingBucketDomainName: !GetAtt LoggingBucket.DomainName
   ApiRedirectBucket:
     Type: AWS::S3::Bucket
