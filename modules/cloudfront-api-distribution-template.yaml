@@ -847,10 +847,6 @@ Resources:
               Forward: none
 
 Outputs:
-  Domain:
-    Description: The FQDN of the App
-    Condition: ShouldConfigureAliases
-    Value: !Ref ZoneRecord
   DistributionDomain:
     Description: The Domain for the Lightrail CloudFront Distribution
     Value: !GetAtt Distribution.DomainName
