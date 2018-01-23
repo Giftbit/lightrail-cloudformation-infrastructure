@@ -94,14 +94,14 @@ Mappings:
       MaxInstances: 4
       SSHKeyName: LightrailDevECS
       ScaleUpRecurrence: "0 15 * * MON-FRI"
-      ScaleDownRecurrence: ""
+      ScaleDownRecurrence: "0 3 * * TUE-SAT"
     Staging-us-west-2:
       InstanceType: t2.medium
       MinInstances: 2
       MaxInstances: 4
       SSHKeyName: LightrailStagingECS
       ScaleUpRecurrence: "0 15 * * MON-FRI"
-      ScaleDownRecurrence: ""
+      ScaleDownRecurrence: "0 3 * * TUE-SAT"
     Production-us-west-2:
       InstanceType: t2.medium
       MinInstances: 3
