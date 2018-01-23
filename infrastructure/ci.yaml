@@ -713,7 +713,7 @@ Resources:
       Handler: index.handler
       Runtime: nodejs6.10
       Timeout: 30
-      Code: ../res/codepipeline-cloudformation-change-set-replace-s3-action-0.1.0.zip
+      Code: ../res/codepipeline-cloudformation-change-set-replace-s3-action-0.1.1.zip
       Environment:
         Variables:
           Param_ProductionAccountId: !Ref ProductionAccountId
