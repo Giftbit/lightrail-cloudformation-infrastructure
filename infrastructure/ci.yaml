@@ -627,7 +627,7 @@ Resources:
       Handler: index.handler
       Runtime: nodejs6.10
       Timeout: 30  # Twice our expected delay.
-      Code: ../res/delay.zip
+      Code: ../res/delay.zip  # Built from https://github.com/Giftbit/delay-custom-resource/blob/master/index.js
   CloudformationDelayFunctionRole:
     Type: AWS::IAM::Role
     Properties:
@@ -650,7 +650,7 @@ Resources:
       Handler: index.handler
       Runtime: nodejs6.10
       Timeout: 30
-      Code: ../res/codepipeline-s3-put-action-0.1.0.zip
+      Code: ../res/codepipeline-s3-put-action-0.1.0.zip  # Built from https://github.com/Giftbit/codepipeline-s3-put-action/blob/master/src/index.ts
   CodePipelineS3PutActionRole:
     Type: AWS::IAM::Role
     Properties:
@@ -713,7 +713,7 @@ Resources:
       Handler: index.handler
       Runtime: nodejs6.10
       Timeout: 30
-      Code: ../res/codepipeline-cloudformation-change-set-replace-s3-action-0.1.0.zip
+      Code: ../res/codepipeline-cloudformation-change-set-replace-s3-action-0.1.0.zip  # https://github.com/Giftbit/codepipeline-cloudformation-change-set-replace-s3/blob/master/src/index.ts
       Environment:
         Variables:
           Param_ProductionAccountId: !Ref ProductionAccountId
@@ -895,7 +895,7 @@ Resources:
       Handler: index.handler
       Runtime: nodejs6.10
       Timeout: 15
-      Code: ../res/approval-diff-notifier.zip
+      Code: ../res/approval-diff-notifier.zip  # Built from https://github.com/Giftbit/codepipeline-github-approval-diff-notifier/blob/master/src/lambdas/approval-diff-notifier/index.ts
       Environment:
         Variables:
           ARTIFACT_BUCKET: !Ref DeploymentArtifactBucket
@@ -956,7 +956,7 @@ Resources:
       Handler: index.handler
       Runtime: nodejs6.10
       Timeout: 15
-      Code: ../res/stage-revision-updater.zip
+      Code: ../res/stage-revision-updater.zip  # Built from https://github.com/Giftbit/codepipeline-github-approval-diff-notifier/blob/master/src/lambdas/stage-revision-updater/index.ts
       Environment:
         Variables:
           ARTIFACT_BUCKET: !Ref DeploymentArtifactBucket
@@ -1087,7 +1087,7 @@ Resources:
       Handler: lambda_function.lambda_handler
       Runtime: python2.7
       Timeout: 15
-      Code: ../res/kms-encryption-custom-resource.zip
+      Code: ../res/kms-encryption-custom-resource.zip  # Built from https://github.com/Giftbit/lambda-backed-cloud-formation-kms-encryption/blob/master/lambda_function.py
   EncryptedGitHubOAuthToken:
     Type: AWS::CloudFormation::CustomResource
     Version: 1.0
@@ -1137,7 +1137,7 @@ Resources:
       Handler: kmsDependency.handler
       Runtime: nodejs6.10
       Timeout: 15
-      Code: ../res/kms-decryption-custom-resource.zip
+      Code: ../res/kms-decryption-custom-resource.zip  # Built from https://github.com/sonyxperiadev/amazon-custom-resources/blob/master/kms-dependency/kmsDependency.js
       Environment:
         Variables:
           REGION: !Ref AWS::Region
