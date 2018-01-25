@@ -932,7 +932,7 @@ Resources:
       Handler: index.handler
       Runtime: nodejs6.10
       Timeout: 15
-      Code: ../res/role-id-lookup.zip
+      Code: ../res/role-id-lookup.zip  # https://github.com/Giftbit/role-id-lookup-custom-resource/blob/master/index.js
   GitHubOAuthToken:
     Type: AWS::CloudFormation::CustomResource
     Properties:

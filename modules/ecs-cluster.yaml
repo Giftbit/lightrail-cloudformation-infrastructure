@@ -192,7 +192,7 @@ Resources:
       # We're using a version of this that reposts to the same SNS topic when not yet complete
       # https://github.com/awslabs/ecs-cid-sample/pull/14
       # The original master doesn't page subscriptions properly
-      Code: ../res/autoscaling-instance-draining.zip
+      Code: ../res/autoscaling-instance-draining.zip  # Built from https://github.com/Giftbit/ecs-cid-sample/blob/master/code/index.py
       Description: Lambda code for the autoscaling hook triggers invoked when autoscaling instance terminating occurs
       Handler: index.lambda_handler
       Runtime: python2.7
