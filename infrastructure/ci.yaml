@@ -17,7 +17,6 @@ Metadata:
           - GithubRepoName
           - GithubRepoBranch
           - GitHubOAuthToken
-          - DownstreamGitHubOAuthToken
           - PreferredSlackChannel
           - CurrentAccountStackName
           - ApprovalNotificationTopicExport
@@ -116,10 +115,6 @@ Parameters:
     Type: String
     Description: The CloudFormation Stack that should be used for the lightrail account
     Default: "production"
-  DownstreamGitHubOAuthToken:
-    Type: String
-    Description: GitHub OAuth token for downstream CIs. User must have 'repo' and 'admin:repo_hook' access
-    NoEcho: true
 
 Conditions:
   DevAccountIsEnabled: !And
@@ -719,8 +714,8 @@ Resources:
           Param_ProductionAccountId: !Ref ProductionAccountId
           Param_StagingAccountId: !Ref StagingAccountId
           Param_DevAccountId: !Ref DevAccountId
-          Param_DecryptionLambdaArn: "arn:aws:lambda:us-west-2:212888042843:function:LightrailInfrastructureCI-DecryptionLambda-18BIRXDP7BHPK"
-          Param_EncryptedGitHubOAuthToken: "AQICAHiZldD6KRd+/exTIuIgaQXoRSRCyN1vVSqwPQLHIZ9mIQEtQMQtW/6n/0vSZaN+nh2wAAAAhzCBhAYJKoZIhvcNAQcGoHcwdQIBADBwBgkqhkiG9w0BBwEwHgYJYIZIAWUDBAEuMBEEDCS6odHstciFlw4pVwIBEIBDnPx0lrNj/shyeeNZl8mWTz/MpdCrg7IQrxIcscFjr+vNK/IInaUiCqXjAubXhTJf5BZylpSYAWOqeMBo61w9AioqdA=="
+          Param_DecryptionLambdaArn: !GetAtt DecryptionLambda.Arn
+          Param_EncryptedGitHubOAuthToken: !GetAtt EncryptedGitHubOAuthToken.CipherText
           Param_CloudFormationServiceRoleName: !Sub "${ProjectName}-CloudFormationServiceRole"
           DEBUG: true
   CodePipelineCloudformationChangeSetReplaceS3Role:
@@ -1095,13 +1090,6 @@ Resources:
       ServiceToken: !GetAtt EncryptionLambda.Arn
       KeyId: !GetAtt EncryptionKey.Arn
       PlainText: !Ref GitHubOAuthToken
-  EncryptedDownstreamGitHubOAuthToken:
-    Type: AWS::CloudFormation::CustomResource
-    Version: 1.0
-    Properties:
-      ServiceToken: !GetAtt EncryptionLambda.Arn
-      KeyId: !GetAtt EncryptionKey.Arn
-      PlainText: !Ref DownstreamGitHubOAuthToken
 
   DecryptionLambdaRole:
     Type: AWS::IAM::Role
