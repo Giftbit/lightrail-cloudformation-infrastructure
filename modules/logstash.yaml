@@ -279,7 +279,7 @@ Resources:
       Namespace: !Sub "Lightrail/${EnvironmentName}"
       Period: 120
       Statistic: Sum
-      Threshold: 5
+      Threshold: 10
       AlarmActions:
         - !Ref NonEmergencyAlertsSnsArn
       OKActions:
