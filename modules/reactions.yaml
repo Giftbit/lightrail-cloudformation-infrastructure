@@ -84,7 +84,6 @@ Resources:
               "SecureConfigBucket": "${SecureConfigBucket}",
               "SecureConfigKmsArn": "${SecureConfigKmsArn}",
               "SecureConfigKeyJwt": "${SecureConfigKeyJwt}",
-              "SecureConfigKeyRoleDefinitions": "${SecureConfigKeyRoleDefinitions}",
               "SecureConfigKeyDataDog": "${SecureConfigKeyDataDog}",
               "Capacity": "${Capacity}",
               "RestRootUrl": "https://${LightrailDomain}/v1/"
