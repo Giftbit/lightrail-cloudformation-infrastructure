@@ -74,13 +74,13 @@ Mappings:
     us-west-2:
       GitHubBranch: dev-ci
       GitHubBranchDest: ""
-      RoleNames: dev-Turnkey-GiftcardPurchaseFunctionRole-1KGBM93LPXQFP,dev-Turnkey-StripeFunctionRole-1G73BZDEQRT90
+      RoleNames: dev-Turnkey-GiftcardPurchaseFunctionRole-1KGBM93LPXQFP,dev-Turnkey-StripeFunctionRole-1G73BZDEQRT90,dev-Turnkey-EmailFunctionRole-1JTV1097Y6KW
       Endpoint: vjn3uqm8ok.execute-api.us-west-2.amazonaws.com
   Staging:
     us-west-2:
       GitHubBranch: staging
       GitHubBranchDest: master
-      RoleNames: staging-Turnkey-GiftcardPurchaseFunctionRole-6OE7SS30H6TU,staging-Turnkey-StripeFunctionRole-V0W37G8KYYD3
+      RoleNames: staging-Turnkey-GiftcardPurchaseFunctionRole-6OE7SS30H6TU,staging-Turnkey-StripeFunctionRole-V0W37G8KYYD3,staging-Turnkey-EmailFunctionRole-1L0FEVQWYRM6
       Endpoint: tk1tioiyz5.execute-api.us-west-2.amazonaws.com
   Production:
     us-west-2:
