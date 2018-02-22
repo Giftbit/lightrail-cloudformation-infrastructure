@@ -80,7 +80,7 @@ Mappings:
     us-west-2:
       GitHubBranch: staging
       GitHubBranchDest: master
-      RoleNames: staging-Turnkey-GiftcardPurchaseFunctionRole-6OE7SS30H6TU,staging-Turnkey-StripeFunctionRole-V0W37G8KYYD3
+      RoleNames: staging-Turnkey-GiftcardPurchaseFunctionRole-6OE7SS30H6TU,staging-Turnkey-StripeFunctionRole-V0W37G8KYYD3,staging-Turnkey-EmailFunctionRole-1L0FEVQWYRM6
       Endpoint: tk1tioiyz5.execute-api.us-west-2.amazonaws.com
   Production:
     us-west-2:
