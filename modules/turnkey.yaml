@@ -86,7 +86,7 @@ Mappings:
     us-west-2:
       GitHubBranch: master
       GitHubBranchDest: ""
-      RoleNames: production-Turnkey-GiftcardPurchaseFunctionRole-1VO6BCQNGZKOZ,production-Turnkey-StripeFunctionRole-107HU60YD7SP7
+      RoleNames: production-Turnkey-GiftcardPurchaseFunctionRole-1VO6BCQNGZKOZ,production-Turnkey-StripeFunctionRole-107HU60YD7SP7,production-Turnkey-EmailFunctionRole-ONUCBP8IEKOM
       Endpoint: 13shovrsob.execute-api.us-west-2.amazonaws.com
 
 Resources:
