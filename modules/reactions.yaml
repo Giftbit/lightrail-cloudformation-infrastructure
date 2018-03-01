@@ -54,21 +54,18 @@ Mappings:
     us-west-2:
       GitHubBranch: dev-ci
       GitHubBranchDest: ""
-      Capacity: low
       RoleNames: dev-Reactions-IngressFunctionRole-1WSWAQEXFYBFD,dev-Reactions-LogsRestFunctionRole-DO9D51OBRJIX,dev-Reactions-QueueConsumerFunctionRole-1MJU3O9YZ1S1K,dev-Reactions-ReactionWorkerFunctionRole-1FPY0LCYJGYQ4,dev-Reactions-ReactionsRestFunctionRole-1RA07KXUTJX9R
       Endpoint: serkjs3ing.execute-api.us-west-2.amazonaws.com
   Staging:
     us-west-2:
       GitHubBranch: staging
       GitHubBranchDest: master
-      Capacity: low
       RoleNames: staging-Reactions-IngressFunctionRole-1U7DFD533XHLG,staging-Reactions-LogsRestFunctionRole-JG0KDS3FUKPR,staging-Reactions-QueueConsumerFunctionRole-BLWJHDNJ5U9Y,staging-Reactions-ReactionWorkerFunctionRole-3I2L9DUWJA4Q,staging-Reactions-ReactionsRestFunctionRole-9QMH80CO137L
       Endpoint: 3nlzb4jfng.execute-api.us-west-2.amazonaws.com
   Production:
     us-west-2:
       GitHubBranch: master
       GitHubBranchDest: ""
-      Capacity: high
       RoleNames: production-Reactions-IngressFunctionRole-ZJO4ZWBHPVH9,production-Reactions-LogsRestFunctionRole-1WJQYJDV8ED0A,production-Reactions-QueueConsumerFunctionRole-IYIITWXGSK22,production-Reactions-ReactionWorkerFunctionRole-6220PS0JSMTW,production-Reactions-ReactionsRestFunctionRole-EQS6X56MJOB
       Endpoint: e84yb3jwmc.execute-api.us-west-2.amazonaws.com
 
@@ -85,7 +82,6 @@ Resources:
               "SecureConfigKmsArn": "${SecureConfigKmsArn}",
               "SecureConfigKeyJwt": "${SecureConfigKeyJwt}",
               "SecureConfigKeyDataDog": "${SecureConfigKeyDataDog}",
-              "Capacity": "${Capacity}",
               "RestRootUrl": "https://${LightrailDomain}/v1/"
             }
           -
