@@ -84,7 +84,7 @@ Resources:
   CI:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://raw.githubusercontent.com/Giftbit/giftbit-simple-rollup/39a8aea9ee388ab6d9b219b98b9af0650a971e66/infrastructure/ci.yaml
+      TemplateURL: https://raw.githubusercontent.com/Giftbit/giftbit-simple-rollup/0b33145539a66f352d1debad1daf35d76cddeac8/infrastructure/ci.yaml
       Parameters:
         ProjectParameterOverrides: !Sub
           - >
