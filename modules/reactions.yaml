@@ -84,8 +84,7 @@ Resources:
               "SecureConfigKeyDataDog": "${SecureConfigKeyDataDog}",
               "RestRootUrl": "https://${LightrailDomain}/v1/"
             }
-          -
-            Capacity: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", Capacity]
+          - {}
         GitHubBranch: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", GitHubBranch]
         GitHubBranchDest: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", GitHubBranchDest]
         GitHubOAuthToken: !Ref GitHubOAuthToken
