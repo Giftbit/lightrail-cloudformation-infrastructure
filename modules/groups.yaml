@@ -37,6 +37,7 @@ Resources:
           - arn:aws:iam::aws:policy/PowerUserAccess
           - !Ref "AWS::NoValue"
         - arn:aws:iam::aws:policy/AWSCloudFormationReadOnlyAccess
+        - arn:aws:iam::aws:policy/AWSCodeBuildReadOnlyAccess
         - arn:aws:iam::aws:policy/CloudFrontReadOnlyAccess
       Policies:
         -
