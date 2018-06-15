@@ -30,47 +30,50 @@ Parameters:
     Default: ""
   DefaultEndpoint:
     Type: String
-    Description: Enter the domain that should handle the default requests
+    Description: The domain that should handle the default requests
   AppEndpoint:
     Type: String
-    Description: Enter the domain that should handle the React app requests
+    Description: The domain that should handle the React app requests
     Default: ""
   ServicesEndpoint:
     Type: String
-    Description: Enter the domain that should handle the Grails services requests
+    Description: The domain that should handle the Grails services requests
   StatsEndpoint:
     Type: String
-    Description: Enter the domain that should handle the Stats requests
+    Description: The domain that should handle the Stats requests
   CardsSearchEndpoint:
     Type: String
-    Description: Enter the domain that should handle the Cards Search requests
+    Description: The domain that should handle the Cards Search requests
   KvsEndpoint:
     Type: String
-    Description: Enter the domain that should handle the KVS requests
+    Description: The domain that should handle the KVS requests
   TurnkeyEndpoint:
     Type: String
-    Description: Enter the domain that should handle the Turnkey requests
+    Description: The domain that should handle the Turnkey requests
   ReactionsEndpoint:
     Type: String
-    Description: Enter the domain that should handle the KVS requests
+    Description: The domain that should handle the KVS requests
+  RothschildEndpoint:
+    Type: String
+    Description: The domain that should handle Rothschild requests
   BatchEndpoint:
     Type: String
-    Description: Enter the domain that should handle the Batch requests
+    Description: The domain that should handle the Batch requests
   UserImageUploadAuthServiceEndpoint:
     Type: String
-    Description: Enter the domain that should handle the User Image Upload Authorization requests
+    Description: The domain that should handle the User Image Upload Authorization requests
     Default: ""
   UserImageServingEndpoint:
     Type: String
-    Description: Enter the domain that should handle requests for a specific user images
+    Description: The domain that should handle requests for a specific user images
     Default: ""
   ReferenceDocsEndpoint:
     Type: String
-    Description: Enter the domain that should handle Reference Docs requests
+    Description: The domain that should handle Reference Docs requests
     Default: ""
   DocsEndpoint:
     Type: String
-    Description: Enter the domain that should handle Docs requests
+    Description: The domain that should handle Docs requests
     Default: ""
 
 Conditions:
@@ -80,6 +83,7 @@ Conditions:
   AppEndpointSet: !Not [!Equals [!Ref AppEndpoint, ""]]
   TurnkeyEndpointSet: !Not [!Equals [!Ref TurnkeyEndpoint, ""]]
   ReactionsEndpointSet: !Not [!Equals [!Ref ReactionsEndpoint, ""]]
+  RothschildEndpointSet: !Not [!Equals [!Ref RothschildEndpoint, ""]]
   UserImageUploadAuthServiceEndpointSet: !Not [!Equals [!Ref UserImageUploadAuthServiceEndpoint, ""]]
   UserImageServingEndpointSet: !Not [!Equals [!Ref UserImageServingEndpoint, ""]]
   DocsEndpointSet: !Not [!Equals [!Ref DocsEndpoint, ""]]
@@ -206,6 +210,20 @@ Resources:
             -
               DomainName: !Ref ReactionsEndpoint
               Id: ReactionsEndpointOrigin
+              OriginPath: /Prod
+              CustomOriginConfig:
+                OriginSSLProtocols:
+                  - TLSv1.1
+                  - TLSv1.2
+                OriginProtocolPolicy: https-only
+                HTTPSPort: 443
+                HTTPPort: 80
+            - !Ref AWS::NoValue
+          - !If
+            - RothschildEndpointSet
+            -
+              DomainName: !Ref RothschildEndpoint
+              Id: RothschildEndpointOrigin
               OriginPath: /Prod
               CustomOriginConfig:
                 OriginSSLProtocols:
@@ -745,6 +763,39 @@ Resources:
                 - AuthorizeAs
               Cookies:
                 Forward: all
+          - !If
+            - RothschildEndpointSet
+            -
+              PathPattern: "/v2/*"
+              TargetOriginId: RothschildEndpointOrigin
+              ViewerProtocolPolicy: "redirect-to-https"
+              Compress: false
+              MinTTL: 0
+              MaxTTL: 31536000
+              DefaultTTL: 0
+              AllowedMethods:
+                - GET
+                - HEAD
+                - OPTIONS
+                - PUT
+                - POST
+                - PATCH
+                - DELETE
+              CachedMethods:
+                - GET
+                - HEAD
+              ForwardedValues:
+                QueryString: true
+                Headers:
+                  - Authorization
+                  - Content-Length
+                  - Content-Type
+                  - Content-MD5
+                  - Range
+                  - X-Requested-With
+                Cookies:
+                  Forward: all
+            - !Ref AWS::NoValue
           - !If
             - AppEndpointSet
             -

@@ -1,0 +1,143 @@
+Description: Rothschild helper module
+
+Parameters:
+  EnvironmentName:
+    Type: String
+    Description: Please select your environment
+    AllowedValues:
+      - Dev
+      - Staging
+      - Production
+  ProjectName:
+    Type: String
+    Description: The name of the project being built.  This name will be used on a number of resources.
+  # SAM config
+  LightrailDomain:
+    Type: String
+    Description: The domain of the Lightrail REST API
+    AllowedPattern: (\w+\.)+\w{3}
+  SecureConfigBucket:
+    Type: String
+    Description: The Name of the Configuration Bucket
+  SecureConfigKmsArn:
+    Type: String
+    Description: The ARN of the Configuration Bucket Encryption Key
+    AllowedPattern: arn:aws:kms:[a-z0-9-]+:\d{12}:key/[a-z0-9-]+
+  VpcUniqueNumber:
+    Type: Number
+    Description: The value to prefix the regions subnets with
+    Default: 1
+    MaxValue: 251
+    MinValue: 1
+  # CI config
+  GitHubOAuthToken:
+    Type: String
+    Description: GitHub oauth token.  This user must have admin access to the repo.
+    Default: "****"
+    NoEcho: true
+  CodeBuildImageNodeSSH:
+    Type: String
+    Description: Name of the docker image to build from.
+    Default: ""
+  CiKeysAccessRoleArn:
+    Type: String
+    Description: ARN for the role that can access our CI SSH keys bucket.
+    Default: ""
+  CiKeysBucketName:
+    Type: String
+    Description: S3 bucket with our CI SSH keys.
+    Default: ""
+
+Mappings:
+  Dev:
+    us-west-2:
+      GitHubBranch: dev-ci
+      GitHubBranchDest: ""
+      Capacity: low
+      RoleName: dev-Rothschild-RestFunctionRole-E6RW6Z3KCO8S
+      Endpoint: a2sbb0stq8.execute-api.us-west-2.amazonaws.com
+  Staging:
+    us-west-2:
+      GitHubBranch: staging
+      GitHubBranchDest: master
+      Capacity: low
+      RoleName: ""
+      Endpoint: ""
+  Production:
+    us-west-2:
+      GitHubBranch: master
+      GitHubBranchDest: ""
+      Capacity: high
+      RoleName: ""
+      Endpoint: ""
+
+Resources:
+  DbEncryptionKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: !Sub "${ProjectName} database encryption key"
+      KeyPolicy:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS:
+                !Sub "arn:aws:iam::${AWS::AccountId}:root"
+            Action:
+              - kms:*
+            Resource: "*"
+          - Effect: Allow
+            Principal:
+              AWS: "*"
+            Action:
+              - kms:Encrypt
+              - kms:Decrypt
+              - kms:ReEncrypt*
+              - kms:GenerateDataKey*
+              - kms:CreateGrant
+              - kms:ListGrants
+              - kms:DescribeKey
+            Resource: "*"
+            Condition:
+              StringEquals:
+                "kms:CallerAccount": !Ref "AWS::AccountId"
+                "kms:ViaService": !Sub "rds.${AWS::Region}.amazonaws.com"
+  EncryptionKeyAlias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: !Sub "alias/${AWS::StackName}-DbEncryptionKey"
+      TargetKeyId: !Ref DbEncryptionKey
+  CI:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://raw.githubusercontent.com/Giftbit/internal-rothschild/5838b4bef520eb9ff1c17e42b923b6e92faef6f9/infrastructure/ci.yaml
+      Parameters:
+        ProjectName: !Ref ProjectName
+        ProjectParameterOverrides: !Sub
+          - >
+            {
+              "Capacity": "${Capacity}",
+              "DbEncryptionKeyId": "${DbEncryptionKey}",
+              "LightrailDomain": "${LightrailDomain}",
+              "SecureConfigBucket": "${SecureConfigBucket}",
+              "SecureConfigKmsArn": "${SecureConfigKmsArn}",
+              "VpcUniqueNumber": "${VpcUniqueNumber}"
+            }
+          -
+            Capacity: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", Capacity]
+        GitHubOAuthToken: !Ref GitHubOAuthToken
+        GitHubBranch: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", GitHubBranch]
+        GitHubBranchDest: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", GitHubBranchDest]
+        CiKeysAccessRoleArn: !Ref CiKeysAccessRoleArn
+        CiKeysBucketName: !Ref CiKeysBucketName
+        CodeBuildImageNodeSSH: !Ref CodeBuildImageNodeSSH
+      Tags:
+        -
+          Key: Service
+          Value: Rothschild
+
+Outputs:
+  RoleName:
+    Value: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", RoleName]
+  Endpoint:
+    Value: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", Endpoint]

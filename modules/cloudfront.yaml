@@ -57,42 +57,45 @@ Parameters:
     Default: ""
   WebsiteEndpoint:
     Type: String
-    Description: Enter the domain that should handle the website requests
+    Description: The domain that should handle the website requests
   ReactEndpoint:
     Type: String
-    Description: Enter the domain that should handle the React app requests
+    Description: The domain that should handle the React app requests
     Default: ""
   ServicesEndpoint:
     Type: String
-    Description: Enter the domain that should handle the Grails services requests
+    Description: The domain that should handle the Grails services requests
   StatsEndpoint:
     Type: String
-    Description: Enter the domain that should handle the Stats requests
+    Description: The domain that should handle the Stats requests
   CardsSearchEndpoint:
     Type: String
-    Description: Enter the domain that should handle the Cards Search requests
+    Description: The domain that should handle the Cards Search requests
   KvsEndpoint:
     Type: String
-    Description: Enter the domain that should handle the KVS requests
+    Description: The domain that should handle the KVS requests
   TurnkeyEndpoint:
     Type: String
-    Description: Enter the domain that should handle the Turnkey requests
+    Description: The domain that should handle the Turnkey requests
   ReactionsEndpoint:
     Type: String
-    Description: Enter the domain that should handle the KVS requests
+    Description: The domain that should handle the KVS requests
+  RothschildEndpoint:
+    Type: String
+    Description: The domain that should handle Rothschild requests
   BatchEndpoint:
     Type: String
-    Description: Enter the domain that should handle the Batch requests
+    Description: The domain that should handle the Batch requests
   WidgetsEndpoint:
     Type: String
-    Description: Enter the domain that should handle the Widgets requests
+    Description: The domain that should handle the Widgets requests
     Default: ""
   UserImageUploadAuthServiceEndpoint:
     Type: String
-    Description: Enter the domain that should handle the User Image Upload Authorization requests
+    Description: The domain that should handle the User Image Upload Authorization requests
   UserImageServingEndpoint:
     Type: String
-    Description: Enter the domain that should handle requests for a specific user images
+    Description: The domain that should handle requests for a specific user images
   ConfigureAliases:
     Type: String
     AllowedValues:
@@ -105,7 +108,6 @@ Conditions:
   ViewerCertificateArnNotSet: !Equals [!Ref ViewerCertificateArn, ""]
   ReactEndpointSet: !Not [!Equals [!Ref ReactEndpoint, ""]]
   TurnkeyEndpointSet: !Not [!Equals [!Ref TurnkeyEndpoint, ""]]
-  ReactionsEndpointSet: !Not [!Equals [!Ref ReactionsEndpoint, ""]]
   UserImageUploadAuthServiceEndpointSet: !Not [!Equals [!Ref UserImageUploadAuthServiceEndpoint, ""]]
   UserImageServingEndpointSet: !Not [!Equals [!Ref UserImageServingEndpoint, ""]]
   WidgetsEndpointSet: !Not [!Equals [!Ref WidgetsEndpoint, ""]]
@@ -130,6 +132,7 @@ Resources:
         CardsSearchEndpoint: !Ref CardsSearchEndpoint
         KvsEndpoint: !Ref KvsEndpoint
         ReactionsEndpoint: !Ref ReactionsEndpoint
+        RothschildEndpoint: !Ref RothschildEndpoint
         ServicesEndpoint: !Ref ServicesEndpoint
         StatsEndpoint: !Ref StatsEndpoint
         TurnkeyEndpoint: !Ref TurnkeyEndpoint
@@ -152,6 +155,7 @@ Resources:
         CardsSearchEndpoint: !Ref CardsSearchEndpoint
         KvsEndpoint: !Ref KvsEndpoint
         ReactionsEndpoint: !Ref ReactionsEndpoint
+        RothschildEndpoint: !Ref RothschildEndpoint
         ServicesEndpoint: !Ref ServicesEndpoint
         StatsEndpoint: !Ref StatsEndpoint
         TurnkeyEndpoint: !Ref TurnkeyEndpoint
@@ -174,6 +178,7 @@ Resources:
         CardsSearchEndpoint: !Ref CardsSearchEndpoint
         KvsEndpoint: !Ref KvsEndpoint
         ReactionsEndpoint: !Ref ReactionsEndpoint
+        RothschildEndpoint: !Ref RothschildEndpoint
         ServicesEndpoint: !Ref ServicesEndpoint
         StatsEndpoint: !Ref StatsEndpoint
         TurnkeyEndpoint: !Ref TurnkeyEndpoint
