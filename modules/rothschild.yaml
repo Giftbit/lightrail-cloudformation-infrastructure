@@ -61,8 +61,8 @@ Mappings:
       GitHubBranch: staging
       GitHubBranchDest: master
       Capacity: low
-      RoleName: ""
-      Endpoint: ""
+      RoleName: staging-Rothschild-RestFunctionRole-1WP0HJUKSCI23
+      Endpoint: kvd0rpwjoa.execute-api.us-west-2.amazonaws.com
   Production:
     us-west-2:
       GitHubBranch: master
