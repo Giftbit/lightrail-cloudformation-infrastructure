@@ -68,8 +68,8 @@ Mappings:
       GitHubBranch: master
       GitHubBranchDest: ""
       Capacity: high
-      RoleName: ""
-      Endpoint: ""
+      RoleName: production-Rothschild-RestFunctionRole-OCVSS4TEU6MY
+      Endpoint: qaljzxzk0l.execute-api.us-west-2.amazonaws.com
 
 Resources:
   DbEncryptionKey:
