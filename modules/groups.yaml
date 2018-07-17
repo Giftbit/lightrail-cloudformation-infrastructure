@@ -294,23 +294,6 @@ Resources:
       Groups:
         - !Ref AllEmployees
         - !Ref FrontEndDevelopersGroup
-  GrahamB:
-    Type: AWS::IAM::User
-    Properties:
-      UserName: graham.b
-      Groups:
-        - !Ref AllEmployees
-        - !Ref BackEndDevelopersGroup
-        - !Ref BastionHostAccessGroup
-  JamieS:
-    Type: AWS::IAM::User
-    Properties:
-      UserName: jamie.s
-      Groups:
-        - !Ref AllEmployees
-        - !Ref BackEndDevelopersGroup
-        - !Ref FrontEndDevelopersGroup
-        - !Ref BastionHostAccessGroup
   JamieT:
     Type: AWS::IAM::User
     Properties:
@@ -339,6 +322,7 @@ Resources:
       UserName: tana.j
       Groups:
         - !Ref AllEmployees
+        - !Ref BackEndDevelopersGroup
   TimJ:
     Type: AWS::IAM::User
     Properties:
