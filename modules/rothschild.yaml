@@ -110,7 +110,7 @@ Resources:
   CI:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://raw.githubusercontent.com/Giftbit/internal-rothschild/dfa75eb8bf22c40aa4b8dacd292cfe6e16d67f9a/infrastructure/ci.yaml
+      TemplateURL: https://raw.githubusercontent.com/Giftbit/internal-rothschild/72c77d142f2cd6fe843cd4e606f8f8a4913798e9/infrastructure/ci.yaml
       Parameters:
         ProjectName: !Ref ProjectName
         ProjectParameterOverrides: !Sub
