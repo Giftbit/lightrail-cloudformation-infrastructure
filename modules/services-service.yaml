@@ -300,7 +300,6 @@ Resources:
                   - cloudformation:DescribeStackEvents
                   - cloudformation:DeleteStack
                   - cloudformation:DescribeChangeSet
-                  - cloudformation:GetTemplateSummary
                 Resource:
                   - !Sub "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${ParentStackName}-Services/*"
               -
@@ -320,12 +319,12 @@ Resources:
                 Effect: Allow
                 Action:
                   - cloudformation:DescribeStacks
+                  - cloudformation:GetTemplateSummary
                 Resource: "*"
               -
                 Effect: Allow
                 Action:
                   - cloudformation:DescribeStackResource
-                  - cloudformation:GetTemplateSummary
                 Resource:
                   - !Sub "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${ParentStackName}/*"
               -
