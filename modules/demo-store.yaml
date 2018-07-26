@@ -154,6 +154,7 @@ Resources:
                 Action:
                   - cloudformation:CreateChangeSet
                   - cloudformation:ExecuteChangeSet
+                  - cloudformation:GetTemplateSummary
                   - cloudformation:UpdateStack
                   - cloudformation:DescribeStackEvents
                   - cloudformation:DeleteStack
