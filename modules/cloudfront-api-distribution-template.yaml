@@ -500,6 +500,39 @@ Resources:
                 Cookies:
                   Forward: all
             - !Ref AWS::NoValue
+          - !If
+            - TurnkeyEndpointSet
+            -
+              PathPattern: "/v2/turnkey/*"
+              TargetOriginId: TurnkeyEndpointOrigin
+              ViewerProtocolPolicy: "redirect-to-https"
+              Compress: false
+              MinTTL: 0
+              MaxTTL: 31536000
+              DefaultTTL: 0
+              AllowedMethods:
+                - GET
+                - HEAD
+                - OPTIONS
+                - PUT
+                - POST
+                - PATCH
+                - DELETE
+              CachedMethods:
+                - GET
+                - HEAD
+              ForwardedValues:
+                QueryString: true
+                Headers:
+                  - Authorization
+                  - Content-Length
+                  - Content-Type
+                  - Content-MD5
+                  - Range
+                  - X-Requested-With
+                Cookies:
+                  Forward: all
+            - !Ref AWS::NoValue
           -
             PathPattern: "/v1/dailystats/*"
             TargetOriginId: StatsEndpointOrigin
