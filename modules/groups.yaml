@@ -323,6 +323,7 @@ Resources:
       Groups:
         - !Ref AllEmployees
         - !Ref BackEndDevelopersGroup
+        - !Ref BastionHostAccessGroup
   TimJ:
     Type: AWS::IAM::User
     Properties:
