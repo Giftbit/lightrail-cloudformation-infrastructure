@@ -576,7 +576,7 @@ Resources:
       RouteTableId: !Ref PrivateSubnetRouteTable
       SubnetId: !Ref SubnetPrivateC
 
-  # RDS Subnets (These are neither publically accessible, nor have outgoing internet access)
+  # RDS Subnets (These are neither publicly accessible, nor have outgoing internet access)
   SubnetRdsA:
     Type: AWS::EC2::Subnet
     Properties:
