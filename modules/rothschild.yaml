@@ -12,6 +12,9 @@ Parameters:
     Type: String
     Description: The name of the project being built.  This name will be used on a number of resources.
   # SAM config
+  BastionHostAuthorizedUsersGroup:
+    Type: String
+    Description: The IAM group authorized to access the bastion host for the VPC
   LightrailDomain:
     Type: String
     Description: The domain of the Lightrail REST API
@@ -116,6 +119,7 @@ Resources:
         ProjectParameterOverrides: !Sub
           - >
             {
+              "BastionHostAuthorizedUsersGroup": "${BastionHostAuthorizedUsersGroup}",
               "Capacity": "${Capacity}",
               "DbEncryptionKeyId": "${DbEncryptionKey}",
               "LightrailDomain": "${LightrailDomain}",
