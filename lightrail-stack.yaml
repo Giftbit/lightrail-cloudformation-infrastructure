@@ -851,6 +851,7 @@ Resources:
       Parameters:
         EnvironmentName: !Ref EnvironmentName
         ProjectName: !Sub "${AWS::StackName}-Rothschild"
+        BastionHostAuthorizedUsersGroup: !GetAtt Groups.Outputs.BastionHostAccessGroupName
         LightrailDomain: !Sub "api.${LightrailDns.Outputs.HostedDomainName}"
         SecureConfigBucket: !GetAtt LightrailSecureConfig.Outputs.BucketName
         SecureConfigKmsArn: !GetAtt LightrailSecureConfig.Outputs.EncryptionKeyArn
