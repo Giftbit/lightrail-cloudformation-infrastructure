@@ -198,6 +198,10 @@ Resources:
                   - kms:DescribeKey
                 Resource:
                   - !Ref SecureDownloadBucketKeyArn
+              -  # Cloudwatch Access
+                Effect: Allow
+                Action:
+                  - cloudwatch:PutMetricData
   # Services RDS Instance
   RdsInstance:
     Type: "AWS::RDS::DBInstance"
