@@ -202,6 +202,7 @@ Resources:
                 Effect: Allow
                 Action:
                   - cloudwatch:PutMetricData
+                Resource: "*"
   # Services RDS Instance
   RdsInstance:
     Type: "AWS::RDS::DBInstance"
