@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: "Redirect subdomain to lightrail.com"
+Description: "Redirect subdomain to www"
 
 Parameters:
   BaseDomainName:
@@ -23,13 +23,14 @@ Parameters:
 
 Conditions:
   ViewerCertificateArnSet: !Not [!Equals [!Ref ViewerCertificateArn, ""]]
+  ViewerCertificateArnNotSet: !Equals [!Ref ViewerCertificateArn, ""]
 
 Resources:
   SubdomainRecordSet:
     Type: AWS::Route53::RecordSet
     Properties:
       Comment: !Sub "Redirect ${SubdomainName}.${BaseDomainName}."
-      HostedZoneName: !Sub "${SubdomainName}.${BaseDomainName}."
+      HostedZoneName: !Sub "${BaseDomainName}."
       Name: !Sub "${SubdomainName}.${BaseDomainName}."
       Type: A
       AliasTarget:
@@ -57,7 +58,7 @@ Resources:
     Properties:
       DistributionConfig:
         Aliases:
-          - !Sub "${SubdomainName}.${BaseDomainName}."
+          - !Sub "${SubdomainName}.${BaseDomainName}"
         Enabled: true
         Comment: !Sub "Managed with CloudFormation Stack ${AWS::StackName}"
         PriceClass: !Ref PriceClass
