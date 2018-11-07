@@ -298,6 +298,7 @@ Resources:
       Parameters:
         BaseDomainName: !Ref BaseDomainName
         SubdomainName: try
+        ViewerCertificateArn: !Ref ViewerCertificateArn
         PriceClass: !Ref PriceClass
   BlogSubdomainRedirect:
     Type: AWS::CloudFormation::Stack
@@ -306,6 +307,7 @@ Resources:
       Parameters:
         BaseDomainName: !Ref BaseDomainName
         SubdomainName: blog
+        ViewerCertificateArn: !Ref ViewerCertificateArn
         PriceClass: !Ref PriceClass
 
 Outputs:

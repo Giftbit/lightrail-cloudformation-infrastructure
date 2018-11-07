@@ -4,10 +4,14 @@ Description: "Redirect subdomain to lightrail.com"
 Parameters:
   BaseDomainName:
     Type: String
-    Description: The base domain that you want to and from
+    Description: The base domain that you want to redirect to and from
   SubdomainName:
     Type: String
     Description: The subdomain to redirect all traffic from
+  ViewerCertificateArn:
+    Type: String
+    Description: Arn of the AWS Certificate Manager cert for the CloudFront distribution
+    Default: ""
   PriceClass:
     Type: String
     Description: CloudFront price class
@@ -16,6 +20,9 @@ Parameters:
     - PriceClass_All
     - PriceClass_100
     - PriceClass_200
+
+Conditions:
+  ViewerCertificateArnSet: !Not [!Equals [!Ref ViewerCertificateArn, ""]]
 
 Resources:
   SubdomainRecordSet:
@@ -45,14 +52,6 @@ Resources:
             HostName: !Sub "www.${BaseDomainName}"
             ReplaceKeyWith: ""
             HttpRedirectCode: 302
-  SubdomainCert:
-    Type: AWS::CertificateManager::Certificate
-    Properties:
-      DomainName: !Sub "${SubdomainName}.${BaseDomainName}"
-      DomainValidationOptions:
-      - DomainName: !Sub "${SubdomainName}.${BaseDomainName}"
-        ValidationDomain: !Ref BaseDomainName
-      ValidationMethod: DNS
   SubdomainDistribution:
     Type: AWS::CloudFront::Distribution
     Properties:
@@ -64,8 +63,9 @@ Resources:
         PriceClass: !Ref PriceClass
         DefaultRootObject: index.html
         ViewerCertificate:
-          AcmCertificateArn: !Ref SubdomainCert
-          SslSupportMethod: sni-only
+          AcmCertificateArn: !If [ViewerCertificateArnSet, !Ref ViewerCertificateArn, !Ref "AWS::NoValue"]
+          CloudFrontDefaultCertificate: !If [ViewerCertificateArnNotSet, true, !Ref "AWS::NoValue"]
+          SslSupportMethod: !If [ViewerCertificateArnSet, "sni-only", !Ref "AWS::NoValue"]
           MinimumProtocolVersion: TLSv1.1_2016
         Origins:
         - DomainName: !Select [2, !Split ["/", !GetAtt SubdomainBucket.WebsiteURL]]
