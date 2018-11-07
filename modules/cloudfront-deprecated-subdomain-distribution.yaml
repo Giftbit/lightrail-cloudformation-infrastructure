@@ -17,9 +17,9 @@ Parameters:
     Description: CloudFront price class
     Default: PriceClass_100
     AllowedValues:
-    - PriceClass_All
-    - PriceClass_100
-    - PriceClass_200
+      - PriceClass_All
+      - PriceClass_100
+      - PriceClass_200
 
 Conditions:
   ViewerCertificateArnSet: !Not [!Equals [!Ref ViewerCertificateArn, ""]]
@@ -47,11 +47,11 @@ Resources:
         IndexDocument: index.html
         ErrorDocument: error.html
         RoutingRules:
-        - RedirectRule:
-            Protocol: https
-            HostName: !Sub "www.${BaseDomainName}"
-            ReplaceKeyWith: ""
-            HttpRedirectCode: 302
+          - RedirectRule:
+              Protocol: https
+              HostName: !Sub "www.${BaseDomainName}"
+              ReplaceKeyWith: ""
+              HttpRedirectCode: 302
   SubdomainDistribution:
     Type: AWS::CloudFront::Distribution
     Properties:
@@ -68,24 +68,24 @@ Resources:
           SslSupportMethod: !If [ViewerCertificateArnSet, "sni-only", !Ref "AWS::NoValue"]
           MinimumProtocolVersion: TLSv1.1_2016
         Origins:
-        - DomainName: !Select [2, !Split ["/", !GetAtt SubdomainBucket.WebsiteURL]]
-          Id: RedirectOrigin
-          CustomOriginConfig:
-            OriginSSLProtocols:
-            - TLSv1.1
-            - TLSv1.2
-            OriginProtocolPolicy: http-only
-            HTTPSPort: 443
-            HTTPPort: 80
+          - DomainName: !Select [2, !Split ["/", !GetAtt SubdomainBucket.WebsiteURL]]
+            Id: RedirectOrigin
+            CustomOriginConfig:
+              OriginSSLProtocols:
+              - TLSv1.1
+              - TLSv1.2
+              OriginProtocolPolicy: http-only
+              HTTPSPort: 443
+              HTTPPort: 80
         DefaultCacheBehavior:
           TargetOriginId: RedirectOrigin
           ViewerProtocolPolicy: allow-all
           AllowedMethods:
-          - GET
-          - HEAD
+            - GET
+            - HEAD
           CachedMethods:
-          - GET
-          - HEAD
+            - GET
+            - HEAD
           MinTTL: 0
           MaxTTL: 31536000
           DefaultTTL: 86400
