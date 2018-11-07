@@ -84,33 +84,6 @@ Resources:
       TTL: 300
       ResourceRecords:
         - '"k=rsa; t=s; p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDPtW5iwpXVPiH5FzJ7Nrl8USzuY9zqqzjE0D1r04xDN6qwziDnmgcFNNfMewVKN2D1O+2J9N14hRprzByFwfQW76yojh54Xu3uSbQ3JP0A7k8o8GutRF8zbFUA8n0ZH2y0cIEjMliXY4W4LwPA7m4q0ObmvSjhd63O9d8z1XkUBwIDAQAB"'
-  Blog:
-    Type: AWS::Route53::RecordSet
-    Properties:
-      HostedZoneName: !Sub "${BaseDomain}."
-      Name: !Sub "blog.${BaseDomain}."
-      Type: CNAME
-      TTL: 300
-      ResourceRecords:
-        - 4092757.group7.sites.hubspot.net
-  BlogSSLVerification:
-    Type: AWS::Route53::RecordSet
-    Properties:
-      HostedZoneName: !Sub "${BaseDomain}."
-      Name: !Sub "f55a892d1901bfae09c1c4a82d15d1b2.${BaseDomain}."
-      Type: CNAME
-      TTL: 300
-      ResourceRecords:
-        - fd2c47384a09eec5c68758c346e1fc3524a7964d.comodoca.com
-  Try:
-    Type: AWS::Route53::RecordSet
-    Properties:
-      HostedZoneName: !Sub "${BaseDomain}."
-      Name: !Sub "try.${BaseDomain}."
-      Type: CNAME
-      TTL: 300
-      ResourceRecords:
-        - 4092757.group7.sites.hubspot.net
   WooCommerceTest:
     Type: AWS::Route53::RecordSet
     Properties:

@@ -1,0 +1,95 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Redirect subdomain to lightrail.com"
+
+Parameters:
+  BaseDomainName:
+    Type: String
+    Description: The base domain that you want to redirect to and from
+  SubdomainName:
+    Type: String
+    Description: The subdomain to redirect all traffic from
+  ViewerCertificateArn:
+    Type: String
+    Description: Arn of the AWS Certificate Manager cert for the CloudFront distribution
+    Default: ""
+  PriceClass:
+    Type: String
+    Description: CloudFront price class
+    Default: PriceClass_100
+    AllowedValues:
+    - PriceClass_All
+    - PriceClass_100
+    - PriceClass_200
+
+Conditions:
+  ViewerCertificateArnSet: !Not [!Equals [!Ref ViewerCertificateArn, ""]]
+
+Resources:
+  SubdomainRecordSet:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      Comment: !Sub "Redirect ${SubdomainName}.${BaseDomainName}."
+      HostedZoneName: !Sub "${SubdomainName}.${BaseDomainName}."
+      Name: !Sub "${SubdomainName}.${BaseDomainName}."
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt SubdomainDistribution.DomainName
+        HostedZoneId: Z2FDTNDATAQYW2  # This is the Route53 HostedZoneId for CloudFront. See http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-route53-aliastarget.html
+  SubdomainBucket:
+    # s3 bucket that acts as a website, redirecting all traffic to www.$domain
+    # this must have the same name as the domain it redirects from
+    # see https://stackoverflow.com/questions/10115799/set-up-dns-based-url-forwarding-in-amazon-route53
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "${SubdomainName}.${BaseDomainName}"
+      AccessControl: PublicRead
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: error.html
+        RoutingRules:
+        - RedirectRule:
+            Protocol: https
+            HostName: !Sub "www.${BaseDomainName}"
+            ReplaceKeyWith: ""
+            HttpRedirectCode: 302
+  SubdomainDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Aliases:
+        - !Sub "${SubdomainName}.${BaseDomainName}."
+        Enabled: true
+        Comment: !Sub "Managed with CloudFormation Stack ${AWS::StackName}"
+        PriceClass: !Ref PriceClass
+        DefaultRootObject: index.html
+        ViewerCertificate:
+          AcmCertificateArn: !If [ViewerCertificateArnSet, !Ref ViewerCertificateArn, !Ref "AWS::NoValue"]
+          CloudFrontDefaultCertificate: !If [ViewerCertificateArnNotSet, true, !Ref "AWS::NoValue"]
+          SslSupportMethod: !If [ViewerCertificateArnSet, "sni-only", !Ref "AWS::NoValue"]
+          MinimumProtocolVersion: TLSv1.1_2016
+        Origins:
+        - DomainName: !Select [2, !Split ["/", !GetAtt SubdomainBucket.WebsiteURL]]
+          Id: RedirectOrigin
+          CustomOriginConfig:
+            OriginSSLProtocols:
+            - TLSv1.1
+            - TLSv1.2
+            OriginProtocolPolicy: http-only
+            HTTPSPort: 443
+            HTTPPort: 80
+        DefaultCacheBehavior:
+          TargetOriginId: RedirectOrigin
+          ViewerProtocolPolicy: allow-all
+          AllowedMethods:
+          - GET
+          - HEAD
+          CachedMethods:
+          - GET
+          - HEAD
+          MinTTL: 0
+          MaxTTL: 31536000
+          DefaultTTL: 86400
+          ForwardedValues:
+            QueryString: true
+            Cookies:
+              Forward: none
