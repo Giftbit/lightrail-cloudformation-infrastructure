@@ -52,6 +52,7 @@ Resources:
       DomainValidationOptions:
       - DomainName: !Sub "${SubdomainName}.${BaseDomainName}"
         ValidationDomain: !Ref BaseDomainName
+      ValidationMethod: DNS
   SubdomainDistribution:
     Type: AWS::CloudFront::Distribution
     Properties:
