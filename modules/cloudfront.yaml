@@ -291,24 +291,24 @@ Resources:
       AliasTarget:
         DNSName: !GetAtt RedirectDistribution.DomainName
         HostedZoneId: Z2FDTNDATAQYW2  # This is the Route53 HostedZoneId for CloudFront. See http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-route53-aliastarget.html
-  TrySubdomainRedirect:
-    Type: AWS::CloudFormation::Stack
-    Properties:
-      TemplateURL: ./cloudfront-deprecated-subdomain-distribution.yaml
-      Parameters:
-        BaseDomainName: !Ref BaseDomainName
-        SubdomainName: try
-        ViewerCertificateArn: !Ref ViewerCertificateArn
-        PriceClass: !Ref PriceClass
-  BlogSubdomainRedirect:
-    Type: AWS::CloudFormation::Stack
-    Properties:
-      TemplateURL: ./cloudfront-deprecated-subdomain-distribution.yaml
-      Parameters:
-        BaseDomainName: !Ref BaseDomainName
-        SubdomainName: blog
-        ViewerCertificateArn: !Ref ViewerCertificateArn
-        PriceClass: !Ref PriceClass
+#  TrySubdomainRedirect:
+#    Type: AWS::CloudFormation::Stack
+#    Properties:
+#      TemplateURL: ./cloudfront-deprecated-subdomain-distribution.yaml
+#      Parameters:
+#        BaseDomainName: !Ref BaseDomainName
+#        SubdomainName: try
+#        ViewerCertificateArn: !Ref ViewerCertificateArn
+#        PriceClass: !Ref PriceClass
+#  BlogSubdomainRedirect:
+#    Type: AWS::CloudFormation::Stack
+#    Properties:
+#      TemplateURL: ./cloudfront-deprecated-subdomain-distribution.yaml
+#      Parameters:
+#        BaseDomainName: !Ref BaseDomainName
+#        SubdomainName: blog
+#        ViewerCertificateArn: !Ref ViewerCertificateArn
+#        PriceClass: !Ref PriceClass
 
 Outputs:
   AppDomain:
