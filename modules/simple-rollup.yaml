@@ -99,8 +99,7 @@ Resources:
               "MessageBucketKmsArn": "${MessageBucketKmsArn}",
               "Capacity": "${Capacity}"
             }
-          -
-            Capacity: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", Capacity]
+          - Capacity: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", Capacity]
         GitHubBranch: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", GitHubBranch]
         GitHubBranchDest: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", GitHubBranchDest]
         GitHubOAuthToken: !Ref GitHubOAuthToken

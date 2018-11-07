@@ -56,8 +56,7 @@ Resources:
       Bucket: !Ref KeysBucket
       PolicyDocument:
         Statement:
-          -
-            Effect: Deny
+          - Effect: Deny
             Action:
               - s3:PutObject
             Resource:
@@ -75,8 +74,7 @@ Resources:
       KeyPolicy:
         Version: "2012-10-17"
         Statement:
-          -
-            Effect: "Allow"
+          - Effect: "Allow"
             Principal:
               AWS:
                 - !Sub "arn:aws:iam::${AWS::AccountId}:root"
@@ -99,8 +97,7 @@ Resources:
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
-          -
-            Effect: Allow
+          - Effect: Allow
             Action:
               - sts:AssumeRole
             Principal:
@@ -194,13 +191,11 @@ Resources:
       PolicyDocument:
         Version: 2012-10-17
         Statement:
-          -
-            Effect: Allow
+          - Effect: Allow
             Action:
               - ecr:GetAuthorizationToken
             Resource: "*"
-          -
-            Effect: Allow
+          - Effect: Allow
             Action:
               - ecr:InitiateLayerUpload
               - ecr:UploadLayerPart

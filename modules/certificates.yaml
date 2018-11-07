@@ -15,15 +15,18 @@ Resources:
         - !Sub "www.${BaseDomain}"
         - !Sub "api.${BaseDomain}"
         - !Sub "embed.${BaseDomain}"
+        - !Sub "blog.${BaseDomain}"
+        - !Sub "try.${BaseDomain}"
       DomainValidationOptions:
-        -
-          DomainName: !Sub "www.${BaseDomain}"
+        - DomainName: !Sub "www.${BaseDomain}"
           ValidationDomain: !Ref BaseDomain
-        -
-          DomainName: !Sub "api.${BaseDomain}"
+        - DomainName: !Sub "api.${BaseDomain}"
           ValidationDomain: !Ref BaseDomain
-        -
-          DomainName: !Sub "embed.${BaseDomain}"
+        - DomainName: !Sub "embed.${BaseDomain}"
+          ValidationDomain: !Ref BaseDomain
+        - DomainName: !Sub "blog.${BaseDomain}"
+          ValidationDomain: !Ref BaseDomain
+        - DomainName: !Sub "try.${BaseDomain}"
           ValidationDomain: !Ref BaseDomain
 
 Outputs:
