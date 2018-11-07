@@ -57,7 +57,7 @@ Resources:
     Properties:
       DistributionConfig:
         Aliases:
-        - !Sub "${SubdomainName}.${BaseDomainName}."
+          - !Sub "${SubdomainName}.${BaseDomainName}."
         Enabled: true
         Comment: !Sub "Managed with CloudFormation Stack ${AWS::StackName}"
         PriceClass: !Ref PriceClass
@@ -72,8 +72,8 @@ Resources:
             Id: RedirectOrigin
             CustomOriginConfig:
               OriginSSLProtocols:
-              - TLSv1.1
-              - TLSv1.2
+                - TLSv1.1
+                - TLSv1.2
               OriginProtocolPolicy: http-only
               HTTPSPort: 443
               HTTPPort: 80
