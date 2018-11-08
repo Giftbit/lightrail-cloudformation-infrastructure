@@ -84,9 +84,9 @@ Mappings:
     Dev:
       ACMCertificateArn: arn:aws:acm:us-east-1:757264843183:certificate/903ec569-594d-4a58-aa5a-256ff12d46dd
     Staging:
-      ACMCertificateArn: arn:aws:acm:us-east-1:939876203001:certificate/ef953a50-9ca2-4083-b404-3551a3bb281d
+      ACMCertificateArn: arn:aws:acm:us-east-1:939876203001:certificate/4fe67780-a7aa-4555-9df9-a0f572c7bff0
     Production:
-      ACMCertificateArn: arn:aws:acm:us-east-1:212888042843:certificate/14d77a41-b2ce-405d-9cde-44f15b1188bb
+      ACMCertificateArn: arn:aws:acm:us-east-1:212888042843:certificate/4c7840f3-b6fb-4dfa-bb9b-a09d6aa46bf5
   EcsCluster:
     Dev-us-west-2:
       InstanceType: t2.medium
