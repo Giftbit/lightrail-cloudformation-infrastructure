@@ -115,11 +115,9 @@ Resources:
     Properties:
       RepositoryPolicyText: !If
         - ShouldConfigureAccountECRAccess
-        -
-          Version: 2012-10-17
+        - Version: 2012-10-17
           Statement:
-            -
-              Sid: RepositoryAccess
+            - Sid: RepositoryAccess
               Effect: Allow
               Principal:
                 AWS: !Split [",", !Ref AccountsToGrantEcrReadAccess]
@@ -136,16 +134,14 @@ Resources:
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
-          -
-            Effect: Allow
+          - Effect: Allow
             Action:
               - sts:AssumeRole
             Principal:
               Service:
                 - ecs-tasks.amazonaws.com
       Policies:
-        -
-          PolicyName: ServicesAccess
+        - PolicyName: ServicesAccess
           PolicyDocument:
             Version: 2012-10-17
             Statement:
@@ -169,8 +165,7 @@ Resources:
                   - !Ref SecureConfigKmsArn
               - !If  # SES Access
                 - ShouldConfigureSes
-                -
-                  Effect: Allow
+                - Effect: Allow
                   Action:
                     - ses:SendEmail
                     - ses:SendRawEmail
@@ -227,8 +222,7 @@ Resources:
       OptionGroupName: default:mysql-5-6
       DBParameterGroupName: default.mysql5.6
       Tags:
-        -
-          Key: Name
+        - Key: Name
           Value: !Sub "Lightrail ${EnvironmentName} Services RDS"
   RdsEncryptionKey:
     Type: AWS::KMS::Key
@@ -237,8 +231,7 @@ Resources:
       KeyPolicy:
         Version: 2012-10-17
         Statement:
-          -
-            Effect: Allow
+          - Effect: Allow
             Principal:
               AWS:
                 !Sub "arn:aws:iam::${AWS::AccountId}:root"
@@ -256,8 +249,7 @@ Resources:
       DBSubnetGroupDescription: !Sub "Lightrail ${EnvironmentName} Subnet Group"
       SubnetIds: !Split [",", !Ref VpcRdsSubnetIds]
       Tags:
-        -
-          Key: Service
+        - Key: Service
           Value: RDS
   RdsVpcZoneRecord:
     Type: "AWS::Route53::RecordSet"
@@ -275,8 +267,7 @@ Resources:
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
-          -
-            Effect: "Allow"
+          - Effect: "Allow"
             Action:
               - "sts:AssumeRole"
             Principal:
@@ -286,18 +277,15 @@ Resources:
               Bool:
                 "aws:MultiFactorAuthPresent": true
       Policies:
-        -
-          PolicyName: CloudFormationUpdateAccess
+        - PolicyName: CloudFormationUpdateAccess
           PolicyDocument:
             Version: 2012-10-17
             Statement:
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - ecr:GetAuthorizationToken
                 Resource: "*"
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - cloudformation:CreateChangeSet
                   - cloudformation:ExecuteChangeSet
@@ -307,8 +295,7 @@ Resources:
                   - cloudformation:DescribeChangeSet
                 Resource:
                   - !Sub "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${ParentStackName}-Services/*"
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - ecr:GetDownloadUrlForLayer
                   - ecr:BatchGetImage
@@ -320,20 +307,17 @@ Resources:
                     - ShouldUseEcrRepoOverride
                     - !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", EcrRepoArnOverride]
                     - !Sub "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/${EcrRepo}"
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - cloudformation:DescribeStacks
                   - cloudformation:GetTemplateSummary
                 Resource: "*"
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - cloudformation:DescribeStackResource
                 Resource:
                   - !Sub "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${ParentStackName}/*"
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - ecs:RegisterTaskDefinition
                   - ecs:DeregisterTaskDefinition
@@ -342,15 +326,13 @@ Resources:
                   - ecs:UpdateService
                   - ecs:DeleteService
                 Resource: "*"
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - iam:PassRole
                 Resource:
                   - !GetAtt Role.Arn
                   - !Ref LoadBalancingServiceRoleArn
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - rds:DescribeDBInstances
                 Resource:
@@ -365,14 +347,12 @@ Resources:
       PolicyDocument:
         Version: 2012-10-17
         Statement:
-          -
-            Effect: Allow
+          - Effect: Allow
             Action:
               - sts:AssumeRole
             Resource:
               - !GetAtt DeploymentRole.Arn
-          -
-            Effect: Allow
+          - Effect: Allow
             Action:
               - ecr:ListImages
             Resource:

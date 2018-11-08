@@ -68,8 +68,7 @@ Resources:
       PolicyDocument:
         Version: 2012-10-17
         Statement:
-          -
-            Effect: Allow
+          - Effect: Allow
             Action:
               - s3:ListBucket
               - s3:GetBucket*
@@ -91,8 +90,7 @@ Resources:
       Bucket: !Ref BuildArtifactBucket
       PolicyDocument:
         Statement:
-          -
-            Effect: Allow
+          - Effect: Allow
             Action:
               - s3:ListBucket
               - s3:GetObject*
@@ -111,8 +109,7 @@ Resources:
       PolicyDocument:
         Version: 2012-10-17
         Statement:
-          -
-            Effect: Allow
+          - Effect: Allow
             Action:
               - s3:ListBucket
               - s3:GetBucket*
@@ -140,8 +137,7 @@ Resources:
       PolicyDocument:
         Version: 2012-10-17
         Statement:
-          -
-            Effect: Allow
+          - Effect: Allow
             Action:
               - s3:ListBucket
               - s3:GetBucket*

@@ -67,8 +67,7 @@ Resources:
         Statement:
           - !If
             - CodePipelineAccountIdSet
-            -
-              Effect: "Allow"
+            - Effect: "Allow"
               Action:
                 - "sts:AssumeRole"
               Principal:

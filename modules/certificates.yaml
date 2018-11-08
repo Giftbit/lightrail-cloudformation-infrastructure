@@ -6,6 +6,9 @@ Parameters:
     Type: String
     Description: The Base Domain Name that you want to use
 
+# SSL certs have to be in us-east-1.  We deploy this stack manually there to create
+# the certificates.
+
 Resources:
   Certificate:
     Type: AWS::CertificateManager::Certificate
@@ -28,6 +31,7 @@ Resources:
           ValidationDomain: !Ref BaseDomain
         - DomainName: !Sub "try.${BaseDomain}"
           ValidationDomain: !Ref BaseDomain
+      ValidationMethod: DNS
 
 Outputs:
   CertificateArn:

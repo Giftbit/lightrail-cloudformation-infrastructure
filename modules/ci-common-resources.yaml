@@ -167,8 +167,7 @@ Resources:
       RepositoryPolicyText:
         Version: 2012-10-17
         Statement:
-          -
-            Sid: CodeBuildAccess
+          - Sid: CodeBuildAccess
             Effect: Allow
             Principal:
               AWS:

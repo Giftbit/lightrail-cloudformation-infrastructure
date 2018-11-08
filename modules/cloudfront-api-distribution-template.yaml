@@ -108,15 +108,13 @@ Resources:
         CustomErrorResponses:
           # By Default, CloudFront caches the following Error codes for 5 Minutes: 400, 403, 404, 405, 414, 500, 501, 502, 503, 504
           # See http://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/HTTPStatusCodes.html#HTTPStatusCodes-cached-errors
-          -
-            ErrorCode: 404
+          - ErrorCode: 404
             ErrorCachingMinTTL: 0  # By default, CloudFront will cache
         Logging:
           Bucket: !Ref LoggingBucketDomainName
           Prefix: !Ref AliasSubDomain
         Origins:
-          -
-            DomainName: !Ref DefaultEndpoint
+          - DomainName: !Ref DefaultEndpoint
             Id: DefaultEndpointOrigin
             CustomOriginConfig:
               OriginSSLProtocols:
@@ -127,8 +125,7 @@ Resources:
               HTTPPort: 80
           - !If
             - AppEndpointSet
-            -
-              DomainName: !Ref AppEndpoint
+            - DomainName: !Ref AppEndpoint
               Id: AppEndpointOrigin
               CustomOriginConfig:
                 OriginSSLProtocols:
@@ -138,8 +135,7 @@ Resources:
                 HTTPSPort: 443
                 HTTPPort: 80
             - !Ref AWS::NoValue
-          -
-            DomainName: !Ref ServicesEndpoint
+          - DomainName: !Ref ServicesEndpoint
             Id: ServicesEndpointOrigin
             CustomOriginConfig:
               OriginSSLProtocols:
@@ -148,8 +144,7 @@ Resources:
               OriginProtocolPolicy: https-only
               HTTPSPort: 443
               HTTPPort: 80
-          -
-            DomainName: !Ref StatsEndpoint
+          - DomainName: !Ref StatsEndpoint
             Id: StatsEndpointOrigin
             OriginPath: /Prod
             CustomOriginConfig:
@@ -159,8 +154,7 @@ Resources:
               OriginProtocolPolicy: https-only
               HTTPSPort: 443
               HTTPPort: 80
-          -
-            DomainName: !Ref BatchEndpoint
+          - DomainName: !Ref BatchEndpoint
             Id: BatchEndpointOrigin
             CustomOriginConfig:
               OriginSSLProtocols:
@@ -169,8 +163,7 @@ Resources:
               OriginProtocolPolicy: https-only
               HTTPSPort: 443
               HTTPPort: 80
-          -
-            DomainName: !Ref CardsSearchEndpoint
+          - DomainName: !Ref CardsSearchEndpoint
             Id: CardsSearchEndpointOrigin
             OriginPath: /Prod
             CustomOriginConfig:
@@ -180,8 +173,7 @@ Resources:
               OriginProtocolPolicy: https-only
               HTTPSPort: 443
               HTTPPort: 80
-          -
-            DomainName: !Ref KvsEndpoint
+          - DomainName: !Ref KvsEndpoint
             Id: KvsEndpointOrigin
             OriginPath: /Prod
             CustomOriginConfig:
@@ -193,8 +185,7 @@ Resources:
               HTTPPort: 80
           - !If
             - TurnkeyEndpointSet
-            -
-              DomainName: !Ref TurnkeyEndpoint
+            - DomainName: !Ref TurnkeyEndpoint
               Id: TurnkeyEndpointOrigin
               OriginPath: /Prod
               CustomOriginConfig:
@@ -207,8 +198,7 @@ Resources:
             - !Ref AWS::NoValue
           - !If
             - ReactionsEndpointSet
-            -
-              DomainName: !Ref ReactionsEndpoint
+            - DomainName: !Ref ReactionsEndpoint
               Id: ReactionsEndpointOrigin
               OriginPath: /Prod
               CustomOriginConfig:
@@ -221,8 +211,7 @@ Resources:
             - !Ref AWS::NoValue
           - !If
             - RothschildEndpointSet
-            -
-              DomainName: !Ref RothschildEndpoint
+            - DomainName: !Ref RothschildEndpoint
               Id: RothschildEndpointOrigin
               OriginPath: /Prod
               CustomOriginConfig:
@@ -235,8 +224,7 @@ Resources:
             - !Ref AWS::NoValue
           - !If
             - UserImageUploadAuthServiceEndpointSet
-            -
-              DomainName: !Ref UserImageUploadAuthServiceEndpoint
+            - DomainName: !Ref UserImageUploadAuthServiceEndpoint
               Id: UserImageUploadAuthServiceEndpointOrigin
               OriginPath: /Prod
               CustomOriginConfig:
@@ -249,8 +237,7 @@ Resources:
             - !Ref AWS::NoValue
           - !If
             - UserImageServingEndpointSet
-            -
-              DomainName: !Ref UserImageServingEndpoint
+            - DomainName: !Ref UserImageServingEndpoint
               Id: UserImageServingEndpointOrigin
               CustomOriginConfig:
                 OriginSSLProtocols:
@@ -262,8 +249,7 @@ Resources:
             - !Ref AWS::NoValue
           - !If
             - ReferenceDocsEndpointSet
-            -
-              DomainName: !Ref ReferenceDocsEndpoint
+            - DomainName: !Ref ReferenceDocsEndpoint
               Id: ReferenceDocsEndpointOrigin
               CustomOriginConfig:
                 OriginSSLProtocols:
@@ -275,8 +261,7 @@ Resources:
             - !Ref AWS::NoValue
           - !If
             - DocsEndpointSet
-            -
-              DomainName: !Ref DocsEndpoint
+            - DomainName: !Ref DocsEndpoint
               Id: DocsEndpointOrigin
               CustomOriginConfig:
                 OriginSSLProtocols:
@@ -287,8 +272,7 @@ Resources:
                 HTTPPort: 80
             - !Ref AWS::NoValue
         CacheBehaviors:
-          -
-            PathPattern: "/v1/search/cards"
+          - PathPattern: "/v1/search/cards"
             TargetOriginId: CardsSearchEndpointOrigin
             ViewerProtocolPolicy: "redirect-to-https"
             Compress: false
@@ -317,8 +301,7 @@ Resources:
                 - X-Requested-With
               Cookies:
                 Forward: all
-          -
-            PathPattern: "/v1/search/cards/*"
+          - PathPattern: "/v1/search/cards/*"
             TargetOriginId: CardsSearchEndpointOrigin
             ViewerProtocolPolicy: "redirect-to-https"
             Compress: false
@@ -347,8 +330,7 @@ Resources:
                 - X-Requested-With
               Cookies:
                 Forward: all
-          -
-            PathPattern: "/v1/search/contacts"
+          - PathPattern: "/v1/search/contacts"
             TargetOriginId: CardsSearchEndpointOrigin
             ViewerProtocolPolicy: "redirect-to-https"
             Compress: false
@@ -377,8 +359,7 @@ Resources:
                 - X-Requested-With
               Cookies:
                 Forward: all
-          -
-            PathPattern: "/v1/search/contacts/*"
+          - PathPattern: "/v1/search/contacts/*"
             TargetOriginId: CardsSearchEndpointOrigin
             ViewerProtocolPolicy: "redirect-to-https"
             Compress: false
@@ -407,8 +388,7 @@ Resources:
                 - X-Requested-With
               Cookies:
                 Forward: all
-          -
-            PathPattern: "/v1/storage"
+          - PathPattern: "/v1/storage"
             TargetOriginId: KvsEndpointOrigin
             ViewerProtocolPolicy: "redirect-to-https"
             Compress: false
@@ -437,8 +417,7 @@ Resources:
                 - X-Requested-With
               Cookies:
                 Forward: all
-          -
-            PathPattern: "/v1/storage/*"
+          - PathPattern: "/v1/storage/*"
             TargetOriginId: KvsEndpointOrigin
             ViewerProtocolPolicy: "redirect-to-https"
             Compress: false
@@ -469,8 +448,7 @@ Resources:
                 Forward: all
           - !If
             - TurnkeyEndpointSet
-            -
-              PathPattern: "/v1/turnkey/*"
+            - PathPattern: "/v1/turnkey/*"
               TargetOriginId: TurnkeyEndpointOrigin
               ViewerProtocolPolicy: "redirect-to-https"
               Compress: false
@@ -502,8 +480,7 @@ Resources:
             - !Ref AWS::NoValue
           - !If
             - TurnkeyEndpointSet
-            -
-              PathPattern: "/v2/turnkey/*"
+            - PathPattern: "/v2/turnkey/*"
               TargetOriginId: TurnkeyEndpointOrigin
               ViewerProtocolPolicy: "redirect-to-https"
               Compress: false
@@ -533,8 +510,7 @@ Resources:
                 Cookies:
                   Forward: all
             - !Ref AWS::NoValue
-          -
-            PathPattern: "/v1/dailystats/*"
+          - PathPattern: "/v1/dailystats/*"
             TargetOriginId: StatsEndpointOrigin
             ViewerProtocolPolicy: "redirect-to-https"
             Compress: false
@@ -563,8 +539,7 @@ Resources:
                 - X-Requested-With
               Cookies:
                 Forward: all
-          -
-            PathPattern: "/v1/stats/*"
+          - PathPattern: "/v1/stats/*"
             TargetOriginId: StatsEndpointOrigin
             ViewerProtocolPolicy: "redirect-to-https"
             Compress: false
@@ -593,8 +568,7 @@ Resources:
                 - X-Requested-With
               Cookies:
                 Forward: all
-          -
-            PathPattern: "/v1/batch/*"
+          - PathPattern: "/v1/batch/*"
             TargetOriginId: BatchEndpointOrigin
             ViewerProtocolPolicy: "redirect-to-https"
             Compress: false
@@ -625,8 +599,7 @@ Resources:
                 Forward: all
           - !If
             - ReactionsEndpointSet
-            -
-              PathPattern: "/v1/react"
+            - PathPattern: "/v1/react"
               TargetOriginId: ReactionsEndpointOrigin
               ViewerProtocolPolicy: "redirect-to-https"
               Compress: false
@@ -658,8 +631,7 @@ Resources:
             - !Ref AWS::NoValue
           - !If
             - ReactionsEndpointSet
-            -
-              PathPattern: "/v1/react/*"
+            - PathPattern: "/v1/react/*"
               TargetOriginId: ReactionsEndpointOrigin
               ViewerProtocolPolicy: "redirect-to-https"
               Compress: false
@@ -691,8 +663,7 @@ Resources:
             - !Ref AWS::NoValue
           - !If
             - UserImageUploadAuthServiceEndpointSet
-            -
-              PathPattern: "/v1/userImages"
+            - PathPattern: "/v1/userImages"
               TargetOriginId: UserImageUploadAuthServiceEndpointOrigin
               ViewerProtocolPolicy: "redirect-to-https"
               Compress: false
@@ -724,8 +695,7 @@ Resources:
             - !Ref AWS::NoValue
           - !If
             - UserImageUploadAuthServiceEndpointSet
-            -
-              PathPattern: "/v1/userImages/healthCheck"
+            - PathPattern: "/v1/userImages/healthCheck"
               TargetOriginId: UserImageUploadAuthServiceEndpointOrigin
               ViewerProtocolPolicy: "redirect-to-https"
               Compress: false
@@ -749,8 +719,7 @@ Resources:
             - !Ref AWS::NoValue
           - !If
             - UserImageServingEndpointSet
-            -
-              PathPattern: "/v1/userImages/*"
+            - PathPattern: "/v1/userImages/*"
               TargetOriginId: UserImageServingEndpointOrigin
               ViewerProtocolPolicy: "redirect-to-https"
               Compress: true
@@ -768,8 +737,7 @@ Resources:
                 Cookies:
                   Forward: none
             - !Ref AWS::NoValue
-          -
-            PathPattern: "/v1/*"
+          - PathPattern: "/v1/*"
             TargetOriginId: ServicesEndpointOrigin
             ViewerProtocolPolicy: "redirect-to-https"
             Compress: false
@@ -798,8 +766,7 @@ Resources:
                 Forward: all
           - !If
             - RothschildEndpointSet
-            -
-              PathPattern: "/v2/*"
+            - PathPattern: "/v2/*"
               TargetOriginId: RothschildEndpointOrigin
               ViewerProtocolPolicy: "redirect-to-https"
               Compress: false
@@ -832,8 +799,7 @@ Resources:
             - !Ref AWS::NoValue
           - !If
             - AppEndpointSet
-            -
-              PathPattern: "/app/*"
+            - PathPattern: "/app/*"
               TargetOriginId: AppEndpointOrigin
               ViewerProtocolPolicy: "redirect-to-https"
               Compress: false
@@ -853,8 +819,7 @@ Resources:
             - !Ref AWS::NoValue
           - !If
             - AppEndpointSet
-            -
-              PathPattern: "/app/"
+            - PathPattern: "/app/"
               TargetOriginId: AppEndpointOrigin
               ViewerProtocolPolicy: "redirect-to-https"
               Compress: false
@@ -874,8 +839,7 @@ Resources:
             - !Ref AWS::NoValue
           - !If
             - ReferenceDocsEndpointSet
-            -
-              PathPattern: "/docs/reference*"
+            - PathPattern: "/docs/reference*"
               TargetOriginId: ReferenceDocsEndpointOrigin
               ViewerProtocolPolicy: "redirect-to-https"
               Compress: false
@@ -895,8 +859,7 @@ Resources:
             - !Ref AWS::NoValue
           - !If
             - DocsEndpointSet
-            -
-              PathPattern: "/docs*"
+            - PathPattern: "/docs*"
               TargetOriginId: DocsEndpointOrigin
               ViewerProtocolPolicy: "redirect-to-https"
               Compress: false

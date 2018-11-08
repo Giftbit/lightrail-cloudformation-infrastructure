@@ -81,8 +81,7 @@ Resources:
       AccessPolicies:
         Version: 2012-10-17
         Statement:
-          -
-            Effect: Allow
+          - Effect: Allow
             Principal:
               AWS: "*"
             Action: es:*
@@ -95,8 +94,7 @@ Resources:
                   - "184.69.186.114"
           - !If
             - ShouldConfigureKibanaFullAccess
-            -
-              Effect: Allow
+            - Effect: Allow
               Action:
                 - es:*
               Principal:
@@ -114,11 +112,9 @@ Resources:
     Properties:
       RepositoryPolicyText: !If
         - ShouldConfigureECRAccess
-        -
-          Version: 2012-10-17
+        - Version: 2012-10-17
           Statement:
-            -
-              Effect: Allow
+            - Effect: Allow
               Principal:
                 AWS: !Split [",", !Ref AccountsToGrantEcrReadAccess]
               Action:
@@ -134,21 +130,18 @@ Resources:
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
-          -
-            Effect: Allow
+          - Effect: Allow
             Action:
               - sts:AssumeRole
             Principal:
               Service:
                 - ecs-tasks.amazonaws.com
       Policies:
-        -
-          PolicyName: KibanaAccess
+        - PolicyName: KibanaAccess
           PolicyDocument:
             Version: 2012-10-17
             Statement:
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - es:ESHttpGet
                   - es:ESHttpHead
@@ -156,11 +149,9 @@ Resources:
                   - es:ESHttpPut
                 Resource: !If
                   - ShouldCreateKibanaInstance
-                  -
-                    - !Sub "${Kibana.DomainArn}"
+                  - - !Sub "${Kibana.DomainArn}"
                     - !Sub "${Kibana.DomainArn}/*"
-                  -
-                    - !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", KibanaArnOverride]
+                  - - !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", KibanaArnOverride]
                     - !Sub
                       - "${KibanaDomainArn}/*"
                       - KibanaDomainArn: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", KibanaArnOverride]
@@ -171,8 +162,7 @@ Resources:
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
-          -
-            Effect: Allow
+          - Effect: Allow
             Action:
               - sts:AssumeRole
             Principal:
@@ -182,18 +172,15 @@ Resources:
               Bool:
                 "aws:MultiFactorAuthPresent": true
       Policies:
-        -
-          PolicyName: CloudFormationUpdateAccess
+        - PolicyName: CloudFormationUpdateAccess
           PolicyDocument:
             Version: 2012-10-17
             Statement:
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - ecr:GetAuthorizationToken
                 Resource: "*"
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - ecr:GetDownloadUrlForLayer
                   - ecr:BatchGetImage
@@ -205,22 +192,18 @@ Resources:
                     - ShouldUseEcrRepoOverride
                     - !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", EcrRepoArnOverride]
                     - !Sub "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/${EcrRepo}"
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - cloudformation:DescribeStacks
                 Resource: "*"
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - cloudformation:DescribeStackResource
                 Resource:
                   - !Sub
                     - "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${EnvNameLowercase}/*"
-                    -
-                      EnvNameLowercase: !FindInMap [!Ref EnvironmentName, EnvName, Lowercase]
-              -
-                Effect: Allow
+                    - EnvNameLowercase: !FindInMap [!Ref EnvironmentName, EnvName, Lowercase]
+              - Effect: Allow
                 Action:
                   - ecs:RegisterTaskDefinition
                   - ecs:DeregisterTaskDefinition
@@ -229,13 +212,11 @@ Resources:
                   - ecs:UpdateService
                   - ecs:DeleteService
                 Resource: "*"
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - ecs:ListTasks
                 Resource: "*"
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - iam:PassRole
                 Resource:
@@ -250,8 +231,7 @@ Resources:
       PolicyDocument:
         Version: 2012-10-17
         Statement:
-          -
-            Effect: Allow
+          - Effect: Allow
             Action:
               - sts:AssumeRole
             Resource:
@@ -265,8 +245,7 @@ Resources:
       LogGroupName: !Ref LogGroup
       FilterPattern: ""
       MetricTransformations:
-        -
-          MetricName: LogCount
+        - MetricName: LogCount
           MetricNamespace: !Sub "Lightrail/${EnvironmentName}"
           MetricValue: 1
   LogAlarm:

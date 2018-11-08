@@ -241,8 +241,7 @@ Resources:
         EnvironmentName: !Ref EnvironmentName
         GroupsToGrantWebsiteReadWrite: !Join
           - ","
-          -
-            - !GetAtt Groups.Outputs.MarkettingGroupName
+          - - !GetAtt Groups.Outputs.MarkettingGroupName
             - !GetAtt Groups.Outputs.FrontEndDevelopersGroupName
   LightrailReact:
     Type: AWS::CloudFormation::Stack
@@ -257,12 +256,10 @@ Resources:
           - ReactBuildArtifactBucketOverride
         GroupsToGrantReactReadWrite: !Join
           - ","
-          -
-            - !GetAtt Groups.Outputs.FrontEndDevelopersGroupName
+          - - !GetAtt Groups.Outputs.FrontEndDevelopersGroupName
         AccountsToGrantBuildArtifactReadAccess: !Join
           - ","
-          -
-            - !If
+          - - !If
               - ProductionAccountIdProvided
               - !Ref ProductionAccountId
               - !Ref AWS::NoValue
@@ -295,12 +292,10 @@ Resources:
           - WidgetsBuildArtifactBucketOverride
         GroupsToGrantWidgetsReadWrite: !Join
           - ","
-          -
-            - !GetAtt Groups.Outputs.FrontEndDevelopersGroupName
+          - - !GetAtt Groups.Outputs.FrontEndDevelopersGroupName
         AccountsToGrantBuildArtifactReadAccess: !Join
           - ","
-          -
-            - !If
+          - - !If
               - ProductionAccountIdProvided
               - !Ref ProductionAccountId
               - !Ref AWS::NoValue
@@ -375,8 +370,7 @@ Resources:
         Ec2SsmPolicyArn: !GetAtt SSM.Outputs.EC2PolicyArn
         EcrReposToGrantClusterAccess: !Join
           - ","
-          -
-            - !GetAtt LightrailServices.Outputs.EcrRepoArn
+          - - !GetAtt LightrailServices.Outputs.EcrRepoArn
             - !GetAtt LightrailLogstash.Outputs.EcrRepoArn
             - !GetAtt LightrailDatadog.Outputs.EcrRepoArn
             - !GetAtt LightrailBatch.Outputs.EcrRepoArn
@@ -418,8 +412,7 @@ Resources:
       ServiceToken: !GetAtt RoleLookupLambda.Arn
       RoleNames: !Join
         - ","
-        -
-          - !FindInMap [CredentialsRevocation, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
+        - - !FindInMap [CredentialsRevocation, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
           - !FindInMap [Services, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
           - !FindInMap [Batch, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
           - !GetAtt LightrailSimpleRollup.Outputs.RoleName
@@ -437,8 +430,7 @@ Resources:
       ServiceToken: !GetAtt RoleLookupLambda.Arn
       RoleNames: !Join
         - ","
-        -
-          - !Ref CloudFormationServiceRoleName
+        - - !Ref CloudFormationServiceRoleName
           - !If
             - EnvIsDev
             - DevLightrailInfrastructureCI-CloudFormationServiceRole
@@ -467,8 +459,7 @@ Resources:
       ServiceToken: !GetAtt RoleLookupLambda.Arn
       RoleNames: !Join
         - ","
-        -
-          - !FindInMap [Services, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
+        - - !FindInMap [Services, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
   LightrailSecureDownloadReadWriteAccessRoleIdGrants:
     Type: AWS::CloudFormation::CustomResource
     Version: 1.0
@@ -476,8 +467,7 @@ Resources:
       ServiceToken: !GetAtt RoleLookupLambda.Arn
       RoleNames: !Join
         - ","
-        -
-          - !FindInMap [Batch, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
+        - - !FindInMap [Batch, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
   LightrailSecureDownloadPolicyAdminAccessRoleIdGrants:
     Type: AWS::CloudFormation::CustomResource
     Version: 1.0
@@ -485,8 +475,7 @@ Resources:
       ServiceToken: !GetAtt RoleLookupLambda.Arn
       RoleNames: !Join
         - ","
-        -
-          - !Ref CloudFormationServiceRoleName
+        - - !Ref CloudFormationServiceRoleName
           - !If
             - EnvIsDev
             - DevLightrailInfrastructureCI-CloudFormationServiceRole
@@ -524,8 +513,7 @@ Resources:
           - !Ref "AWS::NoValue"
         AccountsToGrantEcrReadAccess: !Join
           - ","
-          -
-            - !If
+          - - !If
               - ProductionAccountIdProvided
               - !Ref ProductionAccountId
               - !Ref AWS::NoValue
@@ -548,8 +536,7 @@ Resources:
         GroupsToGrantDeployAccess: !GetAtt Groups.Outputs.BackEndDevelopersGroupName
         AccountsToGrantEcrReadAccess: !Join
           - ","
-          -
-            - !If
+          - - !If
               - ProductionAccountIdProvided
               - !Ref ProductionAccountId
               - !Ref AWS::NoValue
@@ -577,8 +564,7 @@ Resources:
         KinesisStreamArn: !GetAtt LightrailEventStream.Outputs.KinesisStreamArn
         AccountsToGrantEcrReadAccess: !Join
           - ","
-          -
-            - !If
+          - - !If
               - ProductionAccountIdProvided
               - !Ref ProductionAccountId
               - !Ref AWS::NoValue
@@ -600,8 +586,7 @@ Resources:
         VpcRdsSecurityGroupIds: !GetAtt LightrailVPC.Outputs.RdsSecurityGroupId
         LoadBalancingServiceRoleArn: !GetAtt LightrailLoadBalancer.Outputs.EcsLoadBalancingServiceRoleArn
       Tags:
-        -
-          Key: Service
+        - Key: Service
           Value: Services
   LightrailBatch:
     Type: AWS::CloudFormation::Stack
@@ -619,8 +604,7 @@ Resources:
         KinesisStreamArn: !GetAtt LightrailEventStream.Outputs.KinesisStreamArn
         AccountsToGrantEcrReadAccess: !Join
           - ","
-          -
-            - !If
+          - - !If
               - ProductionAccountIdProvided
               - !Ref ProductionAccountId
               - !Ref AWS::NoValue
@@ -635,8 +619,7 @@ Resources:
         GroupsToGrantDeployAccess: !GetAtt Groups.Outputs.BackEndDevelopersGroupName
         LoadBalancingServiceRoleArn: !GetAtt LightrailLoadBalancer.Outputs.EcsLoadBalancingServiceRoleArn
       Tags:
-        -
-          Key: Service
+        - Key: Service
           Value: Batch
   LightrailDemoStore:
     Type: AWS::CloudFormation::Stack
@@ -648,8 +631,7 @@ Resources:
         ParentStackName: !Ref "AWS::StackName"
         AccountsToGrantEcrReadAccess: !Join
           - ","
-          -
-            - !If
+          - - !If
               - ProductionAccountIdProvided
               - !Ref ProductionAccountId
               - !Ref AWS::NoValue
@@ -664,8 +646,7 @@ Resources:
         GroupsToGrantDeployAccess: !GetAtt Groups.Outputs.BackEndDevelopersGroupName
         LoadBalancingServiceRoleArn: !GetAtt LightrailLoadBalancer.Outputs.EcsLoadBalancingServiceRoleArn
       Tags:
-        -
-          Key: Service
+        - Key: Service
           Value: DemoStore
   LightrailCredentials:
     Type: AWS::CloudFormation::Stack
@@ -683,8 +664,7 @@ Resources:
               "SecureConfigKeyAssumeStorageScopeToken": "${SecureConfigKeyAssumeStorageScopeToken}",
               "MerchantKeyURI": "${LightrailCloudfront.Outputs.ApiDomain}${PathToMerchantSharedSecret}"
             }
-          -
-            SecureConfigKeyRoleDefinitions: !FindInMap [SecureConfig, Keys, RoleDefinitions]
+          - SecureConfigKeyRoleDefinitions: !FindInMap [SecureConfig, Keys, RoleDefinitions]
             SecureConfigKeyAssumeStorageScopeToken: !FindInMap [SecureConfig, Keys, AssumeStorageScopeToken]
             SecureConfigAuthBadgeKey: !FindInMap [SecureConfig, Keys, JWT]
             PathToMerchantSharedSecret: !FindInMap [Common, All, PathToMerchantSharedSecret]
@@ -716,8 +696,7 @@ Resources:
         CiKeysBucketName: !GetAtt CIResources.Outputs.KeysBucketName
         ProjectName: !Sub "${AWS::StackName}-SimpleRollup"
       Tags:
-        -
-          Key: Service
+        - Key: Service
           Value: SimpleRollup
   LightrailS3EventTranscoder:
     Type: AWS::CloudFormation::Stack
@@ -736,8 +715,7 @@ Resources:
               "S3EventDestinationBucket": "${LightrailAthena.Outputs.DataBucketName}",
               "S3EventDestinationBucketKmsArn": "${LightrailAthena.Outputs.EncryptionKeyArn}"
             }
-          -
-            SecureConfigKeyDataDog: !FindInMap [SecureConfig, Keys, DataDog]
+          - SecureConfigKeyDataDog: !FindInMap [SecureConfig, Keys, DataDog]
         GitHubBranch: !FindInMap [S3EventTranscoder, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], GitHubBranch]
         GitHubBranchDest: !FindInMap [S3EventTranscoder, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], GitHubBranchDest]
         GitHubOAuthToken: !GetAtt GitHubOAuthToken.DecryptedValue
@@ -746,8 +724,7 @@ Resources:
         CiKeysBucketName: !GetAtt CIResources.Outputs.KeysBucketName
         ProjectName: !Sub "${AWS::StackName}-S3ETranscoder"
       Tags:
-        -
-          Key: Service
+        - Key: Service
           Value: S3EventTranscoder
   LightrailCardsSearch:
     Type: AWS::CloudFormation::Stack
@@ -770,8 +747,7 @@ Resources:
         CiKeysAccessRoleArn: !GetAtt CIResources.Outputs.KeysAccessRoleArn
         CiKeysBucketName: !GetAtt CIResources.Outputs.KeysBucketName
       Tags:
-        -
-          Key: Service
+        - Key: Service
           Value: KVS
   LightrailKvs:
     Type: AWS::CloudFormation::Stack
@@ -793,8 +769,7 @@ Resources:
         CiKeysAccessRoleArn: !GetAtt CIResources.Outputs.KeysAccessRoleArn
         CiKeysBucketName: !GetAtt CIResources.Outputs.KeysBucketName
       Tags:
-        -
-          Key: Service
+        - Key: Service
           Value: KVS
   LightrailTurnkey:
     Type: AWS::CloudFormation::Stack
@@ -820,8 +795,7 @@ Resources:
         CiKeysAccessRoleArn: !GetAtt CIResources.Outputs.KeysAccessRoleArn
         CiKeysBucketName: !GetAtt CIResources.Outputs.KeysBucketName
       Tags:
-        -
-          Key: Service
+        - Key: Service
           Value: Turnkey
   LightrailReactions:
     Type: AWS::CloudFormation::Stack
@@ -842,8 +816,7 @@ Resources:
         CiKeysBucketName: !GetAtt CIResources.Outputs.KeysBucketName
         ProjectName: !Sub "${AWS::StackName}-Reactions"
       Tags:
-        -
-          Key: Service
+        - Key: Service
           Value: Reactions
   LightrailRothschild:
     Type: AWS::CloudFormation::Stack
@@ -883,8 +856,7 @@ Resources:
         CiKeysBucketName: !GetAtt CIResources.Outputs.KeysBucketName
         WebsiteDomainUrl: !Sub "https://www.${LightrailDns.Outputs.HostedDomainName}"
       Tags:
-        -
-          Key: Service
+        - Key: Service
           Value: UserImageUpload
   LightrailDevArtifacts:
     Type: AWS::CloudFormation::Stack

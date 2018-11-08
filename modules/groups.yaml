@@ -40,36 +40,30 @@ Resources:
         - arn:aws:iam::aws:policy/AWSCodeBuildReadOnlyAccess
         - arn:aws:iam::aws:policy/CloudFrontReadOnlyAccess
       Policies:
-        -
-          PolicyName: NoCloudtrail
+        - PolicyName: NoCloudtrail
           PolicyDocument:
             Version: 2012-10-17
             Statement:
-              -
-                Effect: Deny
+              - Effect: Deny
                 Action:
                   - "cloudtrail:*"
                 Resource: "*"
-        -
-          PolicyName: NoAccountSecurityChanges
+        - PolicyName: NoAccountSecurityChanges
           PolicyDocument:
             Version: 2012-10-17
             Statement:
-              -
-                Effect: Deny
+              - Effect: Deny
                 NotAction:
                   - cloudformation:Describe*
                   - cloudformation:List*
                 Resource:
                   - !Sub "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/AccountSecurity/*"
                   - !Sub "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/AccountSecurity-*/*"
-        -
-          PolicyName: AwsHealthApisAndNotifications
+        - PolicyName: AwsHealthApisAndNotifications
           PolicyDocument:
             Version: 2012-10-17
             Statement:
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - "health:*"
                 Resource: "*"
@@ -93,59 +87,49 @@ Resources:
       Policies:
         - !If
           - EnvironmentIsDevelopment
-          -
-            PolicyName: PassRoles
+          - PolicyName: PassRoles
             PolicyDocument:
               Version: 2012-10-17
               Statement:
-                -
-                  Effect: Allow
+                - Effect: Allow
                   Action:
                     - iam:GetRole
                     - iam:PassRole
                     - iam:ListRoles
                   Resource: "*"
           - !Ref AWS::NoValue
-        -
-          PolicyName: NoCloudtrail
+        - PolicyName: NoCloudtrail
           PolicyDocument:
             Version: 2012-10-17
             Statement:
-              -
-                Effect: Deny
+              - Effect: Deny
                 Action:
                   - "cloudtrail:*"
                 Resource: "*"
-        -
-          PolicyName: NoAccountSecurityChanges
+        - PolicyName: NoAccountSecurityChanges
           PolicyDocument:
             Version: 2012-10-17
             Statement:
-              -
-                Effect: Deny
+              - Effect: Deny
                 NotAction:
                   - cloudformation:Describe*
                   - cloudformation:List*
                 Resource:
                   - !Sub "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/AccountSecurity/*"
                   - !Sub "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/AccountSecurity-*/*"
-        -
-          PolicyName: AwsHealthApisAndNotifications
+        - PolicyName: AwsHealthApisAndNotifications
           PolicyDocument:
             Version: 2012-10-17
             Statement:
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - "health:*"
                 Resource: "*"
-        -
-          PolicyName: AwsLambdaReadOnlyAccess
+        - PolicyName: AwsLambdaReadOnlyAccess
           PolicyDocument:
             Version: 2012-10-17
             Statement:
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - lambda:Get*
                   - lambda:List*
@@ -168,21 +152,18 @@ Resources:
       PolicyDocument:
         Version: 2012-10-17
         Statement:
-          -
-            Effect: Allow
+          - Effect: Allow
             Action:
               - cloudformation:ListExports
               - cloudformation:DescribeStacks
             Resource: "*"
-          -
-            Effect: Allow
+          - Effect: Allow
             Action:
               - cloudformation:DescribeStackResource
             Resource:
               - !Sub
                 - "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${EnvLowercase}/*"
-                -
-                  EnvLowercase: !FindInMap [EnvNames, Lowercase, !Ref EnvironmentName]
+                - EnvLowercase: !FindInMap [EnvNames, Lowercase, !Ref EnvironmentName]
 
   EC2ContainerServiceReadOnly:
     Type: AWS::IAM::Policy
@@ -193,8 +174,7 @@ Resources:
       PolicyDocument:
         Version: 2012-10-17
         Statement:
-          -
-            Effect: Allow
+          - Effect: Allow
             Action:
               - ecs:Describe*
               - ecs:List*
@@ -209,8 +189,7 @@ Resources:
       PolicyDocument:
         Version: 2012-10-17
         Statement:
-          -
-            Effect: Allow
+          - Effect: Allow
             Action:
               - aws-portal:ViewBilling
               - aws-portal:ViewUsage
@@ -226,8 +205,7 @@ Resources:
       PolicyDocument:
         Version: 2012-10-17
         Statement:
-          -
-            Effect: Allow
+          - Effect: Allow
             Action:
               - apigateway:GET
             Resource: "*"
@@ -241,8 +219,7 @@ Resources:
       PolicyDocument:
         Version: 2012-10-17
         Statement:
-          -
-            Effect: Allow
+          - Effect: Allow
             Action:
               - codepipeline:RetryStageExecution
               - codepipeline:StartPipelineExecution
@@ -258,8 +235,7 @@ Resources:
       PolicyDocument:
         Version: 2012-10-17
         Statement:
-          -
-            Effect: Allow
+          - Effect: Allow
             Action:
               - cloudformation:DescribeChangeSet
             Resource: "*"
@@ -273,8 +249,7 @@ Resources:
       PolicyDocument:
         Version: 2012-10-17
         Statement:
-          -
-            Effect: Allow
+          - Effect: Allow
             Action:
               - es:Describe*
               - es:List*
