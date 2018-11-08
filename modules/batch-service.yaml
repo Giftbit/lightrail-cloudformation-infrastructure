@@ -78,11 +78,9 @@ Resources:
     Properties:
       RepositoryPolicyText: !If
         - ShouldConfigureAccountECRAccess
-        -
-          Version: 2012-10-17
+        - Version: 2012-10-17
           Statement:
-            -
-              Sid: RepositoryAccess
+            - Sid: RepositoryAccess
               Effect: Allow
               Principal:
                 AWS: !Split [",", !Ref AccountsToGrantEcrReadAccess]
@@ -99,16 +97,14 @@ Resources:
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
-          -
-            Effect: Allow
+          - Effect: Allow
             Action:
               - sts:AssumeRole
             Principal:
               Service:
                 - ecs-tasks.amazonaws.com
       Policies:
-        -
-          PolicyName: BatchAccess
+        - PolicyName: BatchAccess
           PolicyDocument:
             Version: 2012-10-17
             Statement:
@@ -132,8 +128,7 @@ Resources:
                   - !Ref SecureConfigKmsArn
               - !If  # SES Access
                 - ShouldConfigureSes
-                -
-                  Effect: Allow
+                - Effect: Allow
                   Action:
                     - ses:SendEmail
                     - ses:SendRawEmail
@@ -190,12 +185,10 @@ Resources:
         ReadCapacityUnits: 2
         WriteCapacityUnits: 2
       KeySchema:
-        -
-          AttributeName: taskId
+        - AttributeName: taskId
           KeyType: HASH
       AttributeDefinitions:
-        -
-          AttributeName: taskId
+        - AttributeName: taskId
           AttributeType: S
   TaskTableAutoscaling:
     Type: AWS::CloudFormation::Stack
@@ -218,8 +211,7 @@ Resources:
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
-          -
-            Effect: Allow
+          - Effect: Allow
             Action:
               - sts:AssumeRole
             Principal:
@@ -229,18 +221,15 @@ Resources:
               Bool:
                 "aws:MultiFactorAuthPresent": true
       Policies:
-        -
-          PolicyName: CloudFormationUpdateAccess
+        - PolicyName: CloudFormationUpdateAccess
           PolicyDocument:
             Version: 2012-10-17
             Statement:
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - ecr:GetAuthorizationToken
                 Resource: "*"
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - cloudformation:CreateChangeSet
                   - cloudformation:ExecuteChangeSet
@@ -250,8 +239,7 @@ Resources:
                   - cloudformation:DescribeChangeSet
                 Resource:
                   - !Sub "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${ParentStackName}-Batch/*"
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - ecr:GetDownloadUrlForLayer
                   - ecr:BatchGetImage
@@ -263,20 +251,17 @@ Resources:
                     - ShouldUseEcrRepoOverride
                     - !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", EcrRepoArnOverride]
                     - !Sub "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/${EcrRepo}"
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - cloudformation:DescribeStacks
                   - cloudformation:GetTemplateSummary
                 Resource: "*"
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - cloudformation:DescribeStackResource
                 Resource:
                   - !Sub "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${ParentStackName}/*"
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - ecs:RegisterTaskDefinition
                   - ecs:DeregisterTaskDefinition
@@ -285,8 +270,7 @@ Resources:
                   - ecs:UpdateService
                   - ecs:DeleteService
                 Resource: "*"
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - iam:PassRole
                 Resource:
@@ -302,14 +286,12 @@ Resources:
       PolicyDocument:
         Version: 2012-10-17
         Statement:
-          -
-            Effect: Allow
+          - Effect: Allow
             Action:
               - sts:AssumeRole
             Resource:
               - !GetAtt DeploymentRole.Arn
-          -
-            Effect: Allow
+          - Effect: Allow
             Action:
               - ecr:ListImages
             Resource:

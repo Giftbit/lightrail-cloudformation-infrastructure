@@ -107,8 +107,7 @@ Resources:
               "ElasticSearchInstanceType": "${ElasticSearchInstanceType}",
               "ElasticSearchMasterInstanceType": "${ElasticSearchMasterInstanceType}"
             }
-          -
-            ElasticSearchInstanceCount:
+          - ElasticSearchInstanceCount:
               !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", ElasticSearchInstanceCount]
             ElasticSearchInstanceType:
               !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", ElasticSearchInstanceType]

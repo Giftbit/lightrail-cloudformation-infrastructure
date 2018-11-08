@@ -68,8 +68,7 @@ Resources:
             Condition:
               StringNotEquals:
                 "s3:x-amz-server-side-encryption-aws-kms-key-id": !Ref EncryptionKeyArn
-          -
-            Effect: "Deny"
+          - Effect: "Deny"
             NotAction:
               - s3:PutBucketPolicy
               - s3:GetBucketPolicy
@@ -83,8 +82,7 @@ Resources:
                 aws:userid: !Split [",", !Ref UserIdsToGrantPolicyAdminAccess]
           - !If  # In Dev, InfrastructureAdmin can set values and update policies (to test them out before codepipeline)
             - ShouldAllowInfrastructureAdminToPutConfiguration
-            -
-              Effect: "Deny"
+            - Effect: "Deny"
               NotAction:
                 - s3:AbortMultipartUpload
                 - s3:ListBucket
@@ -107,8 +105,7 @@ Resources:
             - !Ref AWS::NoValue
           - !If  # Restrict Reading Roles to specifically Reading actions
             - ShouldConfigureReadAccess
-            -
-              Effect: "Deny"
+            - Effect: "Deny"
               NotAction:
                 - s3:ListBucket
                 - s3:GetObject
@@ -126,8 +123,7 @@ Resources:
             - !Ref AWS::NoValue
           - !If  # Restrict Writing Roles to specifically Writing actions
             - ShouldConfigureWriteAccess
-            -
-              Effect: "Deny"
+            - Effect: "Deny"
               NotAction:
                 - s3:AbortMultipartUpload
                 - s3:ListBucket
@@ -147,8 +143,7 @@ Resources:
             - !Ref AWS::NoValue
           - !If  # Restrict Writing Roles to specifically Writing actions
             - ShouldConfigureReadWriteAccess
-            -
-              Effect: "Deny"
+            - Effect: "Deny"
               NotAction:
                 - s3:AbortMultipartUpload
                 - s3:ListBucket
@@ -185,8 +180,7 @@ Resources:
                   - ","
                   - !Join
                     - ","
-                    -
-                      - !Ref AWS::AccountId
+                    - - !Ref AWS::AccountId
                       - !Ref UserIdsToGrantPolicyAdminAccess
                       - !If  # In Dev, Don't block the Infrastructure Admin Role
                         - ShouldAllowInfrastructureAdminToPutConfiguration

@@ -56,8 +56,7 @@ Resources:
       CidrBlock: !Sub "10.${VPCUniqueNumber}.0.0/16"
       EnableDnsHostnames: true
       Tags:
-        -
-          Key: Name
+        - Key: Name
           Value: !Sub "${EnvironmentName} Lightrail VPC"
 
   # VPC Hosted Zone
@@ -68,12 +67,10 @@ Resources:
       HostedZoneConfig:
         Comment: !Sub "${EnvironmentName} Lightrail VPC Domain"
       VPCs:
-        -
-          VPCId: !Ref VPC
+        - VPCId: !Ref VPC
           VPCRegion: !Ref AWS::Region
       HostedZoneTags:
-        -
-          Key: Name
+        - Key: Name
           Value: !Sub "${EnvironmentName} Lightrail VPC Hosted Zone"
 
   # Internet Gateway
@@ -81,8 +78,7 @@ Resources:
     Type: AWS::EC2::InternetGateway
     Properties:
       Tags:
-        -
-          Key: Name
+        - Key: Name
           Value: !Sub "${EnvironmentName} Lightrail Internet Gateway"
 
   InternetGatewayAttachment:
@@ -103,11 +99,9 @@ Resources:
       SecurityGroupIds:
         - !Ref NatSecurityGroup
       Tags:
-        -
-          Key: Name
+        - Key: Name
           Value: !Sub "${EnvironmentName} Lightrail NAT"
-        -
-          Key: Service
+        - Key: Service
           Value: NAT
   NatElasticIP:
     Type: AWS::EC2::EIP
@@ -122,75 +116,62 @@ Resources:
       VpcId: !Ref VPC
       SecurityGroupIngress:
         # HTTP Access from the App Server Subnet
-        -
-          FromPort: 80
+        - FromPort: 80
           ToPort: 80
           IpProtocol: tcp
           CidrIp: !Sub "10.${VPCUniqueNumber}.21.0/24"
-        -
-          FromPort: 80
+        - FromPort: 80
           ToPort: 80
           IpProtocol: tcp
           CidrIp: !Sub "10.${VPCUniqueNumber}.22.0/24"
-        -
-          FromPort: 80
+        - FromPort: 80
           ToPort: 80
           IpProtocol: tcp
           CidrIp: !Sub "10.${VPCUniqueNumber}.23.0/24"
         # HTTPS Access from the App Server Subnet
-        -
-          FromPort: 443
+        - FromPort: 443
           ToPort: 443
           IpProtocol: tcp
           CidrIp: !Sub "10.${VPCUniqueNumber}.21.0/24"
-        -
-          FromPort: 443
+        - FromPort: 443
           ToPort: 443
           IpProtocol: tcp
           CidrIp: !Sub "10.${VPCUniqueNumber}.22.0/24"
-        -
-          FromPort: 443
+        - FromPort: 443
           ToPort: 443
           IpProtocol: tcp
           CidrIp: !Sub "10.${VPCUniqueNumber}.23.0/24"
         # HTTPS Access from the App Server Subnet
-        -
-          FromPort: 123
+        - FromPort: 123
           ToPort: 123
           IpProtocol: udp
           CidrIp: !Sub "10.${VPCUniqueNumber}.21.0/24"
-        -
-          FromPort: 123
+        - FromPort: 123
           ToPort: 123
           IpProtocol: udp
           CidrIp: !Sub "10.${VPCUniqueNumber}.22.0/24"
-        -
-          FromPort: 123
+        - FromPort: 123
           ToPort: 123
           IpProtocol: udp
           CidrIp: !Sub "10.${VPCUniqueNumber}.23.0/24"
       SecurityGroupEgress:
         # Outgoing HTTP Access
-        -
-          FromPort: 80
+        - FromPort: 80
           ToPort: 80
           IpProtocol: tcp
           CidrIp: 0.0.0.0/0
         # Outgoing HTTPS Access
-        -
-          FromPort: 443
+        - FromPort: 443
           ToPort: 443
           IpProtocol: tcp
           CidrIp: 0.0.0.0/0
         # Outgoing NTP Access
-        -
-          FromPort: 123
+        - FromPort: 123
           ToPort: 123
           IpProtocol: udp
           CidrIp: 0.0.0.0/0
       Tags:
-        -
-          Key: Name
+        - Key: Name
           Value: !Sub "${EnvironmentName} Lightrail NAT"
   NatDemoStoreHttpsAccess:
     Type: AWS::EC2::SecurityGroupIngress
@@ -239,14 +220,11 @@ Resources:
           ./install.sh
         fi
       Tags:
-        -
-          Key: Name
+        - Key: Name
           Value: !Sub "${EnvironmentName} Lightrail Bastion Host"
-        -
-          Key: AuthorizedUsersGroup
+        - Key: AuthorizedUsersGroup
           Value: !Ref BastionHostAuthorizedUsersGroup
-        -
-          Key: Service
+        - Key: Service
           Value: Bastion Host
   BastionHostRole:
     Type: AWS::IAM::Role
@@ -254,21 +232,18 @@ Resources:
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
-          -
-            Effect: Allow
+          - Effect: Allow
             Action:
               - sts:AssumeRole
             Principal:
               Service:
                 - ec2.amazonaws.com
       Policies:
-        -
-          PolicyName: ReadGroupsAndSSHPublicKeys
+        - PolicyName: ReadGroupsAndSSHPublicKeys
           PolicyDocument:
             Version: 2012-10-17
             Statement:
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - iam:GetGroup
                   - iam:ListSSHPublicKeys
@@ -307,8 +282,7 @@ Resources:
           IpProtocol: tcp
           CidrIp: 0.0.0.0/0
       Tags:
-        -
-          Key: Name
+        - Key: Name
           Value: !Sub "${EnvironmentName} Lightrail Bastion Host"
 
   # Load Balancer Security Group
@@ -325,8 +299,7 @@ Resources:
           IpProtocol: tcp
           CidrIp: 0.0.0.0/0
       Tags:
-        -
-          Key: Name
+        - Key: Name
           Value: !Sub "${EnvironmentName} Lightrail Application Load Balancers"
   AlbEcsAccess:
     Type: AWS::EC2::SecurityGroupEgress
@@ -370,8 +343,7 @@ Resources:
           IpProtocol: udp
           CidrIp: 0.0.0.0/0
       Tags:
-        -
-          Key: Name
+        - Key: Name
           Value: !Sub "${EnvironmentName} Lightrail ECS Cluster Instances"
   EcsAlbAccessGrant:
     Type: AWS::EC2::SecurityGroupIngress
@@ -390,20 +362,16 @@ Resources:
       GroupDescription: !Sub "Lightrail ${EnvironmentName} RDS for VPC ${VPC}"
       VpcId: !Ref VPC
       SecurityGroupIngress:
-        -
-          FromPort: 3306
+        - FromPort: 3306
           ToPort: 3306
           IpProtocol: tcp
           SourceSecurityGroupId: !Ref BastionHostSecurityGroup
-        -
-          FromPort: 3306
+        - FromPort: 3306
           ToPort: 3306
           IpProtocol: tcp
           SourceSecurityGroupId: !Ref EcsClusterInstanceSecurityGroup
-
       Tags:
-        -
-          Key: Name
+        - Key: Name
           Value: !Sub "${EnvironmentName} Lightrail RDS Instances"
 
   # Demo Store Security Groups
@@ -420,8 +388,7 @@ Resources:
           IpProtocol: tcp
           CidrIp: 0.0.0.0/0
       Tags:
-        -
-          Key: Name
+        - Key: Name
           Value: !Sub "${EnvironmentName} Lightrail Demo Store"
   DemoAlbAccessGrant:
     Type: AWS::EC2::SecurityGroupIngress
@@ -440,15 +407,12 @@ Resources:
       GroupDescription: Rate Limiting Redis
       VpcId: !Ref VPC
       SecurityGroupIngress:
-        -
-          IpProtocol: tcp
+        - IpProtocol: tcp
           FromPort: 6379
           ToPort: 6379
           SourceSecurityGroupId: !Ref EcsClusterInstanceSecurityGroup
-
       Tags:
-        -
-          Key: Name
+        - Key: Name
           Value: !Sub "${EnvironmentName} Lightrail Rate Limiting Redis"
 
   # Public Subnets
@@ -460,8 +424,7 @@ Resources:
       AvailabilityZone: !Sub "${AWS::Region}a"
       MapPublicIpOnLaunch: true
       Tags:
-        -
-          Key: Name
+        - Key: Name
           Value: !Sub "${EnvironmentName} Lightrail Public Subnet a. (${AWS::StackName})"
   SubnetPublicB:
     Type: AWS::EC2::Subnet
@@ -471,8 +434,7 @@ Resources:
       AvailabilityZone: !Sub "${AWS::Region}b"
       MapPublicIpOnLaunch: true
       Tags:
-        -
-          Key: Name
+        - Key: Name
           Value: !Sub "${EnvironmentName} Lightrail Public Subnet b. (${AWS::StackName})"
   SubnetPublicC:
     Type: AWS::EC2::Subnet
@@ -482,16 +444,14 @@ Resources:
       AvailabilityZone: !Sub "${AWS::Region}c"
       MapPublicIpOnLaunch: true
       Tags:
-        -
-          Key: Name
+        - Key: Name
           Value: !Sub "${EnvironmentName} Lightrail Public Subnet c. (${AWS::StackName})"
   PublicSubnetRouteTable:
     Type: AWS::EC2::RouteTable
     Properties:
       VpcId: !Ref VPC
       Tags:
-        -
-          Key: Name
+        - Key: Name
           Value: !Sub "${EnvironmentName} Public Subnet Routing for VPC ${VPC}"
   PublicSubnetRouting:
     Type: AWS::EC2::Route
@@ -523,8 +483,7 @@ Resources:
       CidrBlock: !Sub "10.${VPCUniqueNumber}.21.0/24"
       AvailabilityZone: !Sub "${AWS::Region}a"
       Tags:
-        -
-          Key: Name
+        - Key: Name
           Value: !Sub "${EnvironmentName} Lightrail Private Subnet a. (${AWS::StackName})"
   SubnetPrivateB:
     Type: AWS::EC2::Subnet
@@ -533,8 +492,7 @@ Resources:
       CidrBlock: !Sub "10.${VPCUniqueNumber}.22.0/24"
       AvailabilityZone: !Sub "${AWS::Region}b"
       Tags:
-        -
-          Key: Name
+        - Key: Name
           Value: !Sub "${EnvironmentName} Lightrail Private Subnet b. (${AWS::StackName})"
   SubnetPrivateC:
     Type: AWS::EC2::Subnet
@@ -543,16 +501,14 @@ Resources:
       CidrBlock: !Sub "10.${VPCUniqueNumber}.23.0/24"
       AvailabilityZone: !Sub "${AWS::Region}c"
       Tags:
-        -
-          Key: Name
+        - Key: Name
           Value: !Sub "${EnvironmentName} Lightrail Private Subnet c. (${AWS::StackName})"
   PrivateSubnetRouteTable:
     Type: AWS::EC2::RouteTable
     Properties:
       VpcId: !Ref VPC
       Tags:
-        -
-          Key: Name
+        - Key: Name
           Value: !Sub "${EnvironmentName} Private Subnet Routing for VPC ${VPC}"
   PrivateSubnetRouting:
     Type: AWS::EC2::Route
@@ -584,8 +540,7 @@ Resources:
       CidrBlock: !Sub "10.${VPCUniqueNumber}.31.0/24"
       AvailabilityZone: !Sub "${AWS::Region}a"
       Tags:
-        -
-          Key: Name
+        - Key: Name
           Value: !Sub "${EnvironmentName} Lightrail RDS Subnet a. (${AWS::StackName})"
   SubnetRdsB:
     Type: AWS::EC2::Subnet
@@ -594,8 +549,7 @@ Resources:
       CidrBlock: !Sub "10.${VPCUniqueNumber}.32.0/24"
       AvailabilityZone: !Sub "${AWS::Region}b"
       Tags:
-        -
-          Key: Name
+        - Key: Name
           Value: !Sub "${EnvironmentName} Lightrail RDS Subnet b. (${AWS::StackName})"
   SubnetRdsC:
     Type: AWS::EC2::Subnet
@@ -604,8 +558,7 @@ Resources:
       CidrBlock: !Sub "10.${VPCUniqueNumber}.33.0/24"
       AvailabilityZone: !Sub "${AWS::Region}c"
       Tags:
-        -
-          Key: Name
+        - Key: Name
           Value: !Sub "${EnvironmentName} Lightrail RDS Subnet c. (${AWS::StackName})"
 
   # Demo Store Subnets
@@ -616,8 +569,7 @@ Resources:
       CidrBlock: !Sub "10.${VPCUniqueNumber}.241.0/24"
       AvailabilityZone: !Sub "${AWS::Region}a"
       Tags:
-        -
-          Key: Name
+        - Key: Name
           Value: !Sub "${EnvironmentName} Lightrail Demo Store Subnet a. (${AWS::StackName})"
   SubnetDemoStoreB:
     Type: AWS::EC2::Subnet
@@ -626,8 +578,7 @@ Resources:
       CidrBlock: !Sub "10.${VPCUniqueNumber}.242.0/24"
       AvailabilityZone: !Sub "${AWS::Region}b"
       Tags:
-        -
-          Key: Name
+        - Key: Name
           Value: !Sub "${EnvironmentName} Lightrail Demo Store Subnet b. (${AWS::StackName})"
   SubnetDemoStoreC:
     Type: AWS::EC2::Subnet
@@ -636,16 +587,14 @@ Resources:
       CidrBlock: !Sub "10.${VPCUniqueNumber}.243.0/24"
       AvailabilityZone: !Sub "${AWS::Region}c"
       Tags:
-        -
-          Key: Name
+        - Key: Name
           Value: !Sub "${EnvironmentName} Lightrail Demo Store Subnet c. (${AWS::StackName})"
   DemoStoreSubnetRouteTable:
     Type: AWS::EC2::RouteTable
     Properties:
       VpcId: !Ref VPC
       Tags:
-        -
-          Key: Name
+        - Key: Name
           Value: !Sub "${EnvironmentName} DemoStore Subnet Routing for VPC ${VPC}"
   DemoStoreSubnetRouting:
     Type: AWS::EC2::Route

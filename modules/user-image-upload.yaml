@@ -93,8 +93,7 @@ Resources:
         CiKeysBucketName: !Ref CiKeysBucketName
         ProjectName: !Ref ProjectName
       Tags:
-        -
-          Key: Service
+        - Key: Service
           Value: UserImageUpload
 
 Outputs:

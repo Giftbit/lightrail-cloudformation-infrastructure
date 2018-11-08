@@ -4,13 +4,11 @@ Description: "CloudFormation Continuous Delivery"
 Metadata:
   "AWS::CloudFormation::Interface":
     ParameterGroups:
-      -
-        Label:
+      - Label:
           default: Project Parameters
         Parameters:
           - ProjectName
-      -
-        Label:
+      - Label:
           default: Pipeline Parameters
         Parameters:
           - GithubRepoOwner
@@ -20,8 +18,7 @@ Metadata:
           - PreferredSlackChannel
           - CurrentAccountStackName
           - ApprovalNotificationTopicExport
-      -
-        Label:
+      - Label:
           default: >
             Enabled Accounts (Deploy this stack first with no enabled accounts, then set up the CI Roles in the
             accounts, before enabling the accounts below)
@@ -29,8 +26,7 @@ Metadata:
           - DevAccountId
           - StagingAccountId
           - ProductionAccountId
-      -
-        Label:
+      - Label:
           default: >
             Manage Accounts with CodePipeline (Deploy this stack first with no enabled accounts, then set up the CI Roles in the
             accounts, before enabling the accounts below)
@@ -146,8 +142,7 @@ Resources:
       Bucket: !Ref "DeploymentArtifactBucket"
       PolicyDocument:
         Statement:
-          -
-            Effect: Allow
+          - Effect: Allow
             Action:
               - s3:GetObject*
               - s3:ListBucket*
@@ -177,8 +172,7 @@ Resources:
       KeyPolicy:
         Version: "2012-10-17"
         Statement:
-          -
-            Effect: Allow
+          - Effect: Allow
             Principal:
               AWS:
                 !Sub "arn:aws:iam::${AWS::AccountId}:root"
@@ -187,8 +181,7 @@ Resources:
             Resource: "*"
           - !If
             - AnAccountIsEnabled
-            -
-              Effect: Allow
+            - Effect: Allow
               Action:
                 - kms:decrypt
               Resource: "*"
@@ -250,11 +243,9 @@ Resources:
           Type: KMS
       Name: !Ref "AWS::StackName"
       Stages:
-        -
-          Name: Source
+        - Name: Source
           Actions:
-            -
-              Name: Source
+            - Name: Source
               ActionTypeId:
                 Category: Source
                 Owner: ThirdParty
@@ -268,11 +259,9 @@ Resources:
                 Branch: !Ref GithubRepoBranch
                 OAuthToken: !Ref GitHubOAuthToken
               RunOrder: 1
-        -
-          Name: Build
+        - Name: Build
           Actions:
-            -
-              Name: CodeBuild
+            - Name: CodeBuild
               ActionTypeId:
                 Category: Build
                 Owner: AWS
@@ -285,8 +274,7 @@ Resources:
               Configuration:
                 ProjectName: !Ref ProjectName
               RunOrder: 1
-            -
-              Name: UploadTemplate
+            - Name: UploadTemplate
               ActionTypeId:
                 Category: Invoke
                 Owner: AWS
@@ -305,11 +293,9 @@ Resources:
               RunOrder: 2
         - !If
           - DevAccountIsEnabled
-          -
-            Name: Dev
+          - Name: Dev
             Actions:
-              -
-                Name: ChangeSetReplace
+              - Name: ChangeSetReplace
                 ActionTypeId:
                   Category: Invoke
                   Owner: AWS
@@ -334,8 +320,7 @@ Resources:
                       }
                     }
                 RunOrder: 1
-              -
-                Name: ApprovalForRelease
+              - Name: ApprovalForRelease
                 ActionTypeId:
                   Category: Approval
                   Owner: AWS
@@ -344,8 +329,7 @@ Resources:
                 Configuration:
                   NotificationArn: !Ref CodePipelineApprovalSNSTopic
                 RunOrder: 2
-              -
-                Name: ExecuteChangeSet
+              - Name: ExecuteChangeSet
                 ActionTypeId:
                   Category: Deploy
                   Owner: AWS
@@ -358,8 +342,7 @@ Resources:
                   RoleArn: !Sub "arn:aws:iam::${DevAccountId}:role/${ProjectName}-CloudFormationServiceRole"
                 RoleArn: !Sub "arn:aws:iam::${DevAccountId}:role/${ProjectName}-CloudFormationExecutorRole"
                 RunOrder: 3
-              -
-                Name: UpdateRevisionState
+              - Name: UpdateRevisionState
                 ActionTypeId:
                   Category: Invoke
                   Owner: AWS
@@ -371,11 +354,9 @@ Resources:
           - !Ref "AWS::NoValue"
         - !If
           - StagingAccountIsEnabled
-          -
-            Name: Staging
+          - Name: Staging
             Actions:
-              -
-                Name: ChangeSetReplace
+              - Name: ChangeSetReplace
                 ActionTypeId:
                   Category: Invoke
                   Owner: AWS
@@ -400,8 +381,7 @@ Resources:
                       }
                     }
                 RunOrder: 1
-              -
-                Name: ApprovalForRelease
+              - Name: ApprovalForRelease
                 ActionTypeId:
                   Category: Approval
                   Owner: AWS
@@ -410,8 +390,7 @@ Resources:
                 Configuration:
                   NotificationArn: !Ref CodePipelineApprovalSNSTopic
                 RunOrder: 2
-              -
-                Name: ExecuteChangeSet
+              - Name: ExecuteChangeSet
                 ActionTypeId:
                   Category: Deploy
                   Owner: AWS
@@ -424,8 +403,7 @@ Resources:
                   RoleArn: !Sub "arn:aws:iam::${StagingAccountId}:role/${ProjectName}-CloudFormationServiceRole"
                 RoleArn: !Sub "arn:aws:iam::${StagingAccountId}:role/${ProjectName}-CloudFormationExecutorRole"
                 RunOrder: 3
-              -
-                Name: UpdateRevisionState
+              - Name: UpdateRevisionState
                 ActionTypeId:
                   Category: Invoke
                   Owner: AWS
@@ -437,11 +415,9 @@ Resources:
           - !Ref AWS::NoValue
         - !If
           - ProductionAccountIsEnabled
-          -
-            Name: Production
+          - Name: Production
             Actions:
-              -
-                Name: ChangeSetReplace
+              - Name: ChangeSetReplace
                 ActionTypeId:
                   Category: Invoke
                   Owner: AWS
@@ -466,8 +442,7 @@ Resources:
                       }
                     }
                 RunOrder: 1
-              -
-                Name: ApprovalForRelease
+              - Name: ApprovalForRelease
                 ActionTypeId:
                   Category: Approval
                   Owner: AWS
@@ -476,8 +451,7 @@ Resources:
                 Configuration:
                   NotificationArn: !Ref CodePipelineApprovalSNSTopic
                 RunOrder: 2
-              -
-                Name: ExecuteChangeSet
+              - Name: ExecuteChangeSet
                 ActionTypeId:
                   Category: Deploy
                   Owner: AWS
@@ -490,8 +464,7 @@ Resources:
                   RoleArn: !Sub "arn:aws:iam::${ProductionAccountId}:role/${ProjectName}-CloudFormationServiceRole"
                 RoleArn: !Sub "arn:aws:iam::${ProductionAccountId}:role/${ProjectName}-CloudFormationExecutorRole"
                 RunOrder: 3
-              -
-                Name: UpdateRevisionState
+              - Name: UpdateRevisionState
                 ActionTypeId:
                   Category: Invoke
                   Owner: AWS
@@ -523,22 +496,19 @@ Resources:
       PolicyDocument:
         Version: 2012-10-17
         Statement:
-          -
-            Effect: Allow
+          - Effect: Allow
             Action:
               - logs:CreateLogGroup
               - logs:CreateLogStream
               - logs:PutLogEvents
             Resource: "arn:aws:logs:*:*:*"
-          -
-            Effect: Allow
+          - Effect: Allow
             Action:
               - s3:GetObject
               - s3:GetObjectVersion
               - s3:PutObject
             Resource: !Sub "arn:aws:s3:::${DeploymentArtifactBucket}/*"
-          -
-            Effect: Allow
+          - Effect: Allow
             Action:
               - kms:DescribeKey
               - kms:GenerateDataKey*
@@ -546,8 +516,7 @@ Resources:
               - kms:ReEncrypt*
               - kms:Decrypt
             Resource: !GetAtt DeploymentArtifactKey.Arn
-          -
-            Effect: Allow
+          - Effect: Allow
             Action:
               - codebuild:BatchGetBuilds
               - codebuild:StartBuild
@@ -555,8 +524,7 @@ Resources:
             Resource: !GetAtt CodeBuildProject.Arn
           - !If
             - AnAccountIsEnabled
-            -
-              Effect: Allow
+            - Effect: Allow
               Action:
                 - sts:AssumeRole
               Resource:
@@ -573,19 +541,16 @@ Resources:
                   - !Sub "arn:aws:iam::${ProductionAccountId}:role/${ProjectName}-CloudFormationExecutorRole"
                   - !Ref "AWS::NoValue"
             - !Ref AWS::NoValue
-          -
-            Effect: Allow
+          - Effect: Allow
             Action:
               - sns:publish
             Resource:
               - !Ref CodePipelineApprovalSNSTopic
-          -
-            Effect: Allow
+          - Effect: Allow
             Action:
               - lambda:ListFunctions
             Resource: "*"
-          -
-            Effect: Allow
+          - Effect: Allow
             Action: lambda:InvokeFunction
             Resource:
               - !GetAtt CodePipelineStageRevisionUpdater.Arn
@@ -652,49 +617,42 @@ Resources:
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
-          -
-            Effect: Allow
+          - Effect: Allow
             Action:
               - sts:AssumeRole
             Principal:
               Service:
                 - lambda.amazonaws.com
       Policies:
-        -
-          PolicyName: CodePipelineS3PutActionPolicy
+        - PolicyName: CodePipelineS3PutActionPolicy
           PolicyDocument:
             Version: 2012-10-17
             Statement:
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - logs:CreateLogGroup
                   - logs:CreateLogStream
                   - logs:PutLogEvents
                 Resource: "arn:aws:logs:*:*:*"
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - s3:GetObject
                   - s3:GetObjectVersion
                 Resource:
                   - !Sub "arn:aws:s3:::codepipeline-${AWS::Region}-*/*"
                   - !Sub "arn:aws:s3:::${DeploymentArtifactBucket}/*"
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - s3:PutObject
                 Resource:
                   - !Sub "arn:aws:s3:::${DeploymentArtifactBucket}/templates/*"
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - kms:DescribeKey
                   - kms:GenerateDataKey*
                   - kms:Decrypt
                 Resource: !GetAtt DeploymentArtifactKey.Arn
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - codepipeline:GetJobDetails
                   - codepipeline:PutJobSuccessResult
@@ -725,43 +683,37 @@ Resources:
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
-          -
-            Effect: Allow
+          - Effect: Allow
             Action:
               - sts:AssumeRole
             Principal:
               Service:
                 - lambda.amazonaws.com
       Policies:
-        -
-          PolicyName: CodePipelineCloudformationChangeSetReplace
+        - PolicyName: CodePipelineCloudformationChangeSetReplace
           PolicyDocument:
             Version: 2012-10-17
             Statement:
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - logs:CreateLogGroup
                   - logs:CreateLogStream
                   - logs:PutLogEvents
                 Resource: "arn:aws:logs:*:*:*"
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - codepipeline:GetJobDetails
                   - codepipeline:PutJobSuccessResult
                   - codepipeline:PutJobFailureResult
                 Resource: "*"
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - s3:GetObject
                   - s3:GetObjectVersion
                 Resource:
                   - !Sub "arn:aws:s3:::codepipeline-${AWS::Region}-*/*"
                   - !Sub "arn:aws:s3:::${DeploymentArtifactBucket}/*"
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - kms:DescribeKey
                   - kms:GenerateDataKey*
@@ -769,8 +721,7 @@ Resources:
                 Resource: !GetAtt DeploymentArtifactKey.Arn
               - !If
                 - AnAccountIsEnabled
-                -
-                  Effect: Allow
+                - Effect: Allow
                   Action:
                     - sts:AssumeRole
                   Resource:
@@ -825,20 +776,17 @@ Resources:
               Service:
                 - codebuild.amazonaws.com
       Policies:
-        -
-          PolicyName: CodeBuildServicePolicy
+        - PolicyName: CodeBuildServicePolicy
           PolicyDocument:
             Version: 2012-10-17
             Statement:
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - logs:CreateLogGroup
                   - logs:CreateLogStream
                   - logs:PutLogEvents
                 Resource: "arn:aws:logs:*:*:*"
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - s3:GetObject
                   - s3:GetObjectVersion
@@ -846,8 +794,7 @@ Resources:
                 Resource:
                   - !Sub "arn:aws:s3:::codepipeline-${AWS::Region}-*/*"
                   - !Sub "arn:aws:s3:::${DeploymentArtifactBucket}/*"
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - kms:DescribeKey
                   - kms:GenerateDataKey*
@@ -855,13 +802,11 @@ Resources:
                   - kms:ReEncrypt*
                   - kms:Decrypt
                 Resource: !GetAtt DeploymentArtifactKey.Arn
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - cloudformation:ValidateTemplate
                 Resource: "*"
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - kms:decrypt
                 Resource: !GetAtt EncryptionKey.Arn
@@ -911,31 +856,26 @@ Resources:
               Service:
                 - lambda.amazonaws.com
       Policies:
-        -
-          PolicyName: CodePipelineApprovalDiffNotifierPolicy
+        - PolicyName: CodePipelineApprovalDiffNotifierPolicy
           PolicyDocument:
             Version: 2012-10-17
             Statement:
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - logs:CreateLogGroup
                   - logs:CreateLogStream
                   - logs:PutLogEvents
                 Resource: arn:aws:logs:*:*:*
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - codepipeline:GetPipelineState
                   - codepipeline:GetPipelineExecution
                 Resource: !Sub "arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:${CodePipeline}"
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - s3:GetObject
                 Resource: !Sub "arn:aws:s3:::${DeploymentArtifactBucket}/StageState/*"
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - sns:publish
                 Resource:
@@ -976,29 +916,25 @@ Resources:
       PolicyDocument:
         Version: 2012-10-17
         Statement:
-          -
-            Effect: Allow
+          - Effect: Allow
             Action:
               - logs:CreateLogGroup
               - logs:CreateLogStream
               - logs:PutLogEvents
             Resource: arn:aws:logs:*:*:*
-          -
-            Effect: Allow
+          - Effect: Allow
             Action:
               - codepipeline:GetPipelineState
               - codepipeline:GetPipelineExecution
             Resource:
               - !Sub "arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:${CodePipeline}"
-          -
-            Effect: Allow
+          - Effect: Allow
             Action:
               - codepipeline:GetJobDetails
               - codepipeline:PutJobSuccessResult
               - codepipeline:PutJobFailureResult
             Resource: "*"
-          -
-            Effect: Allow
+          - Effect: Allow
             Action:
               - s3:PutObject
             Resource: !Sub "arn:aws:s3:::${DeploymentArtifactBucket}/StageState/*"
@@ -1062,13 +998,11 @@ Resources:
               Service:
                 - lambda.amazonaws.com
       Policies:
-        -
-          PolicyName: EncryptionAccess
+        - PolicyName: EncryptionAccess
           PolicyDocument:
             Version: 2012-10-17
             Statement:
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - kms:Encrypt
                   - kms:DescribeKey
@@ -1107,13 +1041,11 @@ Resources:
               Service:
                 - lambda.amazonaws.com
       Policies:
-        -
-          PolicyName: EncryptionAccess
+        - PolicyName: EncryptionAccess
           PolicyDocument:
             Version: 2012-10-17
             Statement:
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - kms:Decrypt
                 Resource: !GetAtt EncryptionKey.Arn
