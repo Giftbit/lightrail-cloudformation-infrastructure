@@ -49,7 +49,7 @@ Parameters:
       - PriceClass_200
   ViewerCertificateArn:
     Type: String
-    Description: Please enter in the Arn of the AWS Certificate Manager Certificate you would like to use
+    Description: Arn of the AWS Certificate Manager cert for the CloudFront distribution (must be in us-east-1)
     Default: ""
   WebsiteEndpoint:
     Type: String
