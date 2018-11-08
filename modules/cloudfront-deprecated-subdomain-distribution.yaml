@@ -10,7 +10,7 @@ Parameters:
     Description: The subdomain to redirect all traffic from
   ViewerCertificateArn:
     Type: String
-    Description: Arn of the AWS Certificate Manager cert for the CloudFront distribution
+    Description: Arn of the AWS Certificate Manager cert for the CloudFront distribution (must be in us-east-1)
     Default: ""
   PriceClass:
     Type: String

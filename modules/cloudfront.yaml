@@ -3,28 +3,23 @@ Description: "Currency CloudFront distribution configurations"
 Metadata:
   "AWS::CloudFormation::Interface":
     ParameterGroups:
-      -
-        Label:
+      - Label:
           default: Stack Environment
         Parameters:
           - EnvironmentName
-      -
-        Label:
+      - Label:
           default: Domains
         Parameters:
           - BaseDomainName
-      -
-        Label:
+      - Label:
           default: Price Class
         Parameters:
           - PriceClass
-      -
-        Label:
+      - Label:
           default: SSL Certificates
         Parameters:
           - ViewerCertificateArn
-      -
-        Label:
+      - Label:
           default: Endpoints
         Parameters:
           - WebsiteEndpoint
@@ -32,6 +27,7 @@ Metadata:
           - ServicesEndpoint
           - StatsEndpoint
           - BatchEndpoint
+
 Parameters:
   EnvironmentName:
     Type: String
@@ -53,7 +49,7 @@ Parameters:
       - PriceClass_200
   ViewerCertificateArn:
     Type: String
-    Description: Please enter in the Arn of the AWS Certificate Manager Certificate you would like to use
+    Description: Arn of the AWS Certificate Manager cert for the CloudFront distribution (must be in us-east-1)
     Default: ""
   WebsiteEndpoint:
     Type: String
@@ -102,6 +98,7 @@ Parameters:
       - "yes"
       - "no"
     Default: "yes"
+
 Conditions:
   ShouldConfigureAliases: !Equals [!Ref ConfigureAliases, "yes"]  # This will be removed once we have the production account go live, but can be overridden quickly in cloudformation
   ViewerCertificateArnSet: !Not [!Equals [!Ref ViewerCertificateArn, ""]]
@@ -111,6 +108,7 @@ Conditions:
   UserImageUploadAuthServiceEndpointSet: !Not [!Equals [!Ref UserImageUploadAuthServiceEndpoint, ""]]
   UserImageServingEndpointSet: !Not [!Equals [!Ref UserImageServingEndpoint, ""]]
   WidgetsEndpointSet: !Not [!Equals [!Ref WidgetsEndpoint, ""]]
+
 Resources:
   AppApiDistribution:
     Type: AWS::CloudFormation::Stack
@@ -194,8 +192,7 @@ Resources:
         IndexDocument: index.html
         ErrorDocument: error.html
         RoutingRules:
-          -
-            RedirectRule:
+          - RedirectRule:
               HostName: !Sub "www.${BaseDomainName}"
               ReplaceKeyWith: docs/
               Protocol: https
@@ -255,8 +252,7 @@ Resources:
           SslSupportMethod: !If [ViewerCertificateArnSet, "sni-only", !Ref "AWS::NoValue"]
           MinimumProtocolVersion: TLSv1.1_2016
         Origins:
-          -
-            DomainName: !Sub "${RedirectBucket}.s3-website-${AWS::Region}.amazonaws.com"
+          - DomainName: !Sub "${RedirectBucket}.s3-website-${AWS::Region}.amazonaws.com"
             Id: RedirectOrigin
             CustomOriginConfig:
               OriginSSLProtocols:

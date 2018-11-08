@@ -114,28 +114,22 @@ Resources:
       HealthCheckType: EC2
       VPCZoneIdentifier: !Split [",", !Ref VpcPublicSubnetIds]
       Tags:
-        -
-          Key: Name
+        - Key: Name
           Value: !Sub "${EnvironmentName} Lightrail ECS Cluster"
           PropagateAtLaunch: true
-        -
-          Key: Service
+        - Key: Service
           Value: ECS
           PropagateAtLaunch: true
-        -
-          Key: CentralizeLogs
+        - Key: CentralizeLogs
           Value: true
           PropagateAtLaunch: true
-        -
-          Key: IncludeInDataDogMetrics
+        - Key: IncludeInDataDogMetrics
           Value: true
           PropagateAtLaunch: true
-        -
-          Key: NormalMinSize
+        - Key: NormalMinSize
           Value: !Ref ClusterMinInstances
           PropagateAtLaunch: false
-        -
-          Key: NormalMaxSize
+        - Key: NormalMaxSize
           Value: !Ref ClusterMaxInstances
           PropagateAtLaunch: false
     CreationPolicy:
@@ -168,20 +162,17 @@ Resources:
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
-          -
-            Effect: Allow
+          - Effect: Allow
             Action:
               - sts:AssumeRole
             Principal:
               Service:
                 - autoscaling.amazonaws.com
       Policies:
-        -
-          PolicyName: SnsPublishAccess
+        - PolicyName: SnsPublishAccess
           PolicyDocument:
             Statement:
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - sns:Publish
                 Resource:
@@ -204,21 +195,18 @@ Resources:
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
-          -
-            Effect: Allow
+          - Effect: Allow
             Action:
               - sts:AssumeRole
             Principal:
               Service:
                 - lambda.amazonaws.com
       Policies:
-        -
-          PolicyName: ClusterInstanceAccess
+        - PolicyName: ClusterInstanceAccess
           PolicyDocument:
             Version: 2012-10-17
             Statement:
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - autoscaling:CompleteLifecycleAction
                   - logs:CreateLogGroup
@@ -309,21 +297,18 @@ Resources:
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
-          -
-            Effect: Allow
+          - Effect: Allow
             Action:
               - sts:AssumeRole
             Principal:
               Service:
                 - ec2.amazonaws.com
       Policies:
-        -
-          PolicyName: BasicECSAccess
+        - PolicyName: BasicECSAccess
           PolicyDocument:
             Version: 2012-10-17
             Statement:
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - ecs:DiscoverPollEndpoint
                   - ecs:Poll
@@ -337,13 +322,11 @@ Resources:
                 Resource: "*"
         - !If
           - ShouldConfigureECRAccess
-          -
-            PolicyName: ECRAccess
+          - PolicyName: ECRAccess
             PolicyDocument:
               Version: 2012-10-17
               Statement:
-                -
-                  Effect: Allow
+                - Effect: Allow
                   Action:
                     - ecr:BatchCheckLayerAvailability
                     - ecr:GetDownloadUrlForLayer
@@ -361,13 +344,11 @@ Resources:
       PolicyDocument:
         Version: 2012-10-17
         Statement:
-          -
-            Effect: Allow
+          - Effect: Allow
             Action:
               - iam:GetRole
             Resource: !GetAtt ClusterRole.Arn
-          -
-            Effect: Allow
+          - Effect: Allow
             Action:
               - s3:PutObject
               - s3:PutObjectAcl
@@ -375,8 +356,7 @@ Resources:
             Resource:
               - !Sub "arn:aws:s3:::${InstanceLogsBucketName}"
               - !Sub "arn:aws:s3:::${InstanceLogsBucketName}/${!aws:userid}/*"
-          -
-            Effect: Allow
+          - Effect: Allow
             Action:
               - kms:Encrypt
               - kms:GenerateDataKey

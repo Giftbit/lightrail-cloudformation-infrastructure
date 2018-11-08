@@ -60,11 +60,9 @@ Resources:
     Properties:
       RepositoryPolicyText: !If
         - ShouldConfigureECRAccess
-        -
-          Version: 2012-10-17
+        - Version: 2012-10-17
           Statement:
-            -
-              Effect: Allow
+            - Effect: Allow
               Principal:
                 AWS: !Split [",", !Ref AccountsToGrantEcrReadAccess]
               Action:
@@ -82,8 +80,7 @@ Resources:
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
-          -
-            Effect: Allow
+          - Effect: Allow
             Action:
               - sts:AssumeRole
             Principal:
@@ -94,13 +91,11 @@ Resources:
                 "sts:ExternalId":
                   !FindInMap [!Ref EnvironmentName, global, AccessRoleExternalId]
       Policies:
-        -
-          PolicyName: DataDogReadOnlyAccess
+        - PolicyName: DataDogReadOnlyAccess
           PolicyDocument:
             Version: 2012-10-17
             Statement:
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - autoscaling:Describe*
                   - budgets:ViewBudget
@@ -155,8 +150,7 @@ Resources:
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
-          -
-            Effect: Allow
+          - Effect: Allow
             Action:
               - sts:AssumeRole
             Principal:
@@ -166,18 +160,15 @@ Resources:
               Bool:
                 "aws:MultiFactorAuthPresent": true
       Policies:
-        -
-          PolicyName: CloudFormationUpdateAccess
+        - PolicyName: CloudFormationUpdateAccess
           PolicyDocument:
             Version: 2012-10-17
             Statement:
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - ecr:GetAuthorizationToken
                 Resource: "*"
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - ecr:GetDownloadUrlForLayer
                   - ecr:BatchGetImage
@@ -189,19 +180,16 @@ Resources:
                     - ShouldCreateECRRepository
                     - !Sub "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/${EcrRepo}"
                     - !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", EcrRepoArnOverride]
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - cloudformation:DescribeStacks
                 Resource: "*"
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - cloudformation:DescribeStackResource
                 Resource:
                   - !Sub "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${ParentStackName}/*"
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - ecs:RegisterTaskDefinition
                   - ecs:DeregisterTaskDefinition
@@ -210,8 +198,7 @@ Resources:
                   - ecs:UpdateService
                   - ecs:DeleteService
                 Resource: "*"
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - ecs:ListTasks
                 Resource: "*"
@@ -225,8 +212,7 @@ Resources:
       PolicyDocument:
         Version: 2012-10-17
         Statement:
-          -
-            Effect: Allow
+          - Effect: Allow
             Action:
               - sts:AssumeRole
             Resource:

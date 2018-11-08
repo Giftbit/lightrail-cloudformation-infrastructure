@@ -41,8 +41,7 @@ Resources:
       SecurityGroups: !Split [",", !Ref SecurityGroups]
       Subnets: !Split [",", !Ref SubnetIds]
       LoadBalancerAttributes:
-        -
-          Key: idle_timeout.timeout_seconds
+        - Key: idle_timeout.timeout_seconds
           Value: 60
   DefaultTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
@@ -59,8 +58,7 @@ Resources:
       Certificates:
         - CertificateArn: !Ref AlbCertificate
       DefaultActions:
-        -
-          Type: forward
+        - Type: forward
           TargetGroupArn: !Ref DefaultTargetGroup
   AdditionalCertificates:
     Type: AWS::ElasticLoadBalancingV2::ListenerCertificate
@@ -74,8 +72,7 @@ Resources:
     Properties:
       DomainName: !Sub "alb.${BaseDomain}"
       DomainValidationOptions:
-        -
-          DomainName: !Sub "alb.${BaseDomain}"
+        - DomainName: !Sub "alb.${BaseDomain}"
           ValidationDomain: !Ref BaseDomain
   AlbZoneRecord:
     Type: AWS::Route53::RecordSet
@@ -92,8 +89,7 @@ Resources:
     Properties:
       DomainName: !Sub "demo.${BaseDomain}"
       DomainValidationOptions:
-        -
-          DomainName: !Sub "demo.${BaseDomain}"
+        - DomainName: !Sub "demo.${BaseDomain}"
           ValidationDomain: !Ref BaseDomain
   DemoStoreZoneRecord:
     Type: AWS::Route53::RecordSet
@@ -117,12 +113,10 @@ Resources:
       UnhealthyThresholdCount: 3
       HealthCheckIntervalSeconds: 30
       TargetGroupAttributes:
-        -
-          Key: deregistration_delay.timeout_seconds
+        - Key: deregistration_delay.timeout_seconds
           Value: !If [EnvIsDev, 15, 60]
       Tags:
-        -
-          Key: Service
+        - Key: Service
           Value: Batch
   BatchListenerWildcard:
     Type: AWS::ElasticLoadBalancingV2::ListenerRule
@@ -130,16 +124,13 @@ Resources:
       Priority: 11
       ListenerArn: !Ref Listener
       Actions:
-        -
-          Type: forward
+        - Type: forward
           TargetGroupArn: !Ref BatchTargetGroup
       Conditions:
-        -
-          Field: path-pattern
+        - Field: path-pattern
           Values:
             - /v1/batch/*
-        -
-          Field: host-header
+        - Field: host-header
           Values:
             - !Sub "alb.${BaseDomain}"
   BatchListenerSlash:
@@ -148,16 +139,13 @@ Resources:
       Priority: 12
       ListenerArn: !Ref Listener
       Actions:
-        -
-          Type: forward
+        - Type: forward
           TargetGroupArn: !Ref BatchTargetGroup
       Conditions:
-        -
-          Field: path-pattern
+        - Field: path-pattern
           Values:
             - /v1/batch/
-        -
-          Field: host-header
+        - Field: host-header
           Values:
             - !Sub "alb.${BaseDomain}"
   BatchListenerBare:
@@ -166,16 +154,13 @@ Resources:
       Priority: 13
       ListenerArn: !Ref Listener
       Actions:
-        -
-          Type: forward
+        - Type: forward
           TargetGroupArn: !Ref BatchTargetGroup
       Conditions:
-        -
-          Field: path-pattern
+        - Field: path-pattern
           Values:
             - /v1/batch
-        -
-          Field: host-header
+        - Field: host-header
           Values:
             - !Sub "alb.${BaseDomain}"
 
@@ -191,18 +176,14 @@ Resources:
       UnhealthyThresholdCount: 3
       HealthCheckIntervalSeconds: 30
       TargetGroupAttributes:
-        -
-          Key: deregistration_delay.timeout_seconds
+        - Key: deregistration_delay.timeout_seconds
           Value: !If [EnvIsDev, 15, 60]
-        -
-          Key: stickiness.enabled
+        - Key: stickiness.enabled
           Value: true
-        -
-          Key: stickiness.type
+        - Key: stickiness.type
           Value: lb_cookie
       Tags:
-        -
-          Key: Service
+        - Key: Service
           Value: Services
   ServicesListenerWildcard:
     Type: AWS::ElasticLoadBalancingV2::ListenerRule
@@ -210,16 +191,13 @@ Resources:
       Priority: 21
       ListenerArn: !Ref Listener
       Actions:
-        -
-          Type: forward
+        - Type: forward
           TargetGroupArn: !Ref ServicesTargetGroup
       Conditions:
-        -
-          Field: path-pattern
+        - Field: path-pattern
           Values:
             - /v1/*
-        -
-          Field: host-header
+        - Field: host-header
           Values:
             - !Sub "alb.${BaseDomain}"
   ServicesListenerSlash:
@@ -228,16 +206,13 @@ Resources:
       Priority: 22
       ListenerArn: !Ref Listener
       Actions:
-        -
-          Type: forward
+        - Type: forward
           TargetGroupArn: !Ref ServicesTargetGroup
       Conditions:
-        -
-          Field: path-pattern
+        - Field: path-pattern
           Values:
             - /v1/
-        -
-          Field: host-header
+        - Field: host-header
           Values:
             - !Sub "alb.${BaseDomain}"
   ServicesListenerBare:
@@ -246,16 +221,13 @@ Resources:
       Priority: 23
       ListenerArn: !Ref Listener
       Actions:
-        -
-          Type: forward
+        - Type: forward
           TargetGroupArn: !Ref ServicesTargetGroup
       Conditions:
-        -
-          Field: path-pattern
+        - Field: path-pattern
           Values:
             - /v1
-        -
-          Field: host-header
+        - Field: host-header
           Values:
             - !Sub "alb.${BaseDomain}"
 
@@ -272,12 +244,10 @@ Resources:
       HealthCheckIntervalSeconds: 15
       TargetType: ip
       TargetGroupAttributes:
-        -
-          Key: deregistration_delay.timeout_seconds
+        - Key: deregistration_delay.timeout_seconds
           Value: !If [EnvIsDev, 15, 60]
       Tags:
-        -
-          Key: Service
+        - Key: Service
           Value: DemoStore
   DemoStoreListener:
     Type: AWS::ElasticLoadBalancingV2::ListenerRule
@@ -285,12 +255,10 @@ Resources:
       Priority: 31
       ListenerArn: !Ref Listener
       Actions:
-        -
-          Type: forward
+        - Type: forward
           TargetGroupArn: !Ref DemoStoreTargetGroup
       Conditions:
-        -
-          Field: host-header
+        - Field: host-header
           Values:
             - !Sub "demo.${BaseDomain}"
 
@@ -300,8 +268,7 @@ Resources:
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
-          -
-            Effect: Allow
+          - Effect: Allow
             Action:
               - sts:AssumeRole
             Principal:

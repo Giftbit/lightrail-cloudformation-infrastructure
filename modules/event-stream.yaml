@@ -21,11 +21,9 @@ Resources:
     Properties:
       ShardCount: 1
       Tags:
-        -
-          Key: Service
+        - Key: Service
           Value: EventStream
-        -
-          Key: ForwardToFirehoseStream
+        - Key: ForwardToFirehoseStream
           Value: !Ref FirehoseStream
 
   DataBucket:
@@ -34,14 +32,12 @@ Resources:
       AccessControl: Private
       NotificationConfiguration: !If
         - ShouldConfigureS3EventTranscoderNotification
-        -
-          LambdaConfigurations:
+        - LambdaConfigurations:
             - Function: !Ref S3EventTranscoderLambdaArn
               Event: 's3:ObjectCreated:*'
         - !Ref AWS::NoValue
       Tags:
-        -
-          Key: Service
+        - Key: Service
           Value: EventStream
   DataBucketPolicy:
     Type: AWS::S3::BucketPolicy
@@ -67,8 +63,7 @@ Resources:
       KeyPolicy:
         Version: "2012-10-17"
         Statement:
-          -
-            Effect: "Allow"
+          - Effect: "Allow"
             Principal:
               AWS:
                 !Sub "arn:aws:iam::${AWS::AccountId}:root"
@@ -86,21 +81,18 @@ Resources:
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
-          -
-            Effect: Allow
+          - Effect: Allow
             Action:
               - sts:AssumeRole
             Principal:
               Service:
                 - firehose.amazonaws.com
       Policies:
-        -
-          PolicyName: EncryptionAndBucketAccess
+        - PolicyName: EncryptionAndBucketAccess
           PolicyDocument:
             Version: 2012-10-17
             Statement:
-              -
-                # Granting Access to Decrypt seems weird, but Firehose says it needs it
+              - # Granting Access to Decrypt seems weird, but Firehose says it needs it
                 # http://docs.aws.amazon.com/firehose/latest/dev/controlling-access.html#using-iam-s3
                 Effect: Allow
                 Action:
@@ -113,8 +105,7 @@ Resources:
                     kms:ViaService: !Sub "s3.${AWS::Region}.amazonaws.com"
                   StringLike:
                     kms:EncryptionContext:aws:s3:arn: !Sub "arn:aws:s3:::${DataBucket}/*"
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - s3:AbortMultipartUpload
                   - s3:GetBucketLocation
@@ -125,13 +116,11 @@ Resources:
                 Resource:
                   - !Sub "arn:aws:s3:::${DataBucket}"
                   - !Sub "arn:aws:s3:::${DataBucket}/*"
-        -
-          PolicyName: WriteLogs
+        - PolicyName: WriteLogs
           PolicyDocument:
             Version: 2012-10-17
             Statement:
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - logs:PutLogEvents
                 Resource:
@@ -174,33 +163,28 @@ Resources:
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
-          -
-            Effect: Allow
+          - Effect: Allow
             Action:
               - sts:AssumeRole
             Principal:
               Service:
                 - lambda.amazonaws.com
       Policies:
-        -
-          PolicyName: CloudwatchLogsAccess
+        - PolicyName: CloudwatchLogsAccess
           PolicyDocument:
             Version: 2012-10-17
             Statement:
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - logs:CreateLogGroup
                   - logs:CreateLogStream
                   - logs:PutLogEvents
                 Resource: "*"
-        -
-          PolicyName: KinesisReadFirehoseWrite
+        - PolicyName: KinesisReadFirehoseWrite
           PolicyDocument:
             Version: 2012-10-17
             Statement:
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - kinesis:DescribeStream
                   - kinesis:ListStreams
@@ -208,8 +192,7 @@ Resources:
                   - kinesis:GetRecords
                   - kinesis:ListTagsForStream
                 Resource: "*"
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - firehose:DescribeDeliveryStream
                   - firehose:ListDeliveryStream

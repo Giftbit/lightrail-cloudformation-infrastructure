@@ -127,8 +127,7 @@ Resources:
               "SecureConfigKmsArn": "${SecureConfigKmsArn}",
               "VpcUniqueNumber": "${VpcUniqueNumber}"
             }
-          -
-            Capacity: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", Capacity]
+          - Capacity: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", Capacity]
         GitHubOAuthToken: !Ref GitHubOAuthToken
         GitHubBranch: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", GitHubBranch]
         GitHubBranchDest: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", GitHubBranchDest]
@@ -136,8 +135,7 @@ Resources:
         CiKeysBucketName: !Ref CiKeysBucketName
         CodeBuildImageNodeSSH: !Ref CodeBuildImageNodeSSH
       Tags:
-        -
-          Key: Service
+        - Key: Service
           Value: Rothschild
 
 Outputs:

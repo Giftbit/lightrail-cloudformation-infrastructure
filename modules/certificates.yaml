@@ -6,6 +6,9 @@ Parameters:
     Type: String
     Description: The Base Domain Name that you want to use
 
+# SSL certs have to be in us-east-1.  We deploy this stack manually there to create
+# the certificates (or even just create this resource manually :/).
+
 Resources:
   Certificate:
     Type: AWS::CertificateManager::Certificate
@@ -15,16 +18,20 @@ Resources:
         - !Sub "www.${BaseDomain}"
         - !Sub "api.${BaseDomain}"
         - !Sub "embed.${BaseDomain}"
+        - !Sub "blog.${BaseDomain}"
+        - !Sub "try.${BaseDomain}"
       DomainValidationOptions:
-        -
-          DomainName: !Sub "www.${BaseDomain}"
+        - DomainName: !Sub "www.${BaseDomain}"
           ValidationDomain: !Ref BaseDomain
-        -
-          DomainName: !Sub "api.${BaseDomain}"
+        - DomainName: !Sub "api.${BaseDomain}"
           ValidationDomain: !Ref BaseDomain
-        -
-          DomainName: !Sub "embed.${BaseDomain}"
+        - DomainName: !Sub "embed.${BaseDomain}"
           ValidationDomain: !Ref BaseDomain
+        - DomainName: !Sub "blog.${BaseDomain}"
+          ValidationDomain: !Ref BaseDomain
+        - DomainName: !Sub "try.${BaseDomain}"
+          ValidationDomain: !Ref BaseDomain
+      ValidationMethod: DNS
 
 Outputs:
   CertificateArn:

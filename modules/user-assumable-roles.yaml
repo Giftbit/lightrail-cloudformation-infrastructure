@@ -52,8 +52,7 @@ Resources:
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
-          -
-            Effect: "Allow"
+          - Effect: "Allow"
             Action:
               - "sts:AssumeRole"
             Principal:
@@ -63,13 +62,11 @@ Resources:
               Bool:
                 "aws:MultiFactorAuthPresent": true
       Policies:
-        -
-          PolicyName: EnhancedCodePipelineAccess
+        - PolicyName: EnhancedCodePipelineAccess
           PolicyDocument:
             Version: 2012-10-17
             Statement:
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - codepipeline:RetryStageExecution
                   - codepipeline:StartPipelineExecution
@@ -85,8 +82,7 @@ Resources:
       PolicyDocument:
         Version: "2012-10-17"
         Statement:
-          -
-            Effect: "Allow"
+          - Effect: "Allow"
             Action:
               - "sts:AssumeRole"
             Resource:  # On the Dev Account, grant access to the Production Staging and Dev account pipelines
@@ -113,14 +109,12 @@ Resources:
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
-          -
-            Effect: Allow
+          - Effect: Allow
             Action:
               - sts:AssumeRole
             Principal:
               AWS:
-                -
-                  !Sub "arn:aws:iam::${AWS::AccountId}:root"
+                - !Sub "arn:aws:iam::${AWS::AccountId}:root"
             Condition:
               Bool:
                 aws:MultiFactorAuthPresent: true
@@ -133,15 +127,13 @@ Resources:
       PolicyDocument:
         Version: 2012-10-17
         Statement:
-          -
-            Effect: Deny
+          - Effect: Deny
             NotAction:
               - iam:ListRolePolicies
               - iam:ListInstanceProfilesForRole
             Resource:
               - !GetAtt InfrastructureAdminRole.Arn
-          -
-            Effect: Deny
+          - Effect: Deny
             Action:
               - iam:*User*
               - iam:*Group*
@@ -156,8 +148,7 @@ Resources:
         - ","
         - !Join
           - ","
-          -
-            - !Ref InfrastructureAdminGroup
+          - - !Ref InfrastructureAdminGroup
             - !If
               - ShouldGrantInfrastructureAdminAssume
               - !Ref GroupsToGrantInfrastructureAdminAccess
@@ -166,8 +157,7 @@ Resources:
       PolicyDocument:
         Version: 2012-10-17
         Statement:
-          -
-            Effect: Allow
+          - Effect: Allow
             Action:
               - sts:AssumeRole
             Resource:

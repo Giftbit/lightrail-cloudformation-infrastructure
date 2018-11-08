@@ -26,8 +26,7 @@ Resources:
       PolicyDocument:
         Version: 2012-10-17
         Statement:
-          -
-            Effect: Allow
+          - Effect: Allow
             Action:
               - ssm:DescribeAssociation
               - ssm:GetDocument
@@ -38,8 +37,7 @@ Resources:
               - ssm:UpdateInstanceAssociationStatus
               - ssm:UpdateInstanceInformation
             Resource: "*"
-          -
-            Effect: Allow
+          - Effect: Allow
             Action:
               - ec2messages:AcknowledgeMessage
               - ec2messages:DeleteMessage
@@ -48,24 +46,20 @@ Resources:
               - ec2messages:GetMessages
               - ec2messages:SendReply
             Resource: "*"
-          -
-            Effect: Allow
+          - Effect: Allow
             Action:
               - cloudwatch:PutMetricData
             Resource: "*"
-          -
-            Effect: Allow
+          - Effect: Allow
             Action:
               - ec2:DescribeInstanceStatus
             Resource: "*"
-          -
-            Effect: Allow
+          - Effect: Allow
             Action:
               - ds:CreateComputer
               - ds:DescribeDirectories
             Resource: "*"
-          -
-            Effect: Allow
+          - Effect: Allow
             Action:
               - logs:CreateLogGroup
               - logs:CreateLogStream
@@ -73,8 +67,7 @@ Resources:
               - logs:DescribeLogStreams
               - logs:PutLogEvents
             Resource: "*"
-          -
-            Effect: Allow
+          - Effect: Allow
             Action:
               - s3:PutObject
               - s3:GetObject
@@ -119,8 +112,7 @@ Resources:
         !Ref SynchronizeLogsDocument
       ScheduleExpression: "cron(0 0 0/1 1/1 * ? *)"
       Targets:
-        -
-          Key: !Sub "tag:CentralizeLogs"
+        - Key: !Sub "tag:CentralizeLogs"
           Values:
             - true
 

@@ -47,13 +47,11 @@ Resources:
         - "arn:aws:iam::aws:policy/IAMFullAccess"
         - "arn:aws:iam::aws:policy/PowerUserAccess"
       Policies:
-        -
-          PolicyName: CloudFormationCIServiceRoleRestrictions
+        - PolicyName: CloudFormationCIServiceRoleRestrictions
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
-              -
-                Effect: "Deny"
+              - Effect: "Deny"
                 Action:
                   - "iam:*UserPolicy"
                   - "iam:*UserPolicies"
@@ -69,8 +67,7 @@ Resources:
         Statement:
           - !If
             - CodePipelineAccountIdSet
-            -
-              Effect: "Allow"
+            - Effect: "Allow"
               Action:
                 - "sts:AssumeRole"
               Principal:
@@ -79,19 +76,16 @@ Resources:
                   - !Sub "arn:aws:iam::${CodePipelineAccountId}:role/${ProjectName}-CP-CF-ChangeSetReplaceS3Role"
             - !Ref AWS::NoValue
       Policies:
-        -
-          PolicyName: CloudFormationExecutionAccess
+        - PolicyName: CloudFormationExecutionAccess
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
-              -
-                Effect: "Allow"
+              - Effect: "Allow"
                 Action:
                   - "iam:PassRole"
                 Resource:
                   - !GetAtt CloudFormationServiceRole.Arn
-              -
-                Effect: "Allow"
+              - Effect: "Allow"
                 Action:
                   - "cloudformation:CreateStack"
                   - "cloudformation:DescribeStacks"
@@ -106,8 +100,7 @@ Resources:
                 Resource: !Sub "arn:aws:cloudformation:us-west-2:${AWS::AccountId}:stack/${StackName}/*"
               - !If
                 - DeploymentArtifactBucketSet
-                -
-                  Effect: "Allow"
+                - Effect: "Allow"
                   Action:
                     - "s3:GetBucketLocation"
                     - "s3:GetObject*"
@@ -119,8 +112,7 @@ Resources:
                 - !Ref AWS::NoValue
               - !If
                 - DeploymentArtifactKeySet
-                -
-                  Effect: "Allow"
+                - Effect: "Allow"
                   Action:
                     - "kms:DescribeKey"
                     - "kms:GenerateDataKey*"

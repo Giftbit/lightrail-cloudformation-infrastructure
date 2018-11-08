@@ -6,15 +6,13 @@ Resources:
     Type: AWS::SNS::Topic
     Properties:
       Subscription:
-        -
-          Protocol: https
+        - Protocol: https
           Endpoint: https://events.pagerduty.com/integration/20ef24f7ad74423392e31417365251fb/enqueue
   NonEmergencyTopic:
     Type: AWS::SNS::Topic
     Properties:
       Subscription:
-        -
-          Protocol: https
+        - Protocol: https
           Endpoint: https://events.pagerduty.com/integration/1a909163c3a94fecbce9fd6b79768e97/enqueue
 
 Outputs:
