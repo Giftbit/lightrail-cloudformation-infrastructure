@@ -420,7 +420,7 @@ Resources:
           - !GetAtt LightrailKvs.Outputs.RoleName
           - !GetAtt LightrailTurnkey.Outputs.RoleNames
           - !GetAtt LightrailReactions.Outputs.RoleNames
-          - !GetAtt LightrailRothschild.Outputs.RoleName
+          - !GetAtt LightrailRothschild.Outputs.RoleNames
           - !FindInMap [S3EventTranscoder, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
           - !GetAtt LightrailUserImageUpload.Outputs.RoleName
   LightrailSecureConfigPolicyAdminAccessRoleIdGrants:

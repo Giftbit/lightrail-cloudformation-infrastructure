@@ -57,21 +57,21 @@ Mappings:
       GitHubBranch: dev-ci
       GitHubBranchDest: ""
       Capacity: low
-      RoleName: dev-Rothschild-RestFunctionRole-E6RW6Z3KCO8S
+      RoleNames: dev-Rothschild-RestFunctionRole-E6RW6Z3KCO8S,dev-Rothschild-AutomaticVoidFunctionRole-1HZNZTI7GWDFV
       Endpoint: a2sbb0stq8.execute-api.us-west-2.amazonaws.com
   Staging:
     us-west-2:
       GitHubBranch: staging
       GitHubBranchDest: master
       Capacity: low
-      RoleName: staging-Rothschild-RestFunctionRole-1WP0HJUKSCI23
+      RoleNames: staging-Rothschild-RestFunctionRole-1WP0HJUKSCI23,staging-Rothschild-AutomaticVoidFunctionRole-MZYLCUNWSZYF
       Endpoint: kvd0rpwjoa.execute-api.us-west-2.amazonaws.com
   Production:
     us-west-2:
       GitHubBranch: master
       GitHubBranchDest: ""
       Capacity: high
-      RoleName: production-Rothschild-RestFunctionRole-OCVSS4TEU6MY
+      RoleNames: production-Rothschild-RestFunctionRole-OCVSS4TEU6MY,production-Rothschild-AutomaticVoidFunctionRole-VYL4WGB71JZF
       Endpoint: qaljzxzk0l.execute-api.us-west-2.amazonaws.com
 
 Resources:
@@ -139,7 +139,7 @@ Resources:
           Value: Rothschild
 
 Outputs:
-  RoleName:
-    Value: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", RoleName]
+  RoleNames:
+    Value: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", RoleNames]
   Endpoint:
     Value: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", Endpoint]
