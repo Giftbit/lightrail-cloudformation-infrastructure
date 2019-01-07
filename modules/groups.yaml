@@ -269,6 +269,13 @@ Resources:
       Groups:
         - !Ref AllEmployees
         - !Ref FrontEndDevelopersGroup
+  HelenS:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: helen.s
+      Groups:
+        - !Ref AllEmployees
+        - !Ref FrontEndDevelopersGroup
   JamieT:
     Type: AWS::IAM::User
     Properties:
