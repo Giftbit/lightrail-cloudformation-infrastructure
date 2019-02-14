@@ -65,7 +65,7 @@ Mappings:
       ElasticSearchInstanceCount: 2
       ElasticSearchInstanceType: t2.small.elasticsearch
       ElasticSearchMasterInstanceType: none
-      RoleName: dev-CardsSearch-RestFunctionRole-1WFJDWKX4AFSD
+      RoleName: ""
       Endpoint: hon8eb7zgg.execute-api.us-west-2.amazonaws.com
   Staging:
     us-west-2:
@@ -74,7 +74,7 @@ Mappings:
       ElasticSearchInstanceCount: 2
       ElasticSearchInstanceType: t2.small.elasticsearch
       ElasticSearchMasterInstanceType: none
-      RoleName: staging-CardsSearch-RestFunctionRole-QB1BTL5IJBMS
+      RoleName: ""
       Endpoint: s7fqdm27c1.execute-api.us-west-2.amazonaws.com
   Production:
     us-west-2:
