@@ -57,7 +57,7 @@ Mappings:
       GitHubBranch: dev-ci
       GitHubBranchDest: ""
       Capacity: low
-      RoleNames: dev-Rothschild-RestFunctionRole-E6RW6Z3KCO8S,dev-Rothschild-AutomaticVoidFunctionRole-1HZNZTI7GWDFV
+      RoleNames: dev-Rothschild-RestFunctionRole-E6RW6Z3KCO8S,dev-Rothschild-AutomaticVoidFunctionRole-1HZNZTI7GWDFV,dev-Rothschild-StripeEventWebhookFunctionRole-LML2TNBEL97O
       Endpoint: a2sbb0stq8.execute-api.us-west-2.amazonaws.com
   Staging:
     us-west-2:
