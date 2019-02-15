@@ -108,6 +108,7 @@ Conditions:
   UserImageUploadAuthServiceEndpointSet: !Not [!Equals [!Ref UserImageUploadAuthServiceEndpoint, ""]]
   UserImageServingEndpointSet: !Not [!Equals [!Ref UserImageServingEndpoint, ""]]
   WidgetsEndpointSet: !Not [!Equals [!Ref WidgetsEndpoint, ""]]
+  CardsSearchEndpointSet: !Not [!Equals [!Ref CardsSearchEndpoint, ""]]
 
 Resources:
   AppApiDistribution:

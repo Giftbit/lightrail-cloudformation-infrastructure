@@ -27,3 +27,12 @@ Other elements that will need to be handled manually:
 - Synchronizing the data lake buckets from old to new accounts
 - Snapshotting the Service RDS Database, sharing it with the new account, updating the Services CloudFormation
   configuration to reference the RDS Snapshot ID.
+
+### dev deployments
+
+Requires:
+
+- Dev fob
+- Github [access token](https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/) with `repo` access (no admin scopes). Save in `~/.github/token`.
+
+Run `./auto.sh deploy dev`.
