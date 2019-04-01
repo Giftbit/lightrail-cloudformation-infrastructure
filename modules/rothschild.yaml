@@ -57,21 +57,21 @@ Mappings:
       GitHubBranch: dev-ci
       GitHubBranchDest: ""
       Capacity: low
-      RoleNames: dev-Rothschild-RestFunctionRole-E6RW6Z3KCO8S,dev-Rothschild-AutomaticVoidFunctionRole-1HZNZTI7GWDFV,dev-Rothschild-StripeEventWebhookFunctionRole-LML2TNBEL97O
+      RoleNames: dev-Rothschild-RestFunctionRole-E6RW6Z3KCO8S,dev-Rothschild-AutomaticVoidFunctionRole-1HZNZTI7GWDFV,dev-Rothschild-StripeEventWebhookFunctionRole-LML2TNBEL97O,dev-Rothschild-PostDeployFunctionRole-11MVKJOMNYUHK
       Endpoint: a2sbb0stq8.execute-api.us-west-2.amazonaws.com
   Staging:
     us-west-2:
       GitHubBranch: staging
       GitHubBranchDest: master
       Capacity: low
-      RoleNames: staging-Rothschild-RestFunctionRole-1WP0HJUKSCI23,staging-Rothschild-AutomaticVoidFunctionRole-MZYLCUNWSZYF
+      RoleNames: staging-Rothschild-RestFunctionRole-1WP0HJUKSCI23,staging-Rothschild-AutomaticVoidFunctionRole-MZYLCUNWSZYF,staging-Rothschild-PostDeployFunctionRole-O51X2ALZ04D2
       Endpoint: kvd0rpwjoa.execute-api.us-west-2.amazonaws.com
   Production:
     us-west-2:
       GitHubBranch: master
       GitHubBranchDest: ""
       Capacity: high
-      RoleNames: production-Rothschild-RestFunctionRole-OCVSS4TEU6MY,production-Rothschild-AutomaticVoidFunctionRole-VYL4WGB71JZF
+      RoleNames: production-Rothschild-RestFunctionRole-OCVSS4TEU6MY,production-Rothschild-AutomaticVoidFunctionRole-VYL4WGB71JZF,production-Rothschild-PostDeployFunctionRole-4K8B084OEI1Z
       Endpoint: qaljzxzk0l.execute-api.us-west-2.amazonaws.com
 
 Resources:
