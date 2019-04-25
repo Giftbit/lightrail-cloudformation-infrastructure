@@ -64,14 +64,14 @@ Mappings:
       GitHubBranch: staging
       GitHubBranchDest: master
       Capacity: low
-      RoleNames: staging-Rothschild-RestFunctionRole-1WP0HJUKSCI23,staging-Rothschild-AutomaticVoidFunctionRole-MZYLCUNWSZYF,staging-Rothschild-PostDeployFunctionRole-O51X2ALZ04D2
+      RoleNames: staging-Rothschild-RestFunctionRole-1WP0HJUKSCI23,staging-Rothschild-AutomaticVoidFunctionRole-MZYLCUNWSZYF,staging-Rothschild-PostDeployFunctionRole-O51X2ALZ04D2,staging-Rothschild-StripeEventWebhookFunctionRole-GDWMU4WUCDJC
       Endpoint: kvd0rpwjoa.execute-api.us-west-2.amazonaws.com
   Production:
     us-west-2:
       GitHubBranch: master
       GitHubBranchDest: ""
       Capacity: high
-      RoleNames: production-Rothschild-RestFunctionRole-OCVSS4TEU6MY,production-Rothschild-AutomaticVoidFunctionRole-VYL4WGB71JZF,production-Rothschild-PostDeployFunctionRole-4K8B084OEI1Z
+      RoleNames: production-Rothschild-RestFunctionRole-OCVSS4TEU6MY,production-Rothschild-AutomaticVoidFunctionRole-VYL4WGB71JZF,production-Rothschild-PostDeployFunctionRole-4K8B084OEI1Z,production-Rothschild-StripeEventWebhookFunctionRo-S64HQWGMFGZL
       Endpoint: qaljzxzk0l.execute-api.us-west-2.amazonaws.com
 
 Resources:
