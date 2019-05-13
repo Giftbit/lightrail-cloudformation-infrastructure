@@ -269,13 +269,6 @@ Resources:
       Groups:
         - !Ref AllEmployees
         - !Ref FrontEndDevelopersGroup
-  HelenS:
-    Type: AWS::IAM::User
-    Properties:
-      UserName: helen.s
-      Groups:
-        - !Ref AllEmployees
-        - !Ref FrontEndDevelopersGroup
   JamieT:
     Type: AWS::IAM::User
     Properties:
@@ -292,13 +285,6 @@ Resources:
         - !Ref AllEmployees
         - !Ref BackEndDevelopersGroup
         - !Ref BastionHostAccessGroup
-        - !Ref FrontEndDevelopersGroup
-  JeffM:
-    Type: AWS::IAM::User
-    Properties:
-      UserName: jeff.m
-      Groups:
-        - !Ref AllEmployees
         - !Ref FrontEndDevelopersGroup
   TanaJ:
     Type: AWS::IAM::User
