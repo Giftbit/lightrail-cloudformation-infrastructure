@@ -283,6 +283,7 @@ Resources:
       Groups:
         - !Ref AllEmployees
         - !Ref FrontEndDevelopersGroup
+        - !Ref BackEndDevelopersGroup
   JeffG:
     Type: AWS::IAM::User
     Properties:
@@ -291,6 +292,7 @@ Resources:
         - !Ref AllEmployees
         - !Ref BackEndDevelopersGroup
         - !Ref BastionHostAccessGroup
+        - !Ref FrontEndDevelopersGroup
   JeffM:
     Type: AWS::IAM::User
     Properties:
@@ -306,6 +308,7 @@ Resources:
         - !Ref AllEmployees
         - !Ref BackEndDevelopersGroup
         - !Ref BastionHostAccessGroup
+        - !Ref FrontEndDevelopersGroup
   TimJ:
     Type: AWS::IAM::User
     Properties:
