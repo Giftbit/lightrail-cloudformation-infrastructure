@@ -134,6 +134,14 @@ Resources:
                   - lambda:Get*
                   - lambda:List*
                 Resource: "*"
+        - PolicyName: AwsSupportAccess
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - support:*
+                Resource: "*"
 
   MarkettingGroup:
     Type: AWS::IAM::Group
