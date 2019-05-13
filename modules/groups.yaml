@@ -134,6 +134,14 @@ Resources:
                   - lambda:Get*
                   - lambda:List*
                 Resource: "*"
+        - PolicyName: AwsSupportAccess
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - support:*
+                Resource: "*"
 
   MarkettingGroup:
     Type: AWS::IAM::Group
@@ -269,13 +277,6 @@ Resources:
       Groups:
         - !Ref AllEmployees
         - !Ref FrontEndDevelopersGroup
-  HelenS:
-    Type: AWS::IAM::User
-    Properties:
-      UserName: helen.s
-      Groups:
-        - !Ref AllEmployees
-        - !Ref FrontEndDevelopersGroup
   JamieT:
     Type: AWS::IAM::User
     Properties:
@@ -283,6 +284,7 @@ Resources:
       Groups:
         - !Ref AllEmployees
         - !Ref FrontEndDevelopersGroup
+        - !Ref BackEndDevelopersGroup
   JeffG:
     Type: AWS::IAM::User
     Properties:
@@ -291,12 +293,6 @@ Resources:
         - !Ref AllEmployees
         - !Ref BackEndDevelopersGroup
         - !Ref BastionHostAccessGroup
-  JeffM:
-    Type: AWS::IAM::User
-    Properties:
-      UserName: jeff.m
-      Groups:
-        - !Ref AllEmployees
         - !Ref FrontEndDevelopersGroup
   TanaJ:
     Type: AWS::IAM::User
@@ -306,6 +302,7 @@ Resources:
         - !Ref AllEmployees
         - !Ref BackEndDevelopersGroup
         - !Ref BastionHostAccessGroup
+        - !Ref FrontEndDevelopersGroup
   TimJ:
     Type: AWS::IAM::User
     Properties:
