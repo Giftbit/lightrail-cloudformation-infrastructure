@@ -74,10 +74,10 @@ Resources:
   CI:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://raw.githubusercontent.com/Giftbit/internal-edhi/7f50ac65132d23a5c5eda4894f3069e2bfeffef8/infrastructure/ci.yaml
+      TemplateURL: https://raw.githubusercontent.com/Giftbit/internal-edhi/9e6f37b8fd57a5a017521a217db7c1e651f429f9/infrastructure/ci.yaml
       Parameters:
         ProjectName: !Ref ProjectName
-        ProjectParameterOverrides: >
+        ProjectParameterOverrides: !Sub >
           {
             "LightrailDomain": "${LightrailDomain}",
             "LightrailEmailDomain": "${LightrailEmailDomain}",
