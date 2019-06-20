@@ -1,4 +1,4 @@
-This directory contains the Dockerfile for Docker container that we use in CodeBuild.
+This directory contains the Dockerfile for the node-ssh Docker image.  This image is used in many CodeBuild setups.  When changed it must be deployed to every AWS account with CI.
 
 ## Build the Docker image
 
