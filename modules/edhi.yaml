@@ -56,7 +56,7 @@ Mappings:
       GitHubBranch: dev-ci
       GitHubBranchDest: ""
       RoleNames: dev-Edhi-RestFunctionRole-111BY1CJ5G250
-      Endpoint: ""
+      Endpoint: ql9cnmujzl.execute-api.us-west-2.amazonaws.com
   Staging:
     us-west-2:
       GitHubBranch: staging
