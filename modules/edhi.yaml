@@ -55,7 +55,7 @@ Mappings:
     us-west-2:
       GitHubBranch: dev-ci
       GitHubBranchDest: ""
-      RoleNames: ""
+      RoleNames: dev-Edhi-RestFunctionRole-111BY1CJ5G250
       Endpoint: ""
   Staging:
     us-west-2:
@@ -74,7 +74,7 @@ Resources:
   CI:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://raw.githubusercontent.com/Giftbit/internal-edhi/9e6f37b8fd57a5a017521a217db7c1e651f429f9/infrastructure/ci.yaml
+      TemplateURL: https://raw.githubusercontent.com/Giftbit/internal-edhi/ff0b4424004d64fc83c449edf4e20a41a0599d61/infrastructure/ci.yaml
       Parameters:
         ProjectName: !Ref ProjectName
         ProjectParameterOverrides: !Sub >
