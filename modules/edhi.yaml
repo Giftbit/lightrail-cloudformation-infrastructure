@@ -93,7 +93,7 @@ Resources:
         CodeBuildImageNodeSSH: !Ref CodeBuildImageNodeSSH
       Tags:
         - Key: Service
-          Value: Rothschild
+          Value: Edhi
 
 Outputs:
   RoleNames:
