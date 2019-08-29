@@ -142,6 +142,15 @@ Resources:
                 Action:
                   - support:*
                 Resource: "*"
+        - PolicyName: RDSReboot
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - rds:CreateDbSnapshot
+                  - rds:RebootDBInstance
+                Resource: "*"
 
   MarkettingGroup:
     Type: AWS::IAM::Group
