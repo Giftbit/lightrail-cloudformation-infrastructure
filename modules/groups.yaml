@@ -142,7 +142,7 @@ Resources:
                 Action:
                   - support:*
                 Resource: "*"
-        - PolicyName: RDSReboot
+        - PolicyName: RdsReboot
           PolicyDocument:
             Version: 2012-10-17
             Statement:
