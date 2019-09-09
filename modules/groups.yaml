@@ -272,6 +272,7 @@ Resources:
               - es:Describe*
               - es:List*
             Resource: "*"
+
   ArshdeepV:
     Type: AWS::IAM::User
     Properties:
