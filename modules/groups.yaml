@@ -276,7 +276,7 @@ Resources:
   ArshdeepV:
     Type: AWS::IAM::User
     Properties:
-      UserName: arshdeep.j
+      UserName: arshdeep.v
       Groups:
       - !Ref AllEmployees
       - !Ref BackEndDevelopersGroup
