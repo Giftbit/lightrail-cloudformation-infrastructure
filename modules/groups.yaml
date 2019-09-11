@@ -273,6 +273,14 @@ Resources:
               - es:List*
             Resource: "*"
 
+  ArshdeepV:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: arshdeep.v
+      Groups:
+      - !Ref AllEmployees
+      - !Ref BackEndDevelopersGroup
+      - !Ref FrontEndDevelopersGroup
   BryanD:
     Type: AWS::IAM::User
     Properties:
