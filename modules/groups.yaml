@@ -280,7 +280,6 @@ Resources:
       Groups:
       - !Ref AllEmployees
       - !Ref BackEndDevelopersGroup
-      - !Ref BastionHostAccessGroup
       - !Ref FrontEndDevelopersGroup
   BryanD:
     Type: AWS::IAM::User
