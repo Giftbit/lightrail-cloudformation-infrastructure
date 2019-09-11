@@ -152,6 +152,13 @@ Resources:
                   - rds:CreateDBClusterSnapshot
                   - rds:RebootDBInstance
                 Resource: "*"
+        - PolicyName: RdsPerformanceInsights
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: pi:*
+                Resource: "arn:aws:pi:*:*:metrics/rds/*"
 
   MarkettingGroup:
     Type: AWS::IAM::Group
