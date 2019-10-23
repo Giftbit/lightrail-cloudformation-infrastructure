@@ -610,7 +610,7 @@ Resources:
       Handler: index.handler
       Runtime: nodejs10.x
       Timeout: 30
-      Code: ../res/codepipeline-s3-put-action-0.2.0.zip  # Built from https://github.com/Giftbit/codepipeline-s3-put-action/blob/master/src/index.ts
+      Code: ../res/codepipeline-s3-put-action.zip  # Built from https://github.com/Giftbit/codepipeline-s3-put-action/
   CodePipelineS3PutActionRole:
     Type: AWS::IAM::Role
     Properties:
@@ -666,7 +666,7 @@ Resources:
       Handler: index.handler
       Runtime: nodejs10.x
       Timeout: 30
-      Code: ../res/codepipeline-cloudformation-change-set-replace-s3-action-0.2.0.zip  # https://github.com/Giftbit/codepipeline-cloudformation-change-set-replace-s3/blob/master/src/index.ts
+      Code: ../res/codepipeline-cloudformation-change-set-replace-s3-action.zip  # https://github.com/Giftbit/codepipeline-cloudformation-change-set-replace-s3/
       Environment:
         Variables:
           Param_ProductionAccountId: !Ref ProductionAccountId
