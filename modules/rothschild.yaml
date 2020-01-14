@@ -21,7 +21,7 @@ Parameters:
     AllowedPattern: (\w+\.)+\w{3}
   LightrailEventTopicArn:
     Type: String
-    Description: Optional ARN of the SNS topic to publish messages about state changes to
+    Description: Optional ARN of the SNS topic on Lightrail Events
     AllowedPattern: (arn:aws:sns:[a-zA-Z_0-9\-]+:\d{12}:[a-zA-Z_0-9+=,.@\-_/]+)?
     Default: ""
   SecureConfigBucket:
