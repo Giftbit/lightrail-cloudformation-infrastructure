@@ -232,6 +232,12 @@ Resources:
         RothschildEndpoint: !GetAtt LightrailRothschild.Outputs.Endpoint
         UserImageUploadAuthServiceEndpoint: !GetAtt LightrailUserImageUpload.Outputs.ServiceEndpoint
         UserImageServingEndpoint: !GetAtt LightrailUserImageUpload.Outputs.BucketEndpoint
+  LightrailEventTopic:
+    Type: AWS::SNS::Topic
+    Condition: RegionIsUSWest2
+    Properties:
+      DisplayName: Lightrail Events
+      KmsMasterKeyId: !GetAtt LightrailSecureConfig.Outputs.EncryptionKeyArn
   LightrailWebsite:
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2
@@ -828,6 +834,7 @@ Resources:
         ProjectName: !Sub "${AWS::StackName}-Rothschild"
         BastionHostAuthorizedUsersGroup: !GetAtt Groups.Outputs.BastionHostAccessGroupName
         LightrailDomain: !Sub "api.${LightrailDns.Outputs.HostedDomainName}"
+        LightrailEventTopicArn: !Ref LightrailEventTopic
         SecureConfigBucket: !GetAtt LightrailSecureConfig.Outputs.BucketName
         SecureConfigKmsArn: !GetAtt LightrailSecureConfig.Outputs.EncryptionKeyArn
         VpcUniqueNumber: 2

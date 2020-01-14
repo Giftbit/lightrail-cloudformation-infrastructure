@@ -19,6 +19,11 @@ Parameters:
     Type: String
     Description: The domain of the Lightrail REST API
     AllowedPattern: (\w+\.)+\w{3}
+  LightrailEventTopicArn:
+    Type: String
+    Description: Optional ARN of the SNS topic to publish messages about state changes to
+    AllowedPattern: (arn:aws:sns:[a-zA-Z_0-9\-]+:\d{12}:[a-zA-Z_0-9+=,.@\-_/]+)?
+    Default: ""
   SecureConfigBucket:
     Type: String
     Description: The Name of the Configuration Bucket
@@ -123,6 +128,7 @@ Resources:
               "Capacity": "${Capacity}",
               "DbEncryptionKeyId": "${DbEncryptionKey}",
               "LightrailDomain": "${LightrailDomain}",
+              "LightrailEventTopicArn": "${LightrailEventTopicArn}",
               "SecureConfigBucket": "${SecureConfigBucket}",
               "SecureConfigKmsArn": "${SecureConfigKmsArn}",
               "VpcUniqueNumber": "${VpcUniqueNumber}"
