@@ -19,6 +19,11 @@ Parameters:
     Type: String
     Description: The domain of the Lightrail REST API
     AllowedPattern: (\w+\.)+\w{3}
+  LightrailEventTopicArn:
+    Type: String
+    Description: Optional ARN of the SNS topic on Lightrail Events
+    AllowedPattern: (arn:aws:sns:[a-zA-Z_0-9\-]+:\d{12}:[a-zA-Z_0-9+=,.@\-_/]+)?
+    Default: ""
   SecureConfigBucket:
     Type: String
     Description: The Name of the Configuration Bucket
@@ -57,7 +62,7 @@ Mappings:
       GitHubBranch: dev-ci
       GitHubBranchDest: ""
       Capacity: low
-      RoleNames: dev-Rothschild-RestFunctionRole-E6RW6Z3KCO8S,dev-Rothschild-AutomaticVoidFunctionRole-1HZNZTI7GWDFV,dev-Rothschild-StripeEventWebhookFunctionRole-LML2TNBEL97O,dev-Rothschild-PostDeployFunctionRole-11MVKJOMNYUHK
+      RoleNames: dev-Rothschild-RestFunctionRole-E6RW6Z3KCO8S,dev-Rothschild-AutomaticVoidFunctionRole-1HZNZTI7GWDFV,dev-Rothschild-StripeEventWebhookFunctionRole-LML2TNBEL97O,dev-Rothschild-PostDeployFunctionRole-11MVKJOMNYUHK,dev-Rothschild-BinlogWatcherFunctionRole-1E1Q066FENXQT
       Endpoint: a2sbb0stq8.execute-api.us-west-2.amazonaws.com
   Staging:
     us-west-2:
@@ -113,7 +118,7 @@ Resources:
   CI:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://raw.githubusercontent.com/Giftbit/internal-rothschild/234570cfb96d749cdfecee08d44bbff2394b90e6/infrastructure/ci.yaml
+      TemplateURL: https://raw.githubusercontent.com/Giftbit/internal-rothschild/cb08ec0e48770f061b2d10364db33aa39cb349a0/infrastructure/ci.yaml
       Parameters:
         ProjectName: !Ref ProjectName
         ProjectParameterOverrides: !Sub
@@ -123,6 +128,7 @@ Resources:
               "Capacity": "${Capacity}",
               "DbEncryptionKeyId": "${DbEncryptionKey}",
               "LightrailDomain": "${LightrailDomain}",
+              "LightrailEventTopicArn": "${LightrailEventTopicArn}",
               "SecureConfigBucket": "${SecureConfigBucket}",
               "SecureConfigKmsArn": "${SecureConfigKmsArn}",
               "VpcUniqueNumber": "${VpcUniqueNumber}"
