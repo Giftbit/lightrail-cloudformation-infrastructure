@@ -69,7 +69,7 @@ Mappings:
       GitHubBranch: staging
       GitHubBranchDest: master
       Capacity: low
-      RoleNames: staging-Rothschild-RestFunctionRole-1WP0HJUKSCI23,staging-Rothschild-AutomaticVoidFunctionRole-MZYLCUNWSZYF,staging-Rothschild-PostDeployFunctionRole-O51X2ALZ04D2,staging-Rothschild-StripeEventWebhookFunctionRole-GDWMU4WUCDJC
+      RoleNames: staging-Rothschild-RestFunctionRole-1WP0HJUKSCI23,staging-Rothschild-AutomaticVoidFunctionRole-MZYLCUNWSZYF,staging-Rothschild-PostDeployFunctionRole-O51X2ALZ04D2,staging-Rothschild-StripeEventWebhookFunctionRole-GDWMU4WUCDJC,staging-Rothschild-BinlogWatcherFunctionRole-DXNHFUVBR4SB
       Endpoint: kvd0rpwjoa.execute-api.us-west-2.amazonaws.com
   Production:
     us-west-2:
