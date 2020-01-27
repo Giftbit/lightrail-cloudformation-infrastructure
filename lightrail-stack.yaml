@@ -238,6 +238,9 @@ Resources:
     Properties:
       DisplayName: Lightrail Events
       KmsMasterKeyId: !GetAtt LightrailSecureConfig.Outputs.EncryptionKeyArn
+      Tags:
+        - Key: ShortName
+          Value: LightrailEventTopic
   LightrailWebsite:
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2
