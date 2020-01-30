@@ -76,7 +76,7 @@ Mappings:
       GitHubBranch: master
       GitHubBranchDest: ""
       Capacity: high
-      RoleNames: production-Rothschild-RestFunctionRole-OCVSS4TEU6MY,production-Rothschild-AutomaticVoidFunctionRole-VYL4WGB71JZF,production-Rothschild-PostDeployFunctionRole-4K8B084OEI1Z,production-Rothschild-StripeEventWebhookFunctionRo-S64HQWGMFGZL
+      RoleNames: production-Rothschild-RestFunctionRole-OCVSS4TEU6MY,production-Rothschild-AutomaticVoidFunctionRole-VYL4WGB71JZF,production-Rothschild-PostDeployFunctionRole-4K8B084OEI1Z,production-Rothschild-StripeEventWebhookFunctionRo-S64HQWGMFGZL,production-Rothschild-BinlogWatcherFunctionRole-1TOUKD2DYR7ID
       Endpoint: qaljzxzk0l.execute-api.us-west-2.amazonaws.com
 
 Resources:
