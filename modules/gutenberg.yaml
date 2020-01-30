@@ -110,16 +110,17 @@ Resources:
   CI:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://raw.githubusercontent.com/Giftbit/internal-gutenberg/230265de76f9d127ecf3a56779073f913e7329cf/infrastructure/ci.yaml # TODO Q: why do none of these seem to resolve to anything? where do these come from?
+      TemplateURL: https://raw.githubusercontent.com/Giftbit/internal-gutenberg/230265de76f9d127ecf3a56779073f913e7329cf/infrastructure/ci.yaml
       Parameters:
         ProjectName: !Ref ProjectName
         ProjectParameterOverrides: !Sub >
           {
-            "LightrailDomain": "${LightrailDomain}",
-            "LightrailEmailDomain": "${LightrailEmailDomain}",
-            "LightrailWebappDomain": "${LightrailWebappDomain}",
-            "SecureConfigBucket": "${SecureConfigBucket}",
-            "SecureConfigKmsArn": "${SecureConfigKmsArn}"
+              "BastionHostAuthorizedUsersGroup": "${BastionHostAuthorizedUsersGroup}",
+              "Capacity": "${Capacity}",
+              "LightrailDomain": "${LightrailDomain}",
+              "LightrailEventTopicArn": "${LightrailEventTopicArn}",
+              "SecureConfigBucket": "${SecureConfigBucket}",
+              "SecureConfigKmsArn": "${SecureConfigKmsArn}",
           }
         GitHubOAuthToken: !Ref GitHubOAuthToken
         GitHubBranch: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", GitHubBranch]
@@ -129,7 +130,7 @@ Resources:
         CodeBuildImageNodeSSH: !Ref CodeBuildImageNodeSSH
       Tags:
       - Key: Service
-        Value: Edhi
+        Value: Gutenberg
 
 Outputs:
   RoleNames:

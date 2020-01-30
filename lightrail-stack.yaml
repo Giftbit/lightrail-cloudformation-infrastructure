@@ -689,13 +689,11 @@ Resources:
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2
     Properties:
-      TemplateURL: ./modules/edhi.yaml
+      TemplateURL: ./modules/gutenberg.yaml
       Parameters:
         EnvironmentName: !Ref EnvironmentName
-        ProjectName: !Sub "${AWS::StackName}-Edhi"
+        ProjectName: !Sub "${AWS::StackName}-Gutenberg"
         LightrailDomain: !Sub "api.${LightrailDns.Outputs.HostedDomainName}"
-        LightrailEmailDomain: !FindInMap [Common, !Ref EnvironmentName, EmailDomainName]
-        LightrailWebappDomain: !Sub "www.${LightrailDns.Outputs.HostedDomainName}"
         SecureConfigBucket: !GetAtt LightrailSecureConfig.Outputs.BucketName
         SecureConfigKmsArn: !GetAtt LightrailSecureConfig.Outputs.EncryptionKeyArn
         GitHubOAuthToken: !GetAtt GitHubOAuthToken.DecryptedValue
@@ -704,7 +702,7 @@ Resources:
         CiKeysBucketName: !GetAtt CIResources.Outputs.KeysBucketName
       Tags:
       - Key: Service
-        Value: Edhi
+        Value: Gutenberg
   LightrailSimpleRollup:
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2
