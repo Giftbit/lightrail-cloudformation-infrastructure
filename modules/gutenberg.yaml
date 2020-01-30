@@ -53,22 +53,22 @@ Mappings:
       GitHubBranch: dev-ci
       GitHubBranchDest: ""
       Capacity: low
-      RoleNames:
-      Endpoint:
+      RoleNames: dev-Gutenberg-RestFunctionRole-8EOF77BH2XD
+      Endpoint: mpi51ujjs8.execute-api.us-west-2.amazonaws.com
   Staging:
     us-west-2:
       GitHubBranch: staging
       GitHubBranchDest: master
       Capacity: low
-      RoleNames:
-      Endpoint:
+      RoleNames: ""
+      Endpoint: ""
   Production:
     us-west-2:
       GitHubBranch: master
       GitHubBranchDest: ""
       Capacity: high
-      RoleNames:
-      Endpoint:
+      RoleNames: ""
+      Endpoint: ""
 
 Resources:
 #  ## I'll need to add a secret encryption key.
@@ -115,8 +115,6 @@ Resources:
         ProjectName: !Ref ProjectName
         ProjectParameterOverrides: !Sub >
           {
-              "BastionHostAuthorizedUsersGroup": "${BastionHostAuthorizedUsersGroup}",
-              "Capacity": "${Capacity}",
               "LightrailDomain": "${LightrailDomain}",
               "LightrailEventTopicArn": "${LightrailEventTopicArn}",
               "SecureConfigBucket": "${SecureConfigBucket}",

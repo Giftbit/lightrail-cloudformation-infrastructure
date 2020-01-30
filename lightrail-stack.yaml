@@ -230,6 +230,7 @@ Resources:
         TurnkeyEndpoint: !GetAtt LightrailTurnkey.Outputs.Endpoint
         ReactionsEndpoint: !GetAtt LightrailReactions.Outputs.Endpoint
         RothschildEndpoint: !GetAtt LightrailRothschild.Outputs.Endpoint
+        GutenbergEndpoint: !GetAtt LightrailGutenberg.Outputs.Endpoint
         UserImageUploadAuthServiceEndpoint: !GetAtt LightrailUserImageUpload.Outputs.ServiceEndpoint
         UserImageServingEndpoint: !GetAtt LightrailUserImageUpload.Outputs.BucketEndpoint
   LightrailEventTopic:

@@ -70,6 +70,9 @@ Parameters:
   KvsEndpoint:
     Type: String
     Description: The domain that should handle the KVS requests
+  GutenbergEndpoint:
+    Type: String
+    Description: The domain that should handle the KVS requests
   TurnkeyEndpoint:
     Type: String
     Description: The domain that should handle the Turnkey requests
@@ -130,6 +133,7 @@ Resources:
         BatchEndpoint: !Ref BatchEndpoint
         CardsSearchEndpoint: !Ref CardsSearchEndpoint
         KvsEndpoint: !Ref KvsEndpoint
+        GutenbergEndpoint: !Ref GutenbergEndpoint
         ReactionsEndpoint: !Ref ReactionsEndpoint
         RothschildEndpoint: !Ref RothschildEndpoint
         ServicesEndpoint: !Ref ServicesEndpoint
@@ -153,6 +157,7 @@ Resources:
         BatchEndpoint: !Ref BatchEndpoint
         CardsSearchEndpoint: !Ref CardsSearchEndpoint
         KvsEndpoint: !Ref KvsEndpoint
+        GutenbergEndpoint: !Ref GutenbergEndpoint
         ReactionsEndpoint: !Ref ReactionsEndpoint
         RothschildEndpoint: !Ref RothschildEndpoint
         ServicesEndpoint: !Ref ServicesEndpoint
@@ -176,6 +181,7 @@ Resources:
         BatchEndpoint: !Ref BatchEndpoint
         CardsSearchEndpoint: !Ref CardsSearchEndpoint
         KvsEndpoint: !Ref KvsEndpoint
+        GutenbergEndpoint: !Ref GutenbergEndpoint
         ReactionsEndpoint: !Ref ReactionsEndpoint
         RothschildEndpoint: !Ref RothschildEndpoint
         ServicesEndpoint: !Ref ServicesEndpoint
