@@ -53,8 +53,8 @@ Mappings:
       GitHubBranch: dev-ci
       GitHubBranchDest: ""
       Capacity: low
-      RoleNames: dev-Gutenberg-RestFunctionRole-8EOF77BH2XD
-      Endpoint: mpi51ujjs8.execute-api.us-west-2.amazonaws.com
+      RoleNames: ""
+      Endpoint: ""
   Staging:
     us-west-2:
       GitHubBranch: staging
@@ -115,10 +115,11 @@ Resources:
         ProjectName: !Ref ProjectName
         ProjectParameterOverrides: !Sub >
           {
+              "Capacity": "${Capacity}",
               "LightrailDomain": "${LightrailDomain}",
               "LightrailEventTopicArn": "${LightrailEventTopicArn}",
               "SecureConfigBucket": "${SecureConfigBucket}",
-              "SecureConfigKmsArn": "${SecureConfigKmsArn}",
+              "SecureConfigKmsArn": "${SecureConfigKmsArn}"
           }
         GitHubOAuthToken: !Ref GitHubOAuthToken
         GitHubBranch: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", GitHubBranch]

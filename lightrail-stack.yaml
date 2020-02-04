@@ -227,10 +227,10 @@ Resources:
         BatchEndpoint: !GetAtt LightrailLoadBalancer.Outputs.DNSName
         CardsSearchEndpoint: !GetAtt LightrailCardsSearch.Outputs.Endpoint
         KvsEndpoint: !GetAtt LightrailKvs.Outputs.Endpoint
+        GutenbergEndpoint: !GetAtt LightrailGutenberg.Outputs.Endpoint
         TurnkeyEndpoint: !GetAtt LightrailTurnkey.Outputs.Endpoint
         ReactionsEndpoint: !GetAtt LightrailReactions.Outputs.Endpoint
         RothschildEndpoint: !GetAtt LightrailRothschild.Outputs.Endpoint
-        GutenbergEndpoint: !GetAtt LightrailGutenberg.Outputs.Endpoint
         UserImageUploadAuthServiceEndpoint: !GetAtt LightrailUserImageUpload.Outputs.ServiceEndpoint
         UserImageServingEndpoint: !GetAtt LightrailUserImageUpload.Outputs.BucketEndpoint
   LightrailEventTopic:
@@ -695,6 +695,7 @@ Resources:
         EnvironmentName: !Ref EnvironmentName
         ProjectName: !Sub "${AWS::StackName}-Gutenberg"
         LightrailDomain: !Sub "api.${LightrailDns.Outputs.HostedDomainName}"
+        LightrailEventTopicArn: !Ref LightrailEventTopic
         SecureConfigBucket: !GetAtt LightrailSecureConfig.Outputs.BucketName
         SecureConfigKmsArn: !GetAtt LightrailSecureConfig.Outputs.EncryptionKeyArn
         GitHubOAuthToken: !GetAtt GitHubOAuthToken.DecryptedValue
