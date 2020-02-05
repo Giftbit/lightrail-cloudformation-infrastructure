@@ -53,8 +53,8 @@ Mappings:
       GitHubBranch: dev-ci
       GitHubBranchDest: ""
       Capacity: low
-      RoleNames: ""
-      Endpoint: ""
+      RoleNames: dev-Gutenberg-RestFunctionRole-1DWFU8ANEDHOL
+      Endpoint: q8kepbiau8.execute-api.us-west-2.amazonaws.com
   Staging:
     us-west-2:
       GitHubBranch: staging
@@ -113,14 +113,16 @@ Resources:
       TemplateURL: https://raw.githubusercontent.com/Giftbit/internal-gutenberg/230265de76f9d127ecf3a56779073f913e7329cf/infrastructure/ci.yaml
       Parameters:
         ProjectName: !Ref ProjectName
-        ProjectParameterOverrides: !Sub >
-          {
-              "Capacity": "${Capacity}",
-              "LightrailDomain": "${LightrailDomain}",
-              "LightrailEventTopicArn": "${LightrailEventTopicArn}",
-              "SecureConfigBucket": "${SecureConfigBucket}",
-              "SecureConfigKmsArn": "${SecureConfigKmsArn}"
-          }
+        ProjectParameterOverrides: !Sub
+          - >
+            {
+                "Capacity": "${Capacity}",
+                "LightrailDomain": "${LightrailDomain}",
+                "LightrailEventTopicArn": "${LightrailEventTopicArn}",
+                "SecureConfigBucket": "${SecureConfigBucket}",
+                "SecureConfigKmsArn": "${SecureConfigKmsArn}"
+            }
+          - Capacity: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", Capacity]
         GitHubOAuthToken: !Ref GitHubOAuthToken
         GitHubBranch: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", GitHubBranch]
         GitHubBranchDest: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", GitHubBranchDest]

@@ -546,7 +546,7 @@ Resources:
             - !Ref AWS::NoValue
           - !If
             - GutenbergEndpointSet
-            - PathPattern: "/v2/webhooks/*"
+            - PathPattern: "/v2/webhooks*"
               TargetOriginId: GutenbergEndpointOrigin
               ViewerProtocolPolicy: "redirect-to-https"
               Compress: false
