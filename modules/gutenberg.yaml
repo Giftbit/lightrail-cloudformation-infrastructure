@@ -71,42 +71,6 @@ Mappings:
       Endpoint: ""
 
 Resources:
-#  ## I'll need to add a secret encryption key.
-#  DbEncryptionKey:
-#    Type: AWS::KMS::Key
-#    Properties:
-#      Description: !Sub "${ProjectName} database encryption key"
-#      KeyPolicy:
-#        Version: 2012-10-17
-#        Statement:
-#          - Effect: Allow
-#            Principal:
-#              AWS:
-#                !Sub "arn:aws:iam::${AWS::AccountId}:root"
-#            Action:
-#              - kms:*
-#            Resource: "*"
-#          - Effect: Allow
-#            Principal:
-#              AWS: "*"
-#            Action:
-#              - kms:Encrypt
-#              - kms:Decrypt
-#              - kms:ReEncrypt*
-#              - kms:GenerateDataKey*
-#              - kms:CreateGrant
-#              - kms:ListGrants
-#              - kms:DescribeKey
-#            Resource: "*"
-#            Condition:
-#              StringEquals:
-#                "kms:CallerAccount": !Ref "AWS::AccountId"
-#                "kms:ViaService": !Sub "rds.${AWS::Region}.amazonaws.com"
-#  EncryptionKeyAlias:
-#    Type: AWS::KMS::Alias
-#    Properties:
-#      AliasName: !Sub "alias/${AWS::StackName}-DbEncryptionKey"
-#      TargetKeyId: !Ref DbEncryptionKey
   CI:
     Type: AWS::CloudFormation::Stack
     Properties:

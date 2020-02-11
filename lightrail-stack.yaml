@@ -688,7 +688,7 @@ Resources:
         ProjectName: !Sub "${AWS::StackName}-Credentials"
   LightrailGutenberg:
     Type: AWS::CloudFormation::Stack
-    Condition: RegionIsUSWest2
+    Condition: EnvIsDevAndRegionIsUSWest2
     Properties:
       TemplateURL: ./modules/gutenberg.yaml
       Parameters:
