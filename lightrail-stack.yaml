@@ -714,7 +714,7 @@ Resources:
         ProjectName: !Sub "${AWS::StackName}-Credentials"
   LightrailGutenberg:
     Type: AWS::CloudFormation::Stack
-    Condition: EnvIsDevAndRegionIsUSWest2
+    Condition: RegionIsUSWest2
     Properties:
       TemplateURL: ./modules/gutenberg.yaml
       Parameters:
@@ -722,6 +722,7 @@ Resources:
         ProjectName: !Sub "${AWS::StackName}-Gutenberg"
         LightrailDomain: !Sub "api.${LightrailDns.Outputs.HostedDomainName}"
         LightrailEventTopicArn: !Ref LightrailEventTopic
+        LightrailEventEncryptionKeyArn: !GetAtt LightrailEventEncryptionKey.Arn
         SecureConfigBucket: !GetAtt LightrailSecureConfig.Outputs.BucketName
         SecureConfigKmsArn: !GetAtt LightrailSecureConfig.Outputs.EncryptionKeyArn
         GitHubOAuthToken: !GetAtt GitHubOAuthToken.DecryptedValue
