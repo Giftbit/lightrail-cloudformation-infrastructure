@@ -21,6 +21,10 @@ Parameters:
     Description: Optional ARN of the SNS topic on Lightrail Events
     AllowedPattern: (arn:aws:sns:[a-zA-Z_0-9\-]+:\d{12}:[a-zA-Z_0-9+=,.@\-_/]+)?
     Default: ""
+  LightrailEventEncryptionKeyArn:
+    Type: String
+    Description: Optional ARN of the KMS key encrypting Lightrail Events
+    AllowedPattern: (arn:aws:kms:[a-z0-9-]+:\d{12}:key/[a-z0-9-]+)?
   SecureConfigBucket:
     Type: String
     Description: The Name of the Configuration Bucket
@@ -83,6 +87,7 @@ Resources:
                 "Capacity": "${Capacity}",
                 "LightrailDomain": "${LightrailDomain}",
                 "LightrailEventTopicArn": "${LightrailEventTopicArn}",
+                "LightrailEventEncryptionKeyArn": "${LightrailEventEncryptionKeyArn}",
                 "SecureConfigBucket": "${SecureConfigBucket}",
                 "SecureConfigKmsArn": "${SecureConfigKmsArn}"
             }
