@@ -729,8 +729,8 @@ Resources:
         CiKeysAccessRoleArn: !GetAtt CIResources.Outputs.KeysAccessRoleArn
         CiKeysBucketName: !GetAtt CIResources.Outputs.KeysBucketName
       Tags:
-      - Key: Service
-        Value: Gutenberg
+        - Key: Service
+          Value: Gutenberg
   LightrailSimpleRollup:
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2
