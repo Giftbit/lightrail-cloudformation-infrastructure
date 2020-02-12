@@ -233,12 +233,38 @@ Resources:
         RothschildEndpoint: !GetAtt LightrailRothschild.Outputs.Endpoint
         UserImageUploadAuthServiceEndpoint: !GetAtt LightrailUserImageUpload.Outputs.ServiceEndpoint
         UserImageServingEndpoint: !GetAtt LightrailUserImageUpload.Outputs.BucketEndpoint
+  LightrailEventEncryptionKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: !Sub "LightrailEventTopic encryption key"
+      KeyPolicy:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS:
+                !Sub "arn:aws:iam::${AWS::AccountId}:root"
+            Action:
+              - kms:*
+            Resource: "*"
+          - Effect: Allow
+            Principal:
+              AWS: "*"
+            Action:
+              - kms:Encrypt
+              - kms:Decrypt
+              - kms:GenerateDataKey*
+              - kms:DescribeKey
+            Resource: "*"
+            Condition:
+              StringEquals:
+                "kms:CallerAccount": !Ref "AWS::AccountId"
   LightrailEventTopic:
     Type: AWS::SNS::Topic
     Condition: RegionIsUSWest2
     Properties:
       DisplayName: Lightrail Events
-      KmsMasterKeyId: !GetAtt LightrailSecureConfig.Outputs.EncryptionKeyArn
+      KmsMasterKeyId: !GetAtt LightrailEventEncryptionKey.Arn
       Tags:
         - Key: ShortName
           Value: LightrailEventTopic
@@ -859,6 +885,7 @@ Resources:
         BastionHostAuthorizedUsersGroup: !GetAtt Groups.Outputs.BastionHostAccessGroupName
         LightrailDomain: !Sub "api.${LightrailDns.Outputs.HostedDomainName}"
         LightrailEventTopicArn: !Ref LightrailEventTopic
+        LightrailEventEncryptionKeyArn: !GetAtt LightrailEventEncryptionKey.Arn
         SecureConfigBucket: !GetAtt LightrailSecureConfig.Outputs.BucketName
         SecureConfigKmsArn: !GetAtt LightrailSecureConfig.Outputs.EncryptionKeyArn
         VpcUniqueNumber: 2
