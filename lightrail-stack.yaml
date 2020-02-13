@@ -722,7 +722,6 @@ Resources:
         ProjectName: !Sub "${AWS::StackName}-Gutenberg"
         LightrailDomain: !Sub "api.${LightrailDns.Outputs.HostedDomainName}"
         LightrailEventTopicArn: !Ref LightrailEventTopic
-        LightrailEventEncryptionKeyArn: !GetAtt LightrailEventEncryptionKey.Arn
         SecureConfigBucket: !GetAtt LightrailSecureConfig.Outputs.BucketName
         SecureConfigKmsArn: !GetAtt LightrailSecureConfig.Outputs.EncryptionKeyArn
         GitHubOAuthToken: !GetAtt GitHubOAuthToken.DecryptedValue
@@ -886,7 +885,6 @@ Resources:
         BastionHostAuthorizedUsersGroup: !GetAtt Groups.Outputs.BastionHostAccessGroupName
         LightrailDomain: !Sub "api.${LightrailDns.Outputs.HostedDomainName}"
         LightrailEventTopicArn: !Ref LightrailEventTopic
-        LightrailEventEncryptionKeyArn: !GetAtt LightrailEventEncryptionKey.Arn
         SecureConfigBucket: !GetAtt LightrailSecureConfig.Outputs.BucketName
         SecureConfigKmsArn: !GetAtt LightrailSecureConfig.Outputs.EncryptionKeyArn
         VpcUniqueNumber: 2
