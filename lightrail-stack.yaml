@@ -266,6 +266,10 @@ Resources:
       DisplayName: Lightrail Events
       KmsMasterKeyId: !GetAtt LightrailEventEncryptionKey.Arn
       Tags:
+        - Key: Environment
+          Value: !Ref EnvironmentName
+        - Key: Product
+          Value: Lightrail
         - Key: ShortName
           Value: LightrailEventTopic
   LightrailWebsite:
