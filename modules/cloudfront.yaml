@@ -64,9 +64,6 @@ Parameters:
   StatsEndpoint:
     Type: String
     Description: The domain that should handle the Stats requests
-  CardsSearchEndpoint:
-    Type: String
-    Description: The domain that should handle the Cards Search requests
   EdhiEndpoint:
     Type: String
     Description: The domain that should handle the Edhi requests
@@ -129,7 +126,6 @@ Resources:
         ReferenceDocsEndpoint: !Ref WebsiteEndpoint
         # Common Endpoints
         BatchEndpoint: !Ref BatchEndpoint
-        CardsSearchEndpoint: !Ref CardsSearchEndpoint
         EdhiEndpoint: !Ref EdhiEndpoint
         KvsEndpoint: !Ref KvsEndpoint
         GutenbergEndpoint: !Ref GutenbergEndpoint
@@ -154,7 +150,6 @@ Resources:
         AliasSubDomain: api
         # Common Endpoints
         BatchEndpoint: !Ref BatchEndpoint
-        CardsSearchEndpoint: !Ref CardsSearchEndpoint
         EdhiEndpoint: !Ref EdhiEndpoint
         KvsEndpoint: !Ref KvsEndpoint
         GutenbergEndpoint: !Ref GutenbergEndpoint
@@ -179,7 +174,6 @@ Resources:
         AliasSubDomain: embed
         # Common Endpoints
         BatchEndpoint: !Ref BatchEndpoint
-        CardsSearchEndpoint: !Ref CardsSearchEndpoint
         EdhiEndpoint: !Ref EdhiEndpoint
         KvsEndpoint: !Ref KvsEndpoint
         GutenbergEndpoint: !Ref GutenbergEndpoint
