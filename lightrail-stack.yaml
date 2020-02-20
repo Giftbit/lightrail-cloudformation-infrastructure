@@ -222,6 +222,7 @@ Resources:
         BatchEndpoint: !GetAtt LightrailLoadBalancer.Outputs.DNSName
         CardsSearchEndpoint: !GetAtt LightrailCardsSearch.Outputs.Endpoint
         EdhiEndpoint: !GetAtt LightrailEdhi.Outputs.Endpoint
+        GutenbergEndpoint: !GetAtt LightrailGutenberg.Outputs.Endpoint
         KvsEndpoint: !GetAtt LightrailKvs.Outputs.Endpoint
         ReactEndpoint: !GetAtt LightrailReact.Outputs.ReactDomainName
         ReactionsEndpoint: !GetAtt LightrailReactions.Outputs.Endpoint
@@ -233,6 +234,45 @@ Resources:
         UserImageUploadAuthServiceEndpoint: !GetAtt LightrailUserImageUpload.Outputs.ServiceEndpoint
         WebsiteEndpoint: !GetAtt LightrailWebsite.Outputs.Domain
         WidgetsEndpoint: !GetAtt LightrailWidgets.Outputs.WidgetsDomainName
+  LightrailEventEncryptionKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: !Sub "LightrailEventTopic encryption key"
+      KeyPolicy:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS:
+                !Sub "arn:aws:iam::${AWS::AccountId}:root"
+            Action:
+              - kms:*
+            Resource: "*"
+          - Effect: Allow
+            Principal:
+              AWS: "*"
+            Action:
+              - kms:Encrypt
+              - kms:Decrypt
+              - kms:GenerateDataKey*
+              - kms:DescribeKey
+            Resource: "*"
+            Condition:
+              StringEquals:
+                "kms:CallerAccount": !Ref "AWS::AccountId"
+  LightrailEventTopic:
+    Type: AWS::SNS::Topic
+    Condition: RegionIsUSWest2
+    Properties:
+      DisplayName: Lightrail Events
+      KmsMasterKeyId: !GetAtt LightrailEventEncryptionKey.Arn
+      Tags:
+        - Key: Environment
+          Value: !Ref EnvironmentName
+        - Key: Product
+          Value: Lightrail
+        - Key: ShortName
+          Value: LightrailEventTopic
   LightrailWebsite:
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2
@@ -419,6 +459,7 @@ Resources:
           - !GetAtt LightrailSimpleRollup.Outputs.RoleName
           - !GetAtt LightrailCardsSearch.Outputs.RoleName
           - !GetAtt LightrailEdhi.Outputs.RoleNames
+          - !GetAtt LightrailGutenberg.Outputs.RoleNames
           - !GetAtt LightrailKvs.Outputs.RoleName
           - !GetAtt LightrailTurnkey.Outputs.RoleNames
           - !GetAtt LightrailReactions.Outputs.RoleNames
@@ -697,6 +738,25 @@ Resources:
       Tags:
         - Key: Service
           Value: Edhi
+  LightrailGutenberg:
+    Type: AWS::CloudFormation::Stack
+    Condition: RegionIsUSWest2
+    Properties:
+      TemplateURL: ./modules/gutenberg.yaml
+      Parameters:
+        EnvironmentName: !Ref EnvironmentName
+        ProjectName: !Sub "${AWS::StackName}-Gutenberg"
+        LightrailDomain: !Sub "api.${LightrailDns.Outputs.HostedDomainName}"
+        LightrailEventTopicArn: !Ref LightrailEventTopic
+        SecureConfigBucket: !GetAtt LightrailSecureConfig.Outputs.BucketName
+        SecureConfigKmsArn: !GetAtt LightrailSecureConfig.Outputs.EncryptionKeyArn
+        GitHubOAuthToken: !GetAtt GitHubOAuthToken.DecryptedValue
+        CodeBuildImageNodeSSH: !GetAtt CIResources.Outputs.CodebuildImageNodeSSH
+        CiKeysAccessRoleArn: !GetAtt CIResources.Outputs.KeysAccessRoleArn
+        CiKeysBucketName: !GetAtt CIResources.Outputs.KeysBucketName
+      Tags:
+        - Key: Service
+          Value: Gutenberg
   LightrailSimpleRollup:
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2
@@ -850,6 +910,7 @@ Resources:
         ProjectName: !Sub "${AWS::StackName}-Rothschild"
         BastionHostAuthorizedUsersGroup: !GetAtt Groups.Outputs.BastionHostAccessGroupName
         LightrailDomain: !Sub "api.${LightrailDns.Outputs.HostedDomainName}"
+        LightrailEventTopicArn: !Ref LightrailEventTopic
         SecureConfigBucket: !GetAtt LightrailSecureConfig.Outputs.BucketName
         SecureConfigKmsArn: !GetAtt LightrailSecureConfig.Outputs.EncryptionKeyArn
         VpcUniqueNumber: 2
@@ -946,7 +1007,7 @@ Resources:
         Backs a CloudFormation Custom Resource for looking up Role Unique IDs (useful in locking down buckets)
       Role: !GetAtt RoleLookupRole.Arn
       Handler: index.handler
-      Runtime: nodejs6.10
+      Runtime: nodejs10.x
       Timeout: 15
       Code: ../res/role-id-lookup.zip  # https://github.com/Giftbit/role-id-lookup-custom-resource/blob/master/index.js
   GitHubOAuthToken:

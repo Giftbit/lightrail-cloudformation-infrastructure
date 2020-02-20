@@ -50,6 +50,9 @@ Parameters:
   KvsEndpoint:
     Type: String
     Description: The domain that should handle the KVS requests
+  GutenbergEndpoint:
+    Type: String
+    Description: The domain that should handle the Gutenbeg requests
   TurnkeyEndpoint:
     Type: String
     Description: The domain that should handle the Turnkey requests
@@ -87,6 +90,7 @@ Conditions:
   CardsSearchEndpointSet: !Not [!Equals [!Ref CardsSearchEndpoint, ""]]
   EdhiEndpointSet: !Not [!Equals [!Ref EdhiEndpoint, ""]]
   DocsEndpointSet: !Not [!Equals [!Ref DocsEndpoint, ""]]
+  GutenbergEndpointSet: !Not [!Equals [!Ref GutenbergEndpoint, ""]]
   ReactionsEndpointSet: !Not [!Equals [!Ref ReactionsEndpoint, ""]]
   ReferenceDocsEndpointSet: !Not [!Equals [!Ref ReferenceDocsEndpoint, ""]]
   RothschildEndpointSet: !Not [!Equals [!Ref RothschildEndpoint, ""]]
@@ -221,6 +225,19 @@ Resources:
             - ReactionsEndpointSet
             - DomainName: !Ref ReactionsEndpoint
               Id: ReactionsEndpointOrigin
+              OriginPath: /Prod
+              CustomOriginConfig:
+                OriginSSLProtocols:
+                  - TLSv1.1
+                  - TLSv1.2
+                OriginProtocolPolicy: https-only
+                HTTPSPort: 443
+                HTTPPort: 80
+            - !Ref AWS::NoValue
+          - !If
+            - GutenbergEndpointSet
+            - DomainName: !Ref GutenbergEndpoint
+              Id: GutenbergEndpointOrigin
               OriginPath: /Prod
               CustomOriginConfig:
                 OriginSSLProtocols:
@@ -515,6 +532,38 @@ Resources:
             - TurnkeyEndpointSet
             - PathPattern: "/v2/turnkey/*"
               TargetOriginId: TurnkeyEndpointOrigin
+              ViewerProtocolPolicy: "redirect-to-https"
+              Compress: false
+              MinTTL: 0
+              MaxTTL: 31536000
+              DefaultTTL: 0
+              AllowedMethods:
+                - GET
+                - HEAD
+                - OPTIONS
+                - PUT
+                - POST
+                - PATCH
+                - DELETE
+              CachedMethods:
+                - GET
+                - HEAD
+              ForwardedValues:
+                QueryString: true
+                Headers:
+                  - Authorization
+                  - Content-Length
+                  - Content-Type
+                  - Content-MD5
+                  - Range
+                  - X-Requested-With
+                Cookies:
+                  Forward: all
+            - !Ref AWS::NoValue
+          - !If
+            - GutenbergEndpointSet
+            - PathPattern: "/v2/webhooks*"
+              TargetOriginId: GutenbergEndpointOrigin
               ViewerProtocolPolicy: "redirect-to-https"
               Compress: false
               MinTTL: 0
