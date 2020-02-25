@@ -1,0 +1,102 @@
+Description: Edhi helper module
+
+Parameters:
+  EnvironmentName:
+    Type: String
+    Description: Please select your environment
+    AllowedValues:
+      - Dev
+      - Staging
+      - Production
+  ProjectName:
+    Type: String
+    Description: The name of the project being built.  This name will be used on a number of resources.
+  # SAM config
+  LightrailDomain:
+    Type: String
+    Description: The domain of the Lightrail REST API
+    AllowedPattern: (\w+\.)+\w{3}
+  LightrailEmailDomain:
+    Type: String
+    Description: The lightrail email domain.
+    Default: ""
+  LightrailWebappDomain:
+    Type: String
+    Description: The domain of the Lightrail web app
+    AllowedPattern: (\w+\.)+\w{3}
+  SecureConfigBucket:
+    Type: String
+    Description: The Name of the Configuration Bucket
+  SecureConfigKmsArn:
+    Type: String
+    Description: The ARN of the Configuration Bucket Encryption Key
+    AllowedPattern: arn:aws:kms:[a-z0-9-]+:\d{12}:key/[a-z0-9-]+
+  # CI config
+  GitHubOAuthToken:
+    Type: String
+    Description: GitHub oauth token.  This user must have admin access to the repo.
+    Default: "****"
+    NoEcho: true
+  CodeBuildImageNodeSSH:
+    Type: String
+    Description: Name of the docker image to build from.
+    Default: ""
+  CiKeysAccessRoleArn:
+    Type: String
+    Description: ARN for the role that can access our CI SSH keys bucket.
+    Default: ""
+  CiKeysBucketName:
+    Type: String
+    Description: S3 bucket with our CI SSH keys.
+    Default: ""
+
+Mappings:
+  Dev:
+    us-west-2:
+      GitHubBranch: dev-ci
+      GitHubBranchDest: ""
+      RoleNames: dev-Edhi-RestFunctionRole-111BY1CJ5G250
+      Endpoint: ql9cnmujzl.execute-api.us-west-2.amazonaws.com
+  Staging:
+    us-west-2:
+      GitHubBranch: staging
+      GitHubBranchDest: master
+      RoleNames: ""
+      Endpoint: ""
+  Production:
+    us-west-2:
+      GitHubBranch: master
+      GitHubBranchDest: ""
+      RoleNames: ""
+      Endpoint: ""
+
+Resources:
+  CI:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://raw.githubusercontent.com/Giftbit/internal-edhi/ff0b4424004d64fc83c449edf4e20a41a0599d61/infrastructure/ci.yaml
+      Parameters:
+        ProjectName: !Ref ProjectName
+        ProjectParameterOverrides: !Sub >
+          {
+            "LightrailDomain": "${LightrailDomain}",
+            "LightrailEmailDomain": "${LightrailEmailDomain}",
+            "LightrailWebappDomain": "${LightrailWebappDomain}",
+            "SecureConfigBucket": "${SecureConfigBucket}",
+            "SecureConfigKmsArn": "${SecureConfigKmsArn}"
+          }
+        GitHubOAuthToken: !Ref GitHubOAuthToken
+        GitHubBranch: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", GitHubBranch]
+        GitHubBranchDest: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", GitHubBranchDest]
+        CiKeysAccessRoleArn: !Ref CiKeysAccessRoleArn
+        CiKeysBucketName: !Ref CiKeysBucketName
+        CodeBuildImageNodeSSH: !Ref CodeBuildImageNodeSSH
+      Tags:
+        - Key: Service
+          Value: Edhi
+
+Outputs:
+  RoleNames:
+    Value: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", RoleNames]
+  Endpoint:
+    Value: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", Endpoint]

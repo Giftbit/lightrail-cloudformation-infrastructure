@@ -64,9 +64,9 @@ Parameters:
   StatsEndpoint:
     Type: String
     Description: The domain that should handle the Stats requests
-  CardsSearchEndpoint:
+  EdhiEndpoint:
     Type: String
-    Description: The domain that should handle the Cards Search requests
+    Description: The domain that should handle the Edhi requests
   KvsEndpoint:
     Type: String
     Description: The domain that should handle the KVS requests
@@ -106,12 +106,7 @@ Conditions:
   ShouldConfigureAliases: !Equals [!Ref ConfigureAliases, "yes"]  # This will be removed once we have the production account go live, but can be overridden quickly in cloudformation
   ViewerCertificateArnSet: !Not [!Equals [!Ref ViewerCertificateArn, ""]]
   ViewerCertificateArnNotSet: !Equals [!Ref ViewerCertificateArn, ""]
-  ReactEndpointSet: !Not [!Equals [!Ref ReactEndpoint, ""]]
-  TurnkeyEndpointSet: !Not [!Equals [!Ref TurnkeyEndpoint, ""]]
-  UserImageUploadAuthServiceEndpointSet: !Not [!Equals [!Ref UserImageUploadAuthServiceEndpoint, ""]]
-  UserImageServingEndpointSet: !Not [!Equals [!Ref UserImageServingEndpoint, ""]]
   WidgetsEndpointSet: !Not [!Equals [!Ref WidgetsEndpoint, ""]]
-  CardsSearchEndpointSet: !Not [!Equals [!Ref CardsSearchEndpoint, ""]]
 
 Resources:
   AppApiDistribution:
@@ -131,7 +126,7 @@ Resources:
         ReferenceDocsEndpoint: !Ref WebsiteEndpoint
         # Common Endpoints
         BatchEndpoint: !Ref BatchEndpoint
-        CardsSearchEndpoint: !Ref CardsSearchEndpoint
+        EdhiEndpoint: !Ref EdhiEndpoint
         KvsEndpoint: !Ref KvsEndpoint
         GutenbergEndpoint: !Ref GutenbergEndpoint
         ReactionsEndpoint: !Ref ReactionsEndpoint
@@ -155,7 +150,7 @@ Resources:
         AliasSubDomain: api
         # Common Endpoints
         BatchEndpoint: !Ref BatchEndpoint
-        CardsSearchEndpoint: !Ref CardsSearchEndpoint
+        EdhiEndpoint: !Ref EdhiEndpoint
         KvsEndpoint: !Ref KvsEndpoint
         GutenbergEndpoint: !Ref GutenbergEndpoint
         ReactionsEndpoint: !Ref ReactionsEndpoint
@@ -179,7 +174,7 @@ Resources:
         AliasSubDomain: embed
         # Common Endpoints
         BatchEndpoint: !Ref BatchEndpoint
-        CardsSearchEndpoint: !Ref CardsSearchEndpoint
+        EdhiEndpoint: !Ref EdhiEndpoint
         KvsEndpoint: !Ref KvsEndpoint
         GutenbergEndpoint: !Ref GutenbergEndpoint
         ReactionsEndpoint: !Ref ReactionsEndpoint

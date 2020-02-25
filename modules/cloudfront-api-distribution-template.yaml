@@ -41,9 +41,9 @@ Parameters:
   StatsEndpoint:
     Type: String
     Description: The domain that should handle the Stats requests
-  CardsSearchEndpoint:
+  EdhiEndpoint:
     Type: String
-    Description: The domain that should handle the Cards Search requests
+    Description: The domain that should handle the Edhi requests
   KvsEndpoint:
     Type: String
     Description: The domain that should handle the KVS requests
@@ -84,15 +84,15 @@ Conditions:
   ViewerCertificateArnSet: !Not [!Equals [!Ref ViewerCertificateArn, ""]]
   ViewerCertificateArnNotSet: !Equals [!Ref ViewerCertificateArn, ""]
   AppEndpointSet: !Not [!Equals [!Ref AppEndpoint, ""]]
-  TurnkeyEndpointSet: !Not [!Equals [!Ref TurnkeyEndpoint, ""]]
-  ReactionsEndpointSet: !Not [!Equals [!Ref ReactionsEndpoint, ""]]
-  RothschildEndpointSet: !Not [!Equals [!Ref RothschildEndpoint, ""]]
-  GutenbergEndpointSet: !Not [!Equals [!Ref GutenbergEndpoint, ""]]
-  UserImageUploadAuthServiceEndpointSet: !Not [!Equals [!Ref UserImageUploadAuthServiceEndpoint, ""]]
-  UserImageServingEndpointSet: !Not [!Equals [!Ref UserImageServingEndpoint, ""]]
+  EdhiEndpointSet: !Not [!Equals [!Ref EdhiEndpoint, ""]]
   DocsEndpointSet: !Not [!Equals [!Ref DocsEndpoint, ""]]
+  GutenbergEndpointSet: !Not [!Equals [!Ref GutenbergEndpoint, ""]]
+  ReactionsEndpointSet: !Not [!Equals [!Ref ReactionsEndpoint, ""]]
   ReferenceDocsEndpointSet: !Not [!Equals [!Ref ReferenceDocsEndpoint, ""]]
-  CardsSearchEndpointSet: !Not [!Equals [!Ref CardsSearchEndpoint, ""]]
+  RothschildEndpointSet: !Not [!Equals [!Ref RothschildEndpoint, ""]]
+  TurnkeyEndpointSet: !Not [!Equals [!Ref TurnkeyEndpoint, ""]]
+  UserImageServingEndpointSet: !Not [!Equals [!Ref UserImageServingEndpoint, ""]]
+  UserImageUploadAuthServiceEndpointSet: !Not [!Equals [!Ref UserImageUploadAuthServiceEndpoint, ""]]
 
 Resources:
   Distribution:
@@ -169,9 +169,9 @@ Resources:
               HTTPSPort: 443
               HTTPPort: 80
           - !If
-            - CardsSearchEndpointSet
-            - DomainName: !Ref CardsSearchEndpoint
-              Id: CardsSearchEndpointOrigin
+            - EdhiEndpointSet
+            - DomainName: !Ref EdhiEndpoint
+              Id: EdhiEndpointOrigin
               OriginPath: /Prod
               CustomOriginConfig:
                 OriginSSLProtocols:
@@ -224,8 +224,8 @@ Resources:
               OriginPath: /Prod
               CustomOriginConfig:
                 OriginSSLProtocols:
-                - TLSv1.1
-                - TLSv1.2
+                  - TLSv1.1
+                  - TLSv1.2
                 OriginProtocolPolicy: https-only
                 HTTPSPort: 443
                 HTTPPort: 80
@@ -293,134 +293,6 @@ Resources:
                 HTTPPort: 80
             - !Ref AWS::NoValue
         CacheBehaviors:
-          - !If
-            - CardsSearchEndpointSet
-            - PathPattern: "/v1/search/cards"
-              TargetOriginId: CardsSearchEndpointOrigin
-              ViewerProtocolPolicy: "redirect-to-https"
-              Compress: false
-              MinTTL: 0
-              MaxTTL: 31536000
-              DefaultTTL: 0
-              AllowedMethods:
-                - GET
-                - HEAD
-                - OPTIONS
-                - PUT
-                - POST
-                - PATCH
-                - DELETE
-              CachedMethods:
-                - GET
-                - HEAD
-              ForwardedValues:
-                QueryString: true
-                Headers:
-                  - Authorization
-                  - Content-Length
-                  - Content-Type
-                  - Content-MD5
-                  - Range
-                  - X-Requested-With
-                Cookies:
-                  Forward: all
-            - !Ref AWS::NoValue
-          - !If
-            - CardsSearchEndpointSet
-            - PathPattern: "/v1/search/cards/*"
-              TargetOriginId: CardsSearchEndpointOrigin
-              ViewerProtocolPolicy: "redirect-to-https"
-              Compress: false
-              MinTTL: 0
-              MaxTTL: 31536000
-              DefaultTTL: 0
-              AllowedMethods:
-                - GET
-                - HEAD
-                - OPTIONS
-                - PUT
-                - POST
-                - PATCH
-                - DELETE
-              CachedMethods:
-                - GET
-                - HEAD
-              ForwardedValues:
-                QueryString: true
-                Headers:
-                  - Authorization
-                  - Content-Length
-                  - Content-Type
-                  - Content-MD5
-                  - Range
-                  - X-Requested-With
-                Cookies:
-                  Forward: all
-            - !Ref AWS::NoValue
-          - !If
-            - CardsSearchEndpointSet
-            - PathPattern: "/v1/search/contacts"
-              TargetOriginId: CardsSearchEndpointOrigin
-              ViewerProtocolPolicy: "redirect-to-https"
-              Compress: false
-              MinTTL: 0
-              MaxTTL: 31536000
-              DefaultTTL: 0
-              AllowedMethods:
-                - GET
-                - HEAD
-                - OPTIONS
-                - PUT
-                - POST
-                - PATCH
-                - DELETE
-              CachedMethods:
-                - GET
-                - HEAD
-              ForwardedValues:
-                QueryString: true
-                Headers:
-                  - Authorization
-                  - Content-Length
-                  - Content-Type
-                  - Content-MD5
-                  - Range
-                  - X-Requested-With
-                Cookies:
-                  Forward: all
-            - !Ref AWS::NoValue
-          - !If
-            - CardsSearchEndpointSet
-            - PathPattern: "/v1/search/contacts/*"
-              TargetOriginId: CardsSearchEndpointOrigin
-              ViewerProtocolPolicy: "redirect-to-https"
-              Compress: false
-              MinTTL: 0
-              MaxTTL: 31536000
-              DefaultTTL: 0
-              AllowedMethods:
-                - GET
-                - HEAD
-                - OPTIONS
-                - PUT
-                - POST
-                - PATCH
-                - DELETE
-              CachedMethods:
-                - GET
-                - HEAD
-              ForwardedValues:
-                QueryString: true
-                Headers:
-                  - Authorization
-                  - Content-Length
-                  - Content-Type
-                  - Content-MD5
-                  - Range
-                  - X-Requested-With
-                Cookies:
-                  Forward: all
-            - !Ref AWS::NoValue
           - PathPattern: "/v1/storage"
             TargetOriginId: KvsEndpointOrigin
             ViewerProtocolPolicy: "redirect-to-https"
@@ -479,7 +351,6 @@ Resources:
                 - X-Requested-With
               Cookies:
                 Forward: all
-
           - !If
             - TurnkeyEndpointSet
             - PathPattern: "/v1/turnkey/*"
@@ -586,25 +457,25 @@ Resources:
               MaxTTL: 31536000
               DefaultTTL: 0
               AllowedMethods:
-              - GET
-              - HEAD
-              - OPTIONS
-              - PUT
-              - POST
-              - PATCH
-              - DELETE
+                - GET
+                - HEAD
+                - OPTIONS
+                - PUT
+                - POST
+                - PATCH
+                - DELETE
               CachedMethods:
-              - GET
-              - HEAD
+                - GET
+                - HEAD
               ForwardedValues:
                 QueryString: true
                 Headers:
-                - Authorization
-                - Content-Length
-                - Content-Type
-                - Content-MD5
-                - Range
-                - X-Requested-With
+                  - Authorization
+                  - Content-Length
+                  - Content-Type
+                  - Content-MD5
+                  - Range
+                  - X-Requested-With
                 Cookies:
                   Forward: all
             - !Ref AWS::NoValue
@@ -862,6 +733,138 @@ Resources:
                 - AuthorizeAs
               Cookies:
                 Forward: all
+          - !If
+            - EdhiEndpointSet
+            - PathPattern: "/v2/user"
+              TargetOriginId: EdhiEndpointOrigin
+              ViewerProtocolPolicy: "redirect-to-https"
+              Compress: false
+              MinTTL: 0
+              MaxTTL: 31536000
+              DefaultTTL: 0
+              AllowedMethods:
+                - GET
+                - HEAD
+                - OPTIONS
+                - PUT
+                - POST
+                - PATCH
+                - DELETE
+              CachedMethods:
+                - GET
+                - HEAD
+              ForwardedValues:
+                QueryString: true
+                Headers:
+                  - Accept
+                  - Authorization
+                  - Content-Length
+                  - Content-Type
+                  - Content-MD5
+                  - Range
+                  - X-Requested-With
+                Cookies:
+                  Forward: all
+            - !Ref AWS::NoValue
+          - !If
+            - EdhiEndpointSet
+            - PathPattern: "/v2/user/*"
+              TargetOriginId: EdhiEndpointOrigin
+              ViewerProtocolPolicy: "redirect-to-https"
+              Compress: false
+              MinTTL: 0
+              MaxTTL: 31536000
+              DefaultTTL: 0
+              AllowedMethods:
+                - GET
+                - HEAD
+                - OPTIONS
+                - PUT
+                - POST
+                - PATCH
+                - DELETE
+              CachedMethods:
+                - GET
+                - HEAD
+              ForwardedValues:
+                QueryString: true
+                Headers:
+                  - Accept
+                  - Authorization
+                  - Content-Length
+                  - Content-Type
+                  - Content-MD5
+                  - Range
+                  - X-Requested-With
+                Cookies:
+                  Forward: all
+            - !Ref AWS::NoValue
+          - !If
+            - EdhiEndpointSet
+            - PathPattern: "/v2/account"
+              TargetOriginId: EdhiEndpointOrigin
+              ViewerProtocolPolicy: "redirect-to-https"
+              Compress: false
+              MinTTL: 0
+              MaxTTL: 31536000
+              DefaultTTL: 0
+              AllowedMethods:
+                - GET
+                - HEAD
+                - OPTIONS
+                - PUT
+                - POST
+                - PATCH
+                - DELETE
+              CachedMethods:
+                - GET
+                - HEAD
+              ForwardedValues:
+                QueryString: true
+                Headers:
+                  - Accept
+                  - Authorization
+                  - Content-Length
+                  - Content-Type
+                  - Content-MD5
+                  - Range
+                  - X-Requested-With
+                Cookies:
+                  Forward: all
+            - !Ref AWS::NoValue
+          - !If
+            - EdhiEndpointSet
+            - PathPattern: "/v2/account/*"
+              TargetOriginId: EdhiEndpointOrigin
+              ViewerProtocolPolicy: "redirect-to-https"
+              Compress: false
+              MinTTL: 0
+              MaxTTL: 31536000
+              DefaultTTL: 0
+              AllowedMethods:
+                - GET
+                - HEAD
+                - OPTIONS
+                - PUT
+                - POST
+                - PATCH
+                - DELETE
+              CachedMethods:
+                - GET
+                - HEAD
+              ForwardedValues:
+                QueryString: true
+                Headers:
+                  - Accept
+                  - Authorization
+                  - Content-Length
+                  - Content-Type
+                  - Content-MD5
+                  - Range
+                  - X-Requested-With
+                Cookies:
+                  Forward: all
+            - !Ref AWS::NoValue
           - !If
             - RothschildEndpointSet
             - PathPattern: "/v2/*"
