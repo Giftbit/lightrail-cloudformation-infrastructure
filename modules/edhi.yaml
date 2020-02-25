@@ -74,7 +74,7 @@ Resources:
   CI:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://raw.githubusercontent.com/Giftbit/internal-edhi/ff0b4424004d64fc83c449edf4e20a41a0599d61/infrastructure/ci.yaml
+      TemplateURL: https://raw.githubusercontent.com/Giftbit/internal-edhi/ee6899a7b64eb068fb651c7758268a0432408a40/infrastructure/ci.yaml
       Parameters:
         ProjectName: !Ref ProjectName
         ProjectParameterOverrides: !Sub >
