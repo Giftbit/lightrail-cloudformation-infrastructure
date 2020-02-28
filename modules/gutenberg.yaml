@@ -53,7 +53,7 @@ Mappings:
       GitHubBranch: dev-ci
       GitHubBranchDest: ""
       Capacity: low
-      RoleNames: dev-Gutenberg-RestFunctionRole-1M3F24PK6D0C3,dev-Gutenberg-EventsFunctionRole-RPXIWDPYOVP5,dev-Gutenberg-PollingFunctionRole-1E1K695XFDP9T
+      RoleNames: dev-Gutenberg-RestFunctionRole-1M3F24PK6D0C3,dev-Gutenberg-EventsFunctionRole-RPXIWDPYOVP5
       Endpoint: 5t4x5i9e7e.execute-api.us-west-2.amazonaws.com
   Staging:
     us-west-2:
