@@ -61,14 +61,14 @@ Mappings:
     us-west-2:
       GitHubBranch: staging
       GitHubBranchDest: master
-      RoleNames: ""
-      Endpoint: ""
+      RoleNames: staging-Edhi-RestFunctionRole-MUB3HPT0IWQA
+      Endpoint: jqpvyxgat0.execute-api.us-west-2.amazonaws.com
   Production:
     us-west-2:
       GitHubBranch: master
       GitHubBranchDest: ""
-      RoleNames: ""
-      Endpoint: ""
+      RoleNames: production-Edhi-RestFunction-1FNS8IE1329TK
+      Endpoint: 1tjy5kf2t9.execute-api.us-west-2.amazonaws.com
 
 Resources:
   CI:
