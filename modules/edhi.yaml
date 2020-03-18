@@ -67,7 +67,7 @@ Mappings:
     us-west-2:
       GitHubBranch: master
       GitHubBranchDest: ""
-      RoleNames: production-Edhi-RestFunction-1FNS8IE1329TK
+      RoleNames: production-Edhi-RestFunctionRole-BC0X5SR4TIW
       Endpoint: 1tjy5kf2t9.execute-api.us-west-2.amazonaws.com
 
 Resources:
