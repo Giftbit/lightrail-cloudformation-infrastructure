@@ -52,21 +52,18 @@ Mappings:
     us-west-2:
       GitHubBranch: dev-ci
       GitHubBranchDest: ""
-      Capacity: low
       RoleNames: dev-Gutenberg-RestFunctionRole-1M3F24PK6D0C3,dev-Gutenberg-EventsFunctionRole-RPXIWDPYOVP5
       Endpoint: 5t4x5i9e7e.execute-api.us-west-2.amazonaws.com
   Staging:
     us-west-2:
       GitHubBranch: staging
       GitHubBranchDest: master
-      Capacity: low
       RoleNames: ""
       Endpoint: ""
   Production:
     us-west-2:
       GitHubBranch: master
       GitHubBranchDest: ""
-      Capacity: high
       RoleNames: ""
       Endpoint: ""
 
@@ -80,13 +77,11 @@ Resources:
         ProjectParameterOverrides: !Sub
           - >
             {
-                "Capacity": "${Capacity}",
                 "LightrailDomain": "${LightrailDomain}",
                 "LightrailEventTopicArn": "${LightrailEventTopicArn}",
                 "SecureConfigBucket": "${SecureConfigBucket}",
                 "SecureConfigKmsArn": "${SecureConfigKmsArn}"
             }
-          - Capacity: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", Capacity]
         LightrailEventTopicArn: !Ref LightrailEventTopicArn
         GitHubOAuthToken: !Ref GitHubOAuthToken
         GitHubBranch: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", GitHubBranch]
