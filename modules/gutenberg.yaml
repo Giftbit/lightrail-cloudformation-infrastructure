@@ -74,14 +74,13 @@ Resources:
       TemplateURL: https://raw.githubusercontent.com/Giftbit/internal-gutenberg/8c300f4025b0a8a5384232052ac710f1d8e247ba/infrastructure/ci.yaml
       Parameters:
         ProjectName: !Ref ProjectName
-        ProjectParameterOverrides: !Sub
-          - >
-            {
-                "LightrailDomain": "${LightrailDomain}",
-                "LightrailEventTopicArn": "${LightrailEventTopicArn}",
-                "SecureConfigBucket": "${SecureConfigBucket}",
-                "SecureConfigKmsArn": "${SecureConfigKmsArn}"
-            }
+        ProjectParameterOverrides: !Sub >
+          {
+              "LightrailDomain": "${LightrailDomain}",
+              "LightrailEventTopicArn": "${LightrailEventTopicArn}",
+              "SecureConfigBucket": "${SecureConfigBucket}",
+              "SecureConfigKmsArn": "${SecureConfigKmsArn}"
+          }
         LightrailEventTopicArn: !Ref LightrailEventTopicArn
         GitHubOAuthToken: !Ref GitHubOAuthToken
         GitHubBranch: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", GitHubBranch]
