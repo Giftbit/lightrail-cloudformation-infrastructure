@@ -6,6 +6,10 @@ Parameters:
     Type: String
     Description: The Base Domain Name that you want to use
 
+Conditions:
+  IsDmarcReportRecipient: !Equals [!Ref BaseDomain, lightrail.com]
+  IsDmarcEnabled: !Not [!Equals [!Ref BaseDomain, lightrail.com]]
+
 Resources:
   IncomingMail:
     Type: AWS::Route53::RecordSet
@@ -21,6 +25,7 @@ Resources:
         - 10 ALT3.ASPMX.L.GOOGLE.COM.
         - 10 ALT4.ASPMX.L.GOOGLE.COM.
   DomainVerificationRecord:
+    # Proves to Google search that we control the domain
     Type: AWS::Route53::RecordSet
     Properties:
       HostedZoneName: !Sub "${BaseDomain}."
@@ -39,7 +44,39 @@ Resources:
       TTL: 300
       ResourceRecords:
         - custom.intercom.help
+  Dmarc:
+    # TODO remove condition to enable on lightrail.com once this is tested on dev and staging
+    Type: AWS::Route53::RecordSet
+    Condition: IsDmarcEnabled
+    Properties:
+      HostedZoneName: !Sub "${BaseDomain}."
+      Name: !Sub "_dmarc.${BaseDomain}."
+      Type: TXT
+      TTL: 300
+      ResourceRecords:
+        - '"v=DMARC1;p=quarantine;pct=100;rua=mailto:bugs+dmarc-reports@lightrail.com;ruf=mailto:bugs+dmarc-forensics@lightrail.com"'
+  DmarcReportsLightrailDev:
+    Type: AWS::Route53::RecordSet
+    Condition: IsDmarcReportRecipient
+    Properties:
+      HostedZoneName: !Sub "${BaseDomain}."
+      Name: !Sub "lightraildev.net._report._dmarc.${BaseDomain}."
+      Type: TXT
+      TTL: 300
+      ResourceRecords:
+        - '"v=DMARC1"'
+  DmarcReportsLightrailStaging:
+    Type: AWS::Route53::RecordSet
+    Condition: IsDmarcReportRecipient
+    Properties:
+      HostedZoneName: !Sub "${BaseDomain}."
+      Name: !Sub "lightrailstaging.net._report._dmarc.${BaseDomain}."
+      Type: TXT
+      TTL: 300
+      ResourceRecords:
+        - '"v=DMARC1"'
   GoogleDkim:
+    # Comes from GSuite: Apps -> G Suite -> GMail -> Authenticate Email
     Type: AWS::Route53::RecordSet
     Properties:
       HostedZoneName: !Sub "${BaseDomain}."
