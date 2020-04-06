@@ -24,7 +24,6 @@ Resources:
         - 10 ALT3.ASPMX.L.GOOGLE.COM.
         - 10 ALT4.ASPMX.L.GOOGLE.COM.
   DomainVerificationRecord:
-    # Proves to Google search that we control the domain
     Type: AWS::Route53::RecordSet
     Properties:
       HostedZoneName: !Sub "${BaseDomain}."
@@ -32,7 +31,9 @@ Resources:
       Type: TXT
       TTL: 300
       ResourceRecords:
+        # Proves to Google search that we control the domain
         - '"google-site-verification=hB0pZKHU41BGKnLqXvBmecFi362yiXMkqKEf5acn-sY"'
+        # SPF
         - '"v=spf1 include:_spf.google.com include:amazonses.com ~all"'
   Help:
     Type: AWS::Route53::RecordSet
