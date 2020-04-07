@@ -40,15 +40,6 @@ Resources:
         # eg: mail-ses-us-west-2.lightrail.com.
         # see: https://docs.aws.amazon.com/ses/latest/DeveloperGuide/mail-from.html
         - '"v=spf1 include:_spf.google.com include:amazonses.com ~all"'
-  Help:
-    Type: AWS::Route53::RecordSet
-    Properties:
-      HostedZoneName: !Sub "${BaseDomain}."
-      Name: !Sub "help.${BaseDomain}."
-      Type: CNAME
-      TTL: 300
-      ResourceRecords:
-        - custom.intercom.help
   Dmarc:
     Type: AWS::Route53::RecordSet
     Properties:
