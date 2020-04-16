@@ -311,10 +311,10 @@ Resources:
       UserName: leif.b
       Groups:
         - !Ref AllEmployees
-  NicholasM:
+  NickM:
     Type: AWS::IAM::User
     Properties:
-      UserName: nicholas.m
+      UserName: nick.m
       Groups:
         - !Ref AllEmployees
         - !Ref BackEndDevelopersGroup
