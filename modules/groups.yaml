@@ -311,7 +311,14 @@ Resources:
       UserName: leif.b
       Groups:
         - !Ref AllEmployees
-        - !Ref BastionHostAccessGroup
+  NickM:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: nick.m
+      Groups:
+        - !Ref AllEmployees
+        - !Ref BackEndDevelopersGroup
+        - !Ref FrontEndDevelopersGroup
   TanaJ:
     Type: AWS::IAM::User
     Properties:
