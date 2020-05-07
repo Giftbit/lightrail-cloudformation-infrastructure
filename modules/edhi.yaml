@@ -57,18 +57,21 @@ Mappings:
       GitHubBranchDest: ""
       RoleNames: dev-Edhi-RestFunctionRole-111BY1CJ5G250
       Endpoint: ql9cnmujzl.execute-api.us-west-2.amazonaws.com
+      SentryDsn: https://fb28f9ac76a84e879f7523cc07092369@o51938.ingest.sentry.io/239845
   Staging:
     us-west-2:
       GitHubBranch: staging
       GitHubBranchDest: master
       RoleNames: staging-Edhi-RestFunctionRole-MUB3HPT0IWQA
       Endpoint: jqpvyxgat0.execute-api.us-west-2.amazonaws.com
+      SentryDsn: https://dad81b3b1b4e494e97069f17f4b9e33f@o51938.ingest.sentry.io/245144
   Production:
     us-west-2:
       GitHubBranch: master
       GitHubBranchDest: ""
       RoleNames: production-Edhi-RestFunctionRole-BC0X5SR4TIW
       Endpoint: 1tjy5kf2t9.execute-api.us-west-2.amazonaws.com
+      SentryDsn: https://b275b17e6ed948ae85b9de4fb0ab722b@o51938.ingest.sentry.io/245145
 
 Resources:
   CI:
@@ -77,14 +80,17 @@ Resources:
       TemplateURL: https://raw.githubusercontent.com/Giftbit/internal-edhi/a33c83f3e065cb40007cc87c5f68eb648ae5e169/infrastructure/ci.yaml
       Parameters:
         ProjectName: !Ref ProjectName
-        ProjectParameterOverrides: !Sub >
-          {
-            "LightrailDomain": "${LightrailDomain}",
-            "LightrailEmailDomain": "${LightrailEmailDomain}",
-            "LightrailWebappDomain": "${LightrailWebappDomain}",
-            "SecureConfigBucket": "${SecureConfigBucket}",
-            "SecureConfigKmsArn": "${SecureConfigKmsArn}"
-          }
+        ProjectParameterOverrides: !Sub
+          - >
+            {
+              "LightrailDomain": "${LightrailDomain}",
+              "LightrailEmailDomain": "${LightrailEmailDomain}",
+              "LightrailWebappDomain": "${LightrailWebappDomain}",
+              "SecureConfigBucket": "${SecureConfigBucket}",
+              "SecureConfigKmsArn": "${SecureConfigKmsArn}",
+              "SentryDsn": "${SentryDsn}"
+            }
+          - SentryDsn: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", SentryDsn]
         GitHubOAuthToken: !Ref GitHubOAuthToken
         GitHubBranch: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", GitHubBranch]
         GitHubBranchDest: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", GitHubBranchDest]
