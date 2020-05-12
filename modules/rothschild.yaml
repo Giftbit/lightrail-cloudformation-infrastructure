@@ -72,7 +72,7 @@ Mappings:
       Capacity: low
       RoleNames: staging-Rothschild-RestFunctionRole-1WP0HJUKSCI23,staging-Rothschild-AutomaticVoidFunctionRole-MZYLCUNWSZYF,staging-Rothschild-PostDeployFunctionRole-O51X2ALZ04D2,staging-Rothschild-StripeEventWebhookFunctionRole-GDWMU4WUCDJC,staging-Rothschild-BinlogWatcherFunctionRole-DXNHFUVBR4SB
       Endpoint: kvd0rpwjoa.execute-api.us-west-2.amazonaws.com
-      SentryDsn: https://fb28f9ac76a84e879f7523cc07092369@o51938.ingest.sentry.io/239845
+      SentryDsn: https://dad81b3b1b4e494e97069f17f4b9e33f@o51938.ingest.sentry.io/245144
   Production:
     us-west-2:
       GitHubBranch: master
@@ -80,7 +80,7 @@ Mappings:
       Capacity: high
       RoleNames: production-Rothschild-RestFunctionRole-OCVSS4TEU6MY,production-Rothschild-AutomaticVoidFunctionRole-VYL4WGB71JZF,production-Rothschild-PostDeployFunctionRole-4K8B084OEI1Z,production-Rothschild-StripeEventWebhookFunctionRo-S64HQWGMFGZL,production-Rothschild-BinlogWatcherFunctionRole-1TOUKD2DYR7ID
       Endpoint: qaljzxzk0l.execute-api.us-west-2.amazonaws.com
-      SentryDsn: https://fb28f9ac76a84e879f7523cc07092369@o51938.ingest.sentry.io/239845
+      SentryDsn: https://b275b17e6ed948ae85b9de4fb0ab722b@o51938.ingest.sentry.io/245145
 
 Resources:
   DbEncryptionKey:
