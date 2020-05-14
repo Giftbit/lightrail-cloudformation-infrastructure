@@ -62,6 +62,7 @@ Mappings:
       Capacity: low
       RoleName: dev-Kvs-KvsFunctionRole-RLFP80MZ8Z16
       Endpoint: wowqnrwyy0.execute-api.us-west-2.amazonaws.com
+      SentryDsn: https://fb28f9ac76a84e879f7523cc07092369@o51938.ingest.sentry.io/239845
   Staging:
     us-west-2:
       GitHubBranch: staging
@@ -69,6 +70,7 @@ Mappings:
       Capacity: low
       RoleName: staging-Kvs-KvsFunctionRole-16TX23DYH1DQ
       Endpoint: 1tnp8xblpd.execute-api.us-west-2.amazonaws.com
+      SentryDsn: https://dad81b3b1b4e494e97069f17f4b9e33f@o51938.ingest.sentry.io/245144
   Production:
     us-west-2:
       GitHubBranch: master
@@ -76,6 +78,7 @@ Mappings:
       Capacity: high
       RoleName: production-Kvs-KvsFunctionRole-35C9CNH786LQ
       Endpoint: hl0fjfzg5b.execute-api.us-west-2.amazonaws.com
+      SentryDsn: https://b275b17e6ed948ae85b9de4fb0ab722b@o51938.ingest.sentry.io/245145
 
 Resources:
   EncryptionKey:
@@ -105,6 +108,7 @@ Resources:
         ProjectParameterOverrides: !Sub
           - >
             {
+              "Capacity": "${Capacity}",
               "LightrailDomain": "${LightrailDomain}",
               "PathToMerchantSharedSecret": "${PathToMerchantSharedSecret}",
               "SecureConfigBucket": "${SecureConfigBucket}",
@@ -112,10 +116,11 @@ Resources:
               "SecureConfigKeyAssumeStorageScopeToken": "${SecureConfigKeyAssumeStorageScopeToken}",
               "SecureConfigKeyJwt": "${SecureConfigKeyJwt}",
               "SecureConfigKeyRoleDefinitions": "${SecureConfigKeyRoleDefinitions}",
-              "StoredItemEncryptionKeyId": "${EncryptionKey}",
-              "Capacity": "${Capacity}"
+              "SentryDsn": "${SentryDsn}",
+              "StoredItemEncryptionKeyId": "${EncryptionKey}"
             }
           - Capacity: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", Capacity]
+            SentryDsn: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", SentryDsn]
         GitHubBranch: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", GitHubBranch]
         GitHubBranchDest: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", GitHubBranchDest]
         GitHubOAuthToken: !Ref GitHubOAuthToken
