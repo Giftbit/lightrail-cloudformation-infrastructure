@@ -54,18 +54,21 @@ Mappings:
       GitHubBranchDest: ""
       RoleNames: dev-Gutenberg-RestFunctionRole-1M3F24PK6D0C3,dev-Gutenberg-EventsFunctionRole-RPXIWDPYOVP5
       Endpoint: 5t4x5i9e7e.execute-api.us-west-2.amazonaws.com
+      SentryDsn: https://fb28f9ac76a84e879f7523cc07092369@o51938.ingest.sentry.io/239845
   Staging:
     us-west-2:
       GitHubBranch: staging
       GitHubBranchDest: master
       RoleNames: staging-Gutenberg-RestFunctionRole-172FW1RJ36QKW,staging-Gutenberg-EventsFunctionRole-EI36SO42J4RI
       Endpoint: d267yqujga.execute-api.us-west-2.amazonaws.com
+      SentryDsn: https://dad81b3b1b4e494e97069f17f4b9e33f@o51938.ingest.sentry.io/245144
   Production:
     us-west-2:
       GitHubBranch: master
       GitHubBranchDest: ""
       RoleNames: production-Gutenberg-RestFunctionRole-1P7K16D960LG9,production-Gutenberg-EventsFunctionRole-98WOGTSGGV4F
       Endpoint: hxoiqowlci.execute-api.us-west-2.amazonaws.com
+      SentryDsn: https://b275b17e6ed948ae85b9de4fb0ab722b@o51938.ingest.sentry.io/245145
 
 Resources:
   CI:
@@ -74,13 +77,16 @@ Resources:
       TemplateURL: https://raw.githubusercontent.com/Giftbit/internal-gutenberg/94bf3cfd7aa0f2ee89c8b014486371103aa7fc02/infrastructure/ci.yaml
       Parameters:
         ProjectName: !Ref ProjectName
-        ProjectParameterOverrides: !Sub >
-          {
-              "LightrailDomain": "${LightrailDomain}",
-              "LightrailEventTopicArn": "${LightrailEventTopicArn}",
-              "SecureConfigBucket": "${SecureConfigBucket}",
-              "SecureConfigKmsArn": "${SecureConfigKmsArn}"
-          }
+        ProjectParameterOverrides: !Sub
+          - >
+            {
+                "LightrailDomain": "${LightrailDomain}",
+                "LightrailEventTopicArn": "${LightrailEventTopicArn}",
+                "SecureConfigBucket": "${SecureConfigBucket}",
+                "SecureConfigKmsArn": "${SecureConfigKmsArn}",
+                "SentryDsn": "${SentryDsn}"
+            }
+          - SentryDsn: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", SentryDsn]
         LightrailEventTopicArn: !Ref LightrailEventTopicArn
         GitHubOAuthToken: !Ref GitHubOAuthToken
         GitHubBranch: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", GitHubBranch]
