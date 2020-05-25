@@ -55,7 +55,7 @@ Mappings:
     us-west-2:
       GitHubBranch: dev-ci
       GitHubBranchDest: ""
-      RoleNames: dev-Edhi-RestFunctionRole-111BY1CJ5G250
+      RoleNames: dev-Edhi-RestFunctionRole-ZBKYVTBJZLW3
       Endpoint: ql9cnmujzl.execute-api.us-west-2.amazonaws.com
       SentryDsn: https://fb28f9ac76a84e879f7523cc07092369@o51938.ingest.sentry.io/239845
   Staging:
@@ -77,12 +77,13 @@ Resources:
   CI:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://raw.githubusercontent.com/Giftbit/internal-edhi/a33c83f3e065cb40007cc87c5f68eb648ae5e169/infrastructure/ci.yaml
+      TemplateURL: https://raw.githubusercontent.com/Giftbit/internal-edhi/c52543cf8630407dfd69e011367bd5720f6d9ca5/infrastructure/ci.yaml
       Parameters:
         ProjectName: !Ref ProjectName
         ProjectParameterOverrides: !Sub
           - >
             {
+              "DeploymentPreferenceType": "Linear10PercentEvery1Minute",
               "LightrailDomain": "${LightrailDomain}",
               "LightrailEmailDomain": "${LightrailEmailDomain}",
               "LightrailWebappDomain": "${LightrailWebappDomain}",
