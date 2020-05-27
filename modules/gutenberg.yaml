@@ -74,12 +74,13 @@ Resources:
   CI:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://raw.githubusercontent.com/Giftbit/internal-gutenberg/94bf3cfd7aa0f2ee89c8b014486371103aa7fc02/infrastructure/ci.yaml
+      TemplateURL: https://raw.githubusercontent.com/Giftbit/internal-gutenberg/bb0e1ae2f448fee8f2d8fb628cf068de36d7cce2/infrastructure/ci.yaml
       Parameters:
         ProjectName: !Ref ProjectName
         ProjectParameterOverrides: !Sub
           - >
             {
+                "DeploymentPreferenceType": "Linear10PercentEvery1Minute",
                 "LightrailDomain": "${LightrailDomain}",
                 "LightrailEventTopicArn": "${LightrailEventTopicArn}",
                 "SecureConfigBucket": "${SecureConfigBucket}",
