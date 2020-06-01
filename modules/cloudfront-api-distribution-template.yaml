@@ -109,7 +109,7 @@ Resources:
           AcmCertificateArn: !If [ViewerCertificateArnSet, !Ref ViewerCertificateArn, !Ref "AWS::NoValue"]
           CloudFrontDefaultCertificate: !If [ViewerCertificateArnNotSet, true, !Ref "AWS::NoValue"]
           SslSupportMethod: !If [ViewerCertificateArnSet, "sni-only", !Ref "AWS::NoValue"]
-          MinimumProtocolVersion: TLSv1.1_2016
+          MinimumProtocolVersion: TLSv1.2_2018
         CustomErrorResponses:
           # By Default, CloudFront caches the following Error codes for 5 Minutes: 400, 403, 404, 405, 414, 500, 501, 502, 503, 504
           # See http://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/HTTPStatusCodes.html#HTTPStatusCodes-cached-errors
@@ -134,7 +134,6 @@ Resources:
               Id: AppEndpointOrigin
               CustomOriginConfig:
                 OriginSSLProtocols:
-                  - TLSv1.1
                   - TLSv1.2
                 OriginProtocolPolicy: http-only
                 HTTPSPort: 443
@@ -154,7 +153,6 @@ Resources:
             OriginPath: /Prod
             CustomOriginConfig:
               OriginSSLProtocols:
-                - TLSv1.1
                 - TLSv1.2
               OriginProtocolPolicy: https-only
               HTTPSPort: 443
@@ -175,7 +173,6 @@ Resources:
               OriginPath: /Prod
               CustomOriginConfig:
                 OriginSSLProtocols:
-                  - TLSv1.1
                   - TLSv1.2
                 OriginProtocolPolicy: https-only
                 HTTPSPort: 443
@@ -186,7 +183,6 @@ Resources:
             OriginPath: /Prod
             CustomOriginConfig:
               OriginSSLProtocols:
-                - TLSv1.1
                 - TLSv1.2
               OriginProtocolPolicy: https-only
               HTTPSPort: 443
@@ -198,7 +194,6 @@ Resources:
               OriginPath: /Prod
               CustomOriginConfig:
                 OriginSSLProtocols:
-                  - TLSv1.1
                   - TLSv1.2
                 OriginProtocolPolicy: https-only
                 HTTPSPort: 443
@@ -211,7 +206,6 @@ Resources:
               OriginPath: /Prod
               CustomOriginConfig:
                 OriginSSLProtocols:
-                  - TLSv1.1
                   - TLSv1.2
                 OriginProtocolPolicy: https-only
                 HTTPSPort: 443
@@ -224,7 +218,6 @@ Resources:
               OriginPath: /Prod
               CustomOriginConfig:
                 OriginSSLProtocols:
-                  - TLSv1.1
                   - TLSv1.2
                 OriginProtocolPolicy: https-only
                 HTTPSPort: 443
@@ -237,7 +230,6 @@ Resources:
               OriginPath: /Prod
               CustomOriginConfig:
                 OriginSSLProtocols:
-                  - TLSv1.1
                   - TLSv1.2
                 OriginProtocolPolicy: https-only
                 HTTPSPort: 443
@@ -250,7 +242,6 @@ Resources:
               OriginPath: /Prod
               CustomOriginConfig:
                 OriginSSLProtocols:
-                  - TLSv1.1
                   - TLSv1.2
                 OriginProtocolPolicy: https-only
                 HTTPSPort: 443
@@ -262,7 +253,6 @@ Resources:
               Id: UserImageServingEndpointOrigin
               CustomOriginConfig:
                 OriginSSLProtocols:
-                  - TLSv1.1
                   - TLSv1.2
                 OriginProtocolPolicy: http-only
                 HTTPSPort: 443
@@ -274,7 +264,6 @@ Resources:
               Id: ReferenceDocsEndpointOrigin
               CustomOriginConfig:
                 OriginSSLProtocols:
-                  - TLSv1.1
                   - TLSv1.2
                 OriginProtocolPolicy: http-only
                 HTTPSPort: 443
@@ -286,7 +275,6 @@ Resources:
               Id: DocsEndpointOrigin
               CustomOriginConfig:
                 OriginSSLProtocols:
-                  - TLSv1.1
                   - TLSv1.2
                 OriginProtocolPolicy: http-only
                 HTTPSPort: 443

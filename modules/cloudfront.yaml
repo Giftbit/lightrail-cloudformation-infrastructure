@@ -252,13 +252,12 @@ Resources:
           AcmCertificateArn: !If [ViewerCertificateArnSet, !Ref ViewerCertificateArn, !Ref "AWS::NoValue"]
           CloudFrontDefaultCertificate: !If [ViewerCertificateArnNotSet, true, !Ref "AWS::NoValue"]
           SslSupportMethod: !If [ViewerCertificateArnSet, "sni-only", !Ref "AWS::NoValue"]
-          MinimumProtocolVersion: TLSv1.1_2016
+          MinimumProtocolVersion: TLSv1.2_2018
         Origins:
           - DomainName: !Sub "${RedirectBucket}.s3-website-${AWS::Region}.amazonaws.com"
             Id: RedirectOrigin
             CustomOriginConfig:
               OriginSSLProtocols:
-                - TLSv1.1
                 - TLSv1.2
               OriginProtocolPolicy: http-only
               HTTPSPort: 443
