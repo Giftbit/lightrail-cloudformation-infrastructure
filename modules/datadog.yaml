@@ -138,6 +138,7 @@ Resources:
                   - sns:List*
                   - sns:Publish
                   - sqs:ListQueues
+                  - stepfunctions:List*
                   - support:*
                   - tag:getResources
                   - tag:getTagKeys
