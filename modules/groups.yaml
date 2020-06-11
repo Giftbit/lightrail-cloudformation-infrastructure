@@ -294,8 +294,9 @@ Resources:
       UserName: jamie.t
       Groups:
         - !Ref AllEmployees
-        - !Ref FrontEndDevelopersGroup
         - !Ref BackEndDevelopersGroup
+        - !Ref BastionHostAccessGroup
+        - !Ref FrontEndDevelopersGroup
   JeffG:
     Type: AWS::IAM::User
     Properties:
