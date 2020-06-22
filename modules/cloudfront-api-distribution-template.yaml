@@ -21,6 +21,11 @@ Parameters:
     Type: String
     Description: Arn of the AWS Certificate Manager cert for the CloudFront distribution (must be in us-east-1)
     Default: ""
+  WebAclArn:
+    Type: String
+    Description: Optional ARN of the WAF Web ACL that will protect this CloudFront distribution.
+    Default: ""
+    AllowedPattern: ^(arn:aws:wafv2:us-east-1:\d+:global/webacl/ApiWebAcl/.*)?$
   LoggingBucketDomainName:
     Type: String
     Description: The Name of the Logging bucket domain
@@ -83,6 +88,7 @@ Conditions:
   ShouldConfigureAliases: !Not [!Equals [!Ref AliasSubDomain, ""]]
   ViewerCertificateArnSet: !Not [!Equals [!Ref ViewerCertificateArn, ""]]
   ViewerCertificateArnNotSet: !Equals [!Ref ViewerCertificateArn, ""]
+  WebAclArnSet: !Not [!Equals [!Ref WebAclArn, ""]]
   AppEndpointSet: !Not [!Equals [!Ref AppEndpoint, ""]]
   EdhiEndpointSet: !Not [!Equals [!Ref EdhiEndpoint, ""]]
   DocsEndpointSet: !Not [!Equals [!Ref DocsEndpoint, ""]]
@@ -982,6 +988,12 @@ Resources:
             QueryString: true
             Cookies:
               Forward: none
+  WebAclAssociation:
+    Type: AWS::WAFv2::WebACLAssociation
+    Condition: WebAclArnSet
+    Properties:
+      ResourceArn: !Sub "arn:aws:cloudfront::${AWS::AccountId}:distribution/${Distribution}"
+      WebACLArn: !Ref WebAclArn
 
 Outputs:
   DomainName:

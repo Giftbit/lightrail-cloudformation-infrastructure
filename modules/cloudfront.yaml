@@ -51,6 +51,11 @@ Parameters:
     Type: String
     Description: Arn of the AWS Certificate Manager cert for the CloudFront distribution (must be in us-east-1)
     Default: ""
+  WebAclArn:
+    Type: String
+    Description: Optional ARN of the WAF Web ACL that will protect API CloudFront distributions.
+    Default: ""
+    AllowedPattern: ^(arn:aws:wafv2:us-east-1:\d+:global/webacl/ApiWebAcl/.*)?$
   WebsiteEndpoint:
     Type: String
     Description: The domain that should handle the website requests
@@ -139,6 +144,7 @@ Resources:
         BaseDomainName: !Ref BaseDomainName
         ViewerCertificateArn: !Ref ViewerCertificateArn
         LoggingBucketDomainName: !GetAtt LoggingBucket.DomainName
+        WebAclArn: !Ref WebAclArn
   ApiApiDistribution:
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -163,6 +169,7 @@ Resources:
         BaseDomainName: !Ref BaseDomainName
         ViewerCertificateArn: !Ref ViewerCertificateArn
         LoggingBucketDomainName: !GetAtt LoggingBucket.DomainName
+        WebAclArn: !Ref WebAclArn
   EmbedApiDistribution:
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -187,6 +194,7 @@ Resources:
         BaseDomainName: !Ref BaseDomainName
         ViewerCertificateArn: !Ref ViewerCertificateArn
         LoggingBucketDomainName: !GetAtt LoggingBucket.DomainName
+        WebAclArn: !Ref WebAclArn
   ApiRedirectBucket:
     Type: AWS::S3::Bucket
     Properties:

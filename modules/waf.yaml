@@ -1,0 +1,58 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Resources that must be configured in us-east-1
+
+# Like certificates.yaml this stack is never actually deployed and the WAF
+# is just created manually.  We don't have an automatic process for
+# creating this stack in us-east-1.  Until then this only serves as documentation
+# on how the WAF should be created.
+
+Resources:
+  ApiWebAcl:
+    Type: AWS::WAFv2::WebACL
+    Properties:
+      Name: ApiWebAcl
+      Scope: CLOUDFRONT
+      Description: Lightrail API WAF
+      DefaultAction:
+        Allow: {}
+      VisibilityConfig:
+        SampledRequestsEnabled: true
+        CloudWatchMetricsEnabled: true
+        MetricName: ApiWebAcl
+      Rules:
+        - Name: LowLimitPaths
+          Priority: 0
+          Action:
+            Block: {}
+          VisibilityConfig:
+            SampledRequestsEnabled: true
+            CloudWatchMetricsEnabled: true
+            MetricName: LowLimitPaths
+          Statement:
+            RateBasedStatement:
+              Limit: 100
+              AggregateKeyType: IP
+              ScopeDownStatement:
+                OrStatement:
+                  Statements:
+                    - ByteMatchStatement:
+                        SearchString: /v2/user/register
+                        FieldToMatch:
+                          UriPath: {}
+                        TextTransformations:
+                          - Priority: 0
+                            Type: NONE
+                        PositionalConstraint: STARTS_WITH
+                    - ByteMatchStatement:
+                        SearchString: /v2/user/login
+                        FieldToMatch:
+                          UriPath: {}
+                        TextTransformations:
+                          - Priority: 0
+                            Type: NONE
+                        PositionalConstraint: STARTS_WITH
+
+Outputs:
+  WebAclArn:
+    Description: The ARN of the WebACL
+    Value: !GetAtt ApiWebAcl.Arn
