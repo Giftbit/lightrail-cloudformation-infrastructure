@@ -121,6 +121,7 @@ Resources:
           # See http://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/HTTPStatusCodes.html#HTTPStatusCodes-cached-errors
           - ErrorCode: 404
             ErrorCachingMinTTL: 0  # By default, CloudFront will cache
+        WebACLId: !Ref WebAclArn
         Logging:
           Bucket: !Ref LoggingBucketDomainName
           Prefix: !Ref AliasSubDomain
@@ -988,12 +989,6 @@ Resources:
             QueryString: true
             Cookies:
               Forward: none
-  WebAclAssociation:
-    Type: AWS::WAFv2::WebACLAssociation
-    Condition: WebAclArnSet
-    Properties:
-      ResourceArn: !Sub "arn:aws:cloudfront::${AWS::AccountId}:distribution/${Distribution}"
-      WebACLArn: !Ref WebAclArn
 
 Outputs:
   DomainName:

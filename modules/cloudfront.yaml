@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: "Currency CloudFront distribution configurations"
+Description: "Lightrail CloudFront distribution configurations"
 Metadata:
   "AWS::CloudFormation::Interface":
     ParameterGroups:
