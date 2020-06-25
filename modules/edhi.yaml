@@ -31,6 +31,10 @@ Parameters:
     Type: String
     Description: The ARN of the Configuration Bucket Encryption Key
     AllowedPattern: arn:aws:kms:[a-z0-9-]+:\d{12}:key/[a-z0-9-]+
+  WebAclArn:
+    Type: String
+    Description: ARN of the WebACL protecting the REST API (updated to block deleted API keys)
+    AllowedPattern: arn:aws:wafv2:us-east-1:\d+:global/webacl/.*/.*
   # CI config
   GitHubOAuthToken:
     Type: String
@@ -55,7 +59,7 @@ Mappings:
     us-west-2:
       GitHubBranch: dev-ci
       GitHubBranchDest: ""
-      RoleNames: dev-Edhi-RestFunctionRole-ZBKYVTBJZLW3
+      RoleNames: dev-Edhi-RestFunctionRole-ZBKYVTBJZLW3,dev-Edhi-ApiKeyBlocklisterFunctionRole-1UC6X62QOX7R0
       Endpoint: ql9cnmujzl.execute-api.us-west-2.amazonaws.com
       SentryDsn: https://fb28f9ac76a84e879f7523cc07092369@o51938.ingest.sentry.io/239845
   Staging:
@@ -77,7 +81,7 @@ Resources:
   CI:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://raw.githubusercontent.com/Giftbit/internal-edhi/718fc6d6296a60e69b4ddf81314e34689c49476f/infrastructure/ci.yaml
+      TemplateURL: https://raw.githubusercontent.com/Giftbit/internal-edhi/c1073282cdee442454c95e5054ca43676ba8c995/infrastructure/ci.yaml
       Parameters:
         ProjectName: !Ref ProjectName
         ProjectParameterOverrides: !Sub
@@ -89,7 +93,8 @@ Resources:
               "LightrailWebappDomain": "${LightrailWebappDomain}",
               "SecureConfigBucket": "${SecureConfigBucket}",
               "SecureConfigKmsArn": "${SecureConfigKmsArn}",
-              "SentryDsn": "${SentryDsn}"
+              "SentryDsn": "${SentryDsn}",
+              "WebAclArn": "${WebAclArn}"
             }
           - SentryDsn: !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", SentryDsn]
         GitHubOAuthToken: !Ref GitHubOAuthToken

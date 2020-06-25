@@ -739,6 +739,7 @@ Resources:
         LightrailWebappDomain: !Sub "www.${LightrailDns.Outputs.HostedDomainName}"
         SecureConfigBucket: !GetAtt LightrailSecureConfig.Outputs.BucketName
         SecureConfigKmsArn: !GetAtt LightrailSecureConfig.Outputs.EncryptionKeyArn
+        WebAclArn: !FindInMap [CloudFront, !Ref EnvironmentName, WebAclArn]
         GitHubOAuthToken: !GetAtt GitHubOAuthToken.DecryptedValue
         CodeBuildImageNodeSSH: !GetAtt CIResources.Outputs.CodebuildImageNodeSSH
         CiKeysAccessRoleArn: !GetAtt CIResources.Outputs.KeysAccessRoleArn
