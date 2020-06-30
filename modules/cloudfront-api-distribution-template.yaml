@@ -21,6 +21,11 @@ Parameters:
     Type: String
     Description: Arn of the AWS Certificate Manager cert for the CloudFront distribution (must be in us-east-1)
     Default: ""
+  WebAclArn:
+    Type: String
+    Description: Optional ARN of the WAF Web ACL that will protect this CloudFront distribution.
+    Default: ""
+    AllowedPattern: ^(arn:aws:wafv2:us-east-1:\d+:global/webacl/ApiWebAcl/.*)?$
   LoggingBucketDomainName:
     Type: String
     Description: The Name of the Logging bucket domain
@@ -28,63 +33,68 @@ Parameters:
     Type: String
     Description: The Sub Domain that should be Aliased by this distribution
     Default: ""
-  DefaultEndpoint:
-    Type: String
-    Description: The domain that should handle the default requests
   AppEndpoint:
     Type: String
     Description: The domain that should handle the React app requests
     Default: ""
+  BatchEndpoint:
+    Type: String
+    Description: The domain that should handle the Batch requests
+  DefaultEndpoint:
+    Type: String
+    Description: The domain that should handle the default requests
+  DocsEndpoint:
+    Type: String
+    Description: The domain that should handle Docs requests
+    Default: ""
+  EdhiEndpoint:
+    Type: String
+    Description: The domain that should handle the Edhi requests
+  ErrorPagesEndpoint:
+    Type: String
+    Description: The domain serving custom error pages
+  GutenbergEndpoint:
+    Type: String
+    Description: The domain that should handle the Gutenbeg requests
+  KvsEndpoint:
+    Type: String
+    Description: The domain that should handle the KVS requests
+  ReactionsEndpoint:
+    Type: String
+    Description: The domain that should handle the KVS requests
+  ReferenceDocsEndpoint:
+    Type: String
+    Description: The domain that should handle Reference Docs requests
+    Default: ""
+  RothschildEndpoint:
+    Type: String
+    Description: The domain that should handle Rothschild requests
   ServicesEndpoint:
     Type: String
     Description: The domain that should handle the Grails services requests
   StatsEndpoint:
     Type: String
     Description: The domain that should handle the Stats requests
-  EdhiEndpoint:
-    Type: String
-    Description: The domain that should handle the Edhi requests
-  KvsEndpoint:
-    Type: String
-    Description: The domain that should handle the KVS requests
-  GutenbergEndpoint:
-    Type: String
-    Description: The domain that should handle the Gutenbeg requests
   TurnkeyEndpoint:
     Type: String
     Description: The domain that should handle the Turnkey requests
-  ReactionsEndpoint:
-    Type: String
-    Description: The domain that should handle the KVS requests
-  RothschildEndpoint:
-    Type: String
-    Description: The domain that should handle Rothschild requests
-  BatchEndpoint:
-    Type: String
-    Description: The domain that should handle the Batch requests
-  UserImageUploadAuthServiceEndpoint:
-    Type: String
-    Description: The domain that should handle the User Image Upload Authorization requests
-    Default: ""
   UserImageServingEndpoint:
     Type: String
     Description: The domain that should handle requests for a specific user images
     Default: ""
-  ReferenceDocsEndpoint:
+  UserImageUploadAuthServiceEndpoint:
     Type: String
-    Description: The domain that should handle Reference Docs requests
-    Default: ""
-  DocsEndpoint:
-    Type: String
-    Description: The domain that should handle Docs requests
+    Description: The domain that should handle the User Image Upload Authorization requests
     Default: ""
 
 Conditions:
   ShouldConfigureAliases: !Not [!Equals [!Ref AliasSubDomain, ""]]
   ViewerCertificateArnSet: !Not [!Equals [!Ref ViewerCertificateArn, ""]]
   ViewerCertificateArnNotSet: !Equals [!Ref ViewerCertificateArn, ""]
+  WebAclArnSet: !Not [!Equals [!Ref WebAclArn, ""]]
   AppEndpointSet: !Not [!Equals [!Ref AppEndpoint, ""]]
   EdhiEndpointSet: !Not [!Equals [!Ref EdhiEndpoint, ""]]
+  ErrorPagesEndpointSet: !Not [!Equals [!Ref ErrorPagesEndpoint, ""]]
   DocsEndpointSet: !Not [!Equals [!Ref DocsEndpoint, ""]]
   GutenbergEndpointSet: !Not [!Equals [!Ref GutenbergEndpoint, ""]]
   ReactionsEndpointSet: !Not [!Equals [!Ref ReactionsEndpoint, ""]]
@@ -115,6 +125,13 @@ Resources:
           # See http://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/HTTPStatusCodes.html#HTTPStatusCodes-cached-errors
           - ErrorCode: 404
             ErrorCachingMinTTL: 0  # By default, CloudFront will cache
+          - !If
+            - ErrorPagesEndpointSet
+            - ErrorCode: 403
+              ResponseCode: 403
+              ResponsePagePath: /customerrors/error403.json
+            - !Ref AWS::NoValue
+        WebACLId: !Ref WebAclArn
         Logging:
           Bucket: !Ref LoggingBucketDomainName
           Prefix: !Ref AliasSubDomain
@@ -270,6 +287,17 @@ Resources:
                 HTTPPort: 80
             - !Ref AWS::NoValue
           - !If
+            - ErrorPagesEndpointSet
+            - DomainName: !Ref ErrorPagesEndpoint
+              Id: ErrorPagesEndpointOrigin
+              CustomOriginConfig:
+                OriginSSLProtocols:
+                  - TLSv1.2
+                OriginProtocolPolicy: http-only
+                HTTPSPort: 443
+                HTTPPort: 80
+            - !Ref AWS::NoValue
+          - !If
             - DocsEndpointSet
             - DomainName: !Ref DocsEndpoint
               Id: DocsEndpointOrigin
@@ -281,36 +309,14 @@ Resources:
                 HTTPPort: 80
             - !Ref AWS::NoValue
         CacheBehaviors:
-          - PathPattern: "/v1/storage"
-            TargetOriginId: KvsEndpointOrigin
-            ViewerProtocolPolicy: "redirect-to-https"
-            Compress: false
-            MinTTL: 0
-            MaxTTL: 31536000
-            DefaultTTL: 0
-            AllowedMethods:
-              - GET
-              - HEAD
-              - OPTIONS
-              - PUT
-              - POST
-              - PATCH
-              - DELETE
-            CachedMethods:
-              - GET
-              - HEAD
-            ForwardedValues:
-              QueryString: true
-              Headers:
-                - Authorization
-                - Content-Length
-                - Content-Type
-                - Content-MD5
-                - Range
-                - X-Requested-With
-              Cookies:
-                Forward: all
-          - PathPattern: "/v1/storage/*"
+          # Limited to 25 cache behaviors per distribution.  These are evaluated in order,
+          # so /v1/foo/* must be before /v1/* to be reachable.
+          #
+          # Cache behaviors can be conserved with slightly liberal path patterns.  For example
+          # /v2/user/* and /v2/user are both served by Edhi and can be combined into /v2/user*.
+          # This new path is overly-permissive in that it will also match paths like /v2/userImage.
+          # This can be worked around by putting the path for /v2/userImage* ahead of /v2/user*.
+          - PathPattern: "/v1/storage*"
             TargetOriginId: KvsEndpointOrigin
             ViewerProtocolPolicy: "redirect-to-https"
             Compress: false
@@ -405,39 +411,7 @@ Resources:
             - !Ref AWS::NoValue
           - !If
             - GutenbergEndpointSet
-            - PathPattern: "/v2/webhooks"
-              TargetOriginId: GutenbergEndpointOrigin
-              ViewerProtocolPolicy: "redirect-to-https"
-              Compress: false
-              MinTTL: 0
-              MaxTTL: 31536000
-              DefaultTTL: 0
-              AllowedMethods:
-              - GET
-              - HEAD
-              - OPTIONS
-              - PUT
-              - POST
-              - PATCH
-              - DELETE
-              CachedMethods:
-              - GET
-              - HEAD
-              ForwardedValues:
-                QueryString: true
-                Headers:
-                - Authorization
-                - Content-Length
-                - Content-Type
-                - Content-MD5
-                - Range
-                - X-Requested-With
-                Cookies:
-                  Forward: all
-            - !Ref AWS::NoValue
-          - !If
-            - GutenbergEndpointSet
-            - PathPattern: "/v2/webhooks/*"
+            - PathPattern: "/v2/webhooks*"
               TargetOriginId: GutenbergEndpointOrigin
               ViewerProtocolPolicy: "redirect-to-https"
               Compress: false
@@ -556,39 +530,7 @@ Resources:
                 Forward: all
           - !If
             - ReactionsEndpointSet
-            - PathPattern: "/v1/react"
-              TargetOriginId: ReactionsEndpointOrigin
-              ViewerProtocolPolicy: "redirect-to-https"
-              Compress: false
-              MinTTL: 0
-              MaxTTL: 31536000
-              DefaultTTL: 0
-              AllowedMethods:
-                - GET
-                - HEAD
-                - OPTIONS
-                - PUT
-                - POST
-                - PATCH
-                - DELETE
-              CachedMethods:
-                - GET
-                - HEAD
-              ForwardedValues:
-                QueryString: true
-                Headers:
-                  - Authorization
-                  - Content-Length
-                  - Content-Type
-                  - Content-MD5
-                  - Range
-                  - X-Requested-With
-                Cookies:
-                  Forward: all
-            - !Ref AWS::NoValue
-          - !If
-            - ReactionsEndpointSet
-            - PathPattern: "/v1/react/*"
+            - PathPattern: "/v1/react*"
               TargetOriginId: ReactionsEndpointOrigin
               ViewerProtocolPolicy: "redirect-to-https"
               Compress: false
@@ -723,7 +665,7 @@ Resources:
                 Forward: all
           - !If
             - EdhiEndpointSet
-            - PathPattern: "/v2/user"
+            - PathPattern: "/v2/user*"
               TargetOriginId: EdhiEndpointOrigin
               ViewerProtocolPolicy: "redirect-to-https"
               Compress: false
@@ -756,73 +698,7 @@ Resources:
             - !Ref AWS::NoValue
           - !If
             - EdhiEndpointSet
-            - PathPattern: "/v2/user/*"
-              TargetOriginId: EdhiEndpointOrigin
-              ViewerProtocolPolicy: "redirect-to-https"
-              Compress: false
-              MinTTL: 0
-              MaxTTL: 31536000
-              DefaultTTL: 0
-              AllowedMethods:
-                - GET
-                - HEAD
-                - OPTIONS
-                - PUT
-                - POST
-                - PATCH
-                - DELETE
-              CachedMethods:
-                - GET
-                - HEAD
-              ForwardedValues:
-                QueryString: true
-                Headers:
-                  - Accept
-                  - Authorization
-                  - Content-Length
-                  - Content-Type
-                  - Content-MD5
-                  - Range
-                  - X-Requested-With
-                Cookies:
-                  Forward: all
-            - !Ref AWS::NoValue
-          - !If
-            - EdhiEndpointSet
-            - PathPattern: "/v2/account"
-              TargetOriginId: EdhiEndpointOrigin
-              ViewerProtocolPolicy: "redirect-to-https"
-              Compress: false
-              MinTTL: 0
-              MaxTTL: 31536000
-              DefaultTTL: 0
-              AllowedMethods:
-                - GET
-                - HEAD
-                - OPTIONS
-                - PUT
-                - POST
-                - PATCH
-                - DELETE
-              CachedMethods:
-                - GET
-                - HEAD
-              ForwardedValues:
-                QueryString: true
-                Headers:
-                  - Accept
-                  - Authorization
-                  - Content-Length
-                  - Content-Type
-                  - Content-MD5
-                  - Range
-                  - X-Requested-With
-                Cookies:
-                  Forward: all
-            - !Ref AWS::NoValue
-          - !If
-            - EdhiEndpointSet
-            - PathPattern: "/v2/account/*"
+            - PathPattern: "/v2/account*"
               TargetOriginId: EdhiEndpointOrigin
               ViewerProtocolPolicy: "redirect-to-https"
               Compress: false
@@ -963,6 +839,26 @@ Resources:
                 - HEAD
               ForwardedValues:
                 QueryString: true
+                Cookies:
+                  Forward: none
+            - !Ref AWS::NoValue
+          - !If
+            - ErrorPagesEndpointSet
+            - PathPattern: "/customerrors/*"
+              TargetOriginId: ErrorPagesEndpointOrigin
+              ViewerProtocolPolicy: "redirect-to-https"
+              Compress: false
+              MinTTL: 0
+              MaxTTL: 60
+              DefaultTTL: 5
+              AllowedMethods:
+                - GET
+                - HEAD
+              CachedMethods:
+                - GET
+                - HEAD
+              ForwardedValues:
+                QueryString: false
                 Cookies:
                   Forward: none
             - !Ref AWS::NoValue

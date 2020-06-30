@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: "Currency CloudFront distribution configurations"
+Description: "Lightrail CloudFront distribution configurations"
 Metadata:
   "AWS::CloudFormation::Interface":
     ParameterGroups:
@@ -51,6 +51,11 @@ Parameters:
     Type: String
     Description: Arn of the AWS Certificate Manager cert for the CloudFront distribution (must be in us-east-1)
     Default: ""
+  WebAclArn:
+    Type: String
+    Description: Optional ARN of the WAF Web ACL that will protect API CloudFront distributions.
+    Default: ""
+    AllowedPattern: ^(arn:aws:wafv2:us-east-1:\d+:global/webacl/ApiWebAcl/.*)?$
   WebsiteEndpoint:
     Type: String
     Description: The domain that should handle the website requests
@@ -127,6 +132,7 @@ Resources:
         # Common Endpoints
         BatchEndpoint: !Ref BatchEndpoint
         EdhiEndpoint: !Ref EdhiEndpoint
+        ErrorPagesEndpoint: !Ref WebsiteEndpoint
         KvsEndpoint: !Ref KvsEndpoint
         GutenbergEndpoint: !Ref GutenbergEndpoint
         ReactionsEndpoint: !Ref ReactionsEndpoint
@@ -139,6 +145,7 @@ Resources:
         BaseDomainName: !Ref BaseDomainName
         ViewerCertificateArn: !Ref ViewerCertificateArn
         LoggingBucketDomainName: !GetAtt LoggingBucket.DomainName
+        WebAclArn: !Ref WebAclArn
   ApiApiDistribution:
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -151,6 +158,7 @@ Resources:
         # Common Endpoints
         BatchEndpoint: !Ref BatchEndpoint
         EdhiEndpoint: !Ref EdhiEndpoint
+        ErrorPagesEndpoint: !Ref WebsiteEndpoint
         KvsEndpoint: !Ref KvsEndpoint
         GutenbergEndpoint: !Ref GutenbergEndpoint
         ReactionsEndpoint: !Ref ReactionsEndpoint
@@ -163,6 +171,7 @@ Resources:
         BaseDomainName: !Ref BaseDomainName
         ViewerCertificateArn: !Ref ViewerCertificateArn
         LoggingBucketDomainName: !GetAtt LoggingBucket.DomainName
+        WebAclArn: !Ref WebAclArn
   EmbedApiDistribution:
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -175,6 +184,7 @@ Resources:
         # Common Endpoints
         BatchEndpoint: !Ref BatchEndpoint
         EdhiEndpoint: !Ref EdhiEndpoint
+        ErrorPagesEndpoint: !Ref WebsiteEndpoint
         KvsEndpoint: !Ref KvsEndpoint
         GutenbergEndpoint: !Ref GutenbergEndpoint
         ReactionsEndpoint: !Ref ReactionsEndpoint
@@ -187,6 +197,7 @@ Resources:
         BaseDomainName: !Ref BaseDomainName
         ViewerCertificateArn: !Ref ViewerCertificateArn
         LoggingBucketDomainName: !GetAtt LoggingBucket.DomainName
+        WebAclArn: !Ref WebAclArn
   ApiRedirectBucket:
     Type: AWS::S3::Bucket
     Properties:
