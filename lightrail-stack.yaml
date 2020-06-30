@@ -87,10 +87,10 @@ Mappings:
       WebAclArn: arn:aws:wafv2:us-east-1:757264843183:global/webacl/ApiWebAcl/e22d1e00-1289-4651-8b3b-c65c605b4914
     Staging:
       ACMCertificateArn: arn:aws:acm:us-east-1:939876203001:certificate/ef953a50-9ca2-4083-b404-3551a3bb281d
-      WebAclArn: ""
+      WebAclArn: arn:aws:wafv2:us-east-1:939876203001:global/webacl/ApiWebAcl/8262b86c-b6a6-408a-a43b-9206a1373fb4
     Production:
       ACMCertificateArn: arn:aws:acm:us-east-1:212888042843:certificate/14d77a41-b2ce-405d-9cde-44f15b1188bb
-      WebAclArn: ""
+      WebAclArn: arn:aws:wafv2:us-east-1:212888042843:global/webacl/ApiWebAcl/852f27dd-7de4-42f5-9d84-f2564e637848
   EcsCluster:
     Dev-us-west-2:
       InstanceType: t2.medium
