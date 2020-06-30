@@ -131,7 +131,7 @@ Resources:
               ResponseCode: 403
               ResponsePagePath: /customerrors/error403.json
             - !Ref AWS::NoValue
-        WebACLId: !Ref WebAclArn
+        WebACLId: !If [WebAclArnSet, !Ref WebAclArn, !Ref "AWS::NoValue"]
         Logging:
           Bucket: !Ref LoggingBucketDomainName
           Prefix: !Ref AliasSubDomain
