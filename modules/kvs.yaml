@@ -103,7 +103,7 @@ Resources:
   CI:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://raw.githubusercontent.com/Giftbit/internal-kvs/109866e2d0f0ba6318c21c0b575f5b370d6116ca/infrastructure/ci.yaml
+      TemplateURL: https://raw.githubusercontent.com/Giftbit/internal-kvs/175c18c323160e000e8849d03bb08d8c85e7760d/infrastructure/ci.yaml
       Parameters:
         ProjectParameterOverrides: !Sub
           - >
