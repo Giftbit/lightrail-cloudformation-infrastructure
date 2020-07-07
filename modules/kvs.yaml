@@ -103,12 +103,11 @@ Resources:
   CI:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://raw.githubusercontent.com/Giftbit/internal-kvs/af1d2cdd0e771b59422476e7da2518cb80154482/infrastructure/ci.yaml
+      TemplateURL: https://raw.githubusercontent.com/Giftbit/internal-kvs/f7643f43ae19cbb64e9cb8837cad5d49463cbf58/infrastructure/ci.yaml
       Parameters:
         ProjectParameterOverrides: !Sub
           - >
             {
-              "Capacity": "${Capacity}",
               "DeploymentPreferenceType": "Linear10PercentEvery1Minute",
               "LightrailDomain": "${LightrailDomain}",
               "PathToMerchantSharedSecret": "${PathToMerchantSharedSecret}",
