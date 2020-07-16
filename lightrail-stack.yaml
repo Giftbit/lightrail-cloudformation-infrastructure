@@ -827,11 +827,8 @@ Resources:
         ProjectName: !Sub "${AWS::StackName}-Kvs"
         LightrailDomain: !Sub "api.${LightrailDns.Outputs.HostedDomainName}"
         PathToMerchantSharedSecret: !FindInMap [Common, All, PathToMerchantSharedSecret]
-        SecureConfigKeyAssumeStorageScopeToken: !FindInMap [SecureConfig, Keys, AssumeStorageScopeToken]
         SecureConfigBucket: !GetAtt LightrailSecureConfig.Outputs.BucketName
         SecureConfigKmsArn: !GetAtt LightrailSecureConfig.Outputs.EncryptionKeyArn
-        SecureConfigKeyJwt: !FindInMap [SecureConfig, Keys, JWT]
-        SecureConfigKeyRoleDefinitions: !FindInMap [SecureConfig, Keys, RoleDefinitions]
         GitHubOAuthToken: !GetAtt GitHubOAuthToken.DecryptedValue
         CodeBuildImageNodeSSH: !GetAtt CIResources.Outputs.CodebuildImageNodeSSH
         CiKeysAccessRoleArn: !GetAtt CIResources.Outputs.KeysAccessRoleArn

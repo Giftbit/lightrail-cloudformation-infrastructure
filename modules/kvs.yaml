@@ -26,15 +26,6 @@ Parameters:
     Type: String
     Description: The ARN of the Configuration Bucket Encryption Key
     AllowedPattern: arn:aws:kms:[a-z0-9-]+:\d{12}:key/[a-z0-9-]+
-  SecureConfigKeyAssumeStorageScopeToken:
-    Type: String
-    Description: Name of the Assume Auth token in S3 that can be used to access merchant secret key in KVS
-  SecureConfigKeyJwt:
-    Type: String
-    Description: The Name of the JWT Configuration File in the Configuration Bucket
-  SecureConfigKeyRoleDefinitions:
-    Type: String
-    Description: The Name of the Role Defintions Configuration File in the Configuration Bucket
   # CI config
   GitHubOAuthToken:
     Type: String
@@ -56,6 +47,8 @@ Parameters:
 
 Mappings:
   Dev:
+    us-east-1:
+      ArtifactBucket: artifact-bucket-manuallycreated-us-east-1
     us-west-2:
       GitHubBranch: dev-ci
       GitHubBranchDest: ""
@@ -64,6 +57,8 @@ Mappings:
       Endpoint: wowqnrwyy0.execute-api.us-west-2.amazonaws.com
       SentryDsn: https://fb28f9ac76a84e879f7523cc07092369@o51938.ingest.sentry.io/239845
   Staging:
+    us-east-1:
+      ArtifactBucket: ""
     us-west-2:
       GitHubBranch: staging
       GitHubBranchDest: master
@@ -72,6 +67,8 @@ Mappings:
       Endpoint: 1tnp8xblpd.execute-api.us-west-2.amazonaws.com
       SentryDsn: https://dad81b3b1b4e494e97069f17f4b9e33f@o51938.ingest.sentry.io/245144
   Production:
+    us-east-1:
+      ArtifactBucket: ""
     us-west-2:
       GitHubBranch: master
       GitHubBranchDest: ""
@@ -103,7 +100,7 @@ Resources:
   CI:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://raw.githubusercontent.com/Giftbit/internal-kvs/d3627cc8c5447a1c137d895e442bccb6c0df827d/infrastructure/ci.yaml
+      TemplateURL: https://raw.githubusercontent.com/Giftbit/internal-kvs/5d837d1436d8e43258297d434b31333205770ee5/infrastructure/ci.yaml
       Parameters:
         ProjectParameterOverrides: !Sub
           - >
@@ -113,9 +110,6 @@ Resources:
               "PathToMerchantSharedSecret": "${PathToMerchantSharedSecret}",
               "SecureConfigBucket": "${SecureConfigBucket}",
               "SecureConfigKmsArn": "${SecureConfigKmsArn}",
-              "SecureConfigKeyAssumeStorageScopeToken": "${SecureConfigKeyAssumeStorageScopeToken}",
-              "SecureConfigKeyJwt": "${SecureConfigKeyJwt}",
-              "SecureConfigKeyRoleDefinitions": "${SecureConfigKeyRoleDefinitions}",
               "SentryDsn": "${SentryDsn}",
               "StoredItemEncryptionKeyId": "${EncryptionKey}"
             }
@@ -128,6 +122,7 @@ Resources:
         CiKeysAccessRoleArn: !Ref CiKeysAccessRoleArn
         CiKeysBucketName: !Ref CiKeysBucketName
         ProjectName: !Ref ProjectName
+        ArtifactBucketUsEast1: !FindInMap [!Ref EnvironmentName, us-east-1, ArtifactBucket]
       Tags:
         - Key: Service
           Value: KVS
