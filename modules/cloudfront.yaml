@@ -75,6 +75,9 @@ Parameters:
   KvsEndpoint:
     Type: String
     Description: The domain that should handle the KVS requests
+  KvsEndpointFallback:
+    Type: String
+    Description: The alternate domain that can handle the KVS requests
   GutenbergEndpoint:
     Type: String
     Description: The domain that should handle the KVS requests
@@ -134,6 +137,7 @@ Resources:
         EdhiEndpoint: !Ref EdhiEndpoint
         ErrorPagesEndpoint: !Ref WebsiteEndpoint
         KvsEndpoint: !Ref KvsEndpoint
+        KvsEndpointFallback: !Ref KvsEndpointFallback
         GutenbergEndpoint: !Ref GutenbergEndpoint
         ReactionsEndpoint: !Ref ReactionsEndpoint
         RothschildEndpoint: !Ref RothschildEndpoint
@@ -160,6 +164,7 @@ Resources:
         EdhiEndpoint: !Ref EdhiEndpoint
         ErrorPagesEndpoint: !Ref WebsiteEndpoint
         KvsEndpoint: !Ref KvsEndpoint
+        KvsEndpointFallback: !Ref KvsEndpointFallback
         GutenbergEndpoint: !Ref GutenbergEndpoint
         ReactionsEndpoint: !Ref ReactionsEndpoint
         RothschildEndpoint: !Ref RothschildEndpoint
@@ -186,6 +191,7 @@ Resources:
         EdhiEndpoint: !Ref EdhiEndpoint
         ErrorPagesEndpoint: !Ref WebsiteEndpoint
         KvsEndpoint: !Ref KvsEndpoint
+        KvsEndpointFallback: !Ref KvsEndpointFallback
         GutenbergEndpoint: !Ref GutenbergEndpoint
         ReactionsEndpoint: !Ref ReactionsEndpoint
         RothschildEndpoint: !Ref RothschildEndpoint

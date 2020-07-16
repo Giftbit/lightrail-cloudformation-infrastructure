@@ -59,6 +59,9 @@ Parameters:
   KvsEndpoint:
     Type: String
     Description: The domain that should handle the KVS requests
+  KvsEndpointFallback:
+    Type: String
+    Description: The alternate domain that can handle the KVS requests
   ReactionsEndpoint:
     Type: String
     Description: The domain that should handle the KVS requests
@@ -97,6 +100,8 @@ Conditions:
   ErrorPagesEndpointSet: !Not [!Equals [!Ref ErrorPagesEndpoint, ""]]
   DocsEndpointSet: !Not [!Equals [!Ref DocsEndpoint, ""]]
   GutenbergEndpointSet: !Not [!Equals [!Ref GutenbergEndpoint, ""]]
+  KvsEndpointSet: !Not [!Equals [!Ref KvsEndpoint, ""]]
+  KvsEndpointFallbackSet: !Not [!Equals [!Ref KvsEndpointFallback, ""]]
   ReactionsEndpointSet: !Not [!Equals [!Ref ReactionsEndpoint, ""]]
   ReferenceDocsEndpointSet: !Not [!Equals [!Ref ReferenceDocsEndpoint, ""]]
   RothschildEndpointSet: !Not [!Equals [!Ref RothschildEndpoint, ""]]
@@ -195,15 +200,30 @@ Resources:
                 HTTPSPort: 443
                 HTTPPort: 80
             - !Ref AWS::NoValue
-          - DomainName: !Ref KvsEndpoint
-            Id: KvsEndpointOrigin
-            OriginPath: /Prod
-            CustomOriginConfig:
-              OriginSSLProtocols:
-                - TLSv1.2
-              OriginProtocolPolicy: https-only
-              HTTPSPort: 443
-              HTTPPort: 80
+          - !If
+            - KvsEndpointSet
+            - DomainName: !Ref KvsEndpoint
+              Id: KvsEndpointOrigin
+              OriginPath: /Prod
+              CustomOriginConfig:
+                OriginSSLProtocols:
+                  - TLSv1.2
+                OriginProtocolPolicy: https-only
+                HTTPSPort: 443
+                HTTPPort: 80
+            - !Ref AWS::NoValue
+          - !If
+            - KvsEndpointFallbackSet
+            - DomainName: !Ref KvsEndpointFallback
+              Id: KvsEndpointFallbackOrigin
+              OriginPath: /Prod
+              CustomOriginConfig:
+                OriginSSLProtocols:
+                  - TLSv1.2
+                OriginProtocolPolicy: https-only
+                HTTPSPort: 443
+                HTTPPort: 80
+            - !Ref AWS::NoValue
           - !If
             - TurnkeyEndpointSet
             - DomainName: !Ref TurnkeyEndpoint
@@ -308,6 +328,26 @@ Resources:
                 HTTPSPort: 443
                 HTTPPort: 80
             - !Ref AWS::NoValue
+        OriginGroups:
+          Items:
+            - !If
+              - KvsEndpointFallbackSet
+              - Id: KvsEndpointOriginGroup
+                FailoverCriteria:
+                  StatusCodes:
+                    Items:
+                      - 500
+                      - 502
+                      - 503
+                      - 504
+                    Quantity: 4
+                Members:
+                  Items:
+                    - OriginId: KvsEndpointOrigin
+                    - OriginId: KvsEndpointFallbackOrigin
+                  Quantity: 2
+              - !Ref AWS::NoValue
+          Quantity: !If [KvsEndpointFallbackSet, 1, 0]
         CacheBehaviors:
           # Limited to 25 cache behaviors per distribution.  These are evaluated in order,
           # so /v1/foo/* must be before /v1/* to be reachable.
