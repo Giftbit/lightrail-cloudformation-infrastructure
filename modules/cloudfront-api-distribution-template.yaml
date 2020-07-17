@@ -357,7 +357,7 @@ Resources:
           # This new path is overly-permissive in that it will also match paths like /v2/userImage.
           # This can be worked around by putting the path for /v2/userImage* ahead of /v2/user*.
           - PathPattern: "/v1/storage*"
-            TargetOriginId: KvsEndpointOrigin
+            TargetOriginId: KvsEndpointOriginGroup
             ViewerProtocolPolicy: "redirect-to-https"
             Compress: false
             MinTTL: 0
