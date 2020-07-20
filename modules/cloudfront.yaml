@@ -63,12 +63,6 @@ Parameters:
     Type: String
     Description: The domain that should handle the React app requests
     Default: ""
-  ServicesEndpoint:
-    Type: String
-    Description: The domain that should handle the Grails services requests
-  StatsEndpoint:
-    Type: String
-    Description: The domain that should handle the Stats requests
   EdhiEndpoint:
     Type: String
     Description: The domain that should handle the Edhi requests
@@ -81,15 +75,9 @@ Parameters:
   TurnkeyEndpoint:
     Type: String
     Description: The domain that should handle the Turnkey requests
-  ReactionsEndpoint:
-    Type: String
-    Description: The domain that should handle the KVS requests
   RothschildEndpoint:
     Type: String
     Description: The domain that should handle Rothschild requests
-  BatchEndpoint:
-    Type: String
-    Description: The domain that should handle the Batch requests
   WidgetsEndpoint:
     Type: String
     Description: The domain that should handle the Widgets requests
@@ -130,15 +118,11 @@ Resources:
         UserImageUploadAuthServiceEndpoint: !Ref UserImageUploadAuthServiceEndpoint
         ReferenceDocsEndpoint: !Ref WebsiteEndpoint
         # Common Endpoints
-        BatchEndpoint: !Ref BatchEndpoint
         EdhiEndpoint: !Ref EdhiEndpoint
         ErrorPagesEndpoint: !Ref WebsiteEndpoint
         KvsEndpoint: !Ref KvsEndpoint
         GutenbergEndpoint: !Ref GutenbergEndpoint
-        ReactionsEndpoint: !Ref ReactionsEndpoint
         RothschildEndpoint: !Ref RothschildEndpoint
-        ServicesEndpoint: !Ref ServicesEndpoint
-        StatsEndpoint: !Ref StatsEndpoint
         TurnkeyEndpoint: !Ref TurnkeyEndpoint
         # Common Distribution Configurations
         EnvironmentName: !Ref EnvironmentName
@@ -156,15 +140,11 @@ Resources:
         # Distribution Specific Config
         AliasSubDomain: api
         # Common Endpoints
-        BatchEndpoint: !Ref BatchEndpoint
         EdhiEndpoint: !Ref EdhiEndpoint
         ErrorPagesEndpoint: !Ref WebsiteEndpoint
         KvsEndpoint: !Ref KvsEndpoint
         GutenbergEndpoint: !Ref GutenbergEndpoint
-        ReactionsEndpoint: !Ref ReactionsEndpoint
         RothschildEndpoint: !Ref RothschildEndpoint
-        ServicesEndpoint: !Ref ServicesEndpoint
-        StatsEndpoint: !Ref StatsEndpoint
         TurnkeyEndpoint: !Ref TurnkeyEndpoint
         # Common Distribution Configurations
         EnvironmentName: !Ref EnvironmentName
@@ -182,15 +162,11 @@ Resources:
         # Distribution Specific Config
         AliasSubDomain: embed
         # Common Endpoints
-        BatchEndpoint: !Ref BatchEndpoint
         EdhiEndpoint: !Ref EdhiEndpoint
         ErrorPagesEndpoint: !Ref WebsiteEndpoint
         KvsEndpoint: !Ref KvsEndpoint
         GutenbergEndpoint: !Ref GutenbergEndpoint
-        ReactionsEndpoint: !Ref ReactionsEndpoint
         RothschildEndpoint: !Ref RothschildEndpoint
-        ServicesEndpoint: !Ref ServicesEndpoint
-        StatsEndpoint: !Ref StatsEndpoint
         TurnkeyEndpoint: !Ref TurnkeyEndpoint
         # Common Distribution Configurations
         EnvironmentName: !Ref EnvironmentName
