@@ -37,9 +37,6 @@ Parameters:
     Type: String
     Description: The domain that should handle the React app requests
     Default: ""
-  BatchEndpoint:
-    Type: String
-    Description: The domain that should handle the Batch requests
   DefaultEndpoint:
     Type: String
     Description: The domain that should handle the default requests
@@ -72,12 +69,6 @@ Parameters:
   RothschildEndpoint:
     Type: String
     Description: The domain that should handle Rothschild requests
-  ServicesEndpoint:
-    Type: String
-    Description: The domain that should handle the Grails services requests
-  StatsEndpoint:
-    Type: String
-    Description: The domain that should handle the Stats requests
   TurnkeyEndpoint:
     Type: String
     Description: The domain that should handle the Turnkey requests
@@ -102,7 +93,6 @@ Conditions:
   GutenbergEndpointSet: !Not [!Equals [!Ref GutenbergEndpoint, ""]]
   KvsEndpointSet: !Not [!Equals [!Ref KvsEndpoint, ""]]
   KvsEndpointFallbackSet: !Not [!Equals [!Ref KvsEndpointFallback, ""]]
-  ReactionsEndpointSet: !Not [!Equals [!Ref ReactionsEndpoint, ""]]
   ReferenceDocsEndpointSet: !Not [!Equals [!Ref ReferenceDocsEndpoint, ""]]
   RothschildEndpointSet: !Not [!Equals [!Ref RothschildEndpoint, ""]]
   TurnkeyEndpointSet: !Not [!Equals [!Ref TurnkeyEndpoint, ""]]
@@ -161,33 +151,6 @@ Resources:
                 HTTPSPort: 443
                 HTTPPort: 80
             - !Ref AWS::NoValue
-          - DomainName: !Ref ServicesEndpoint
-            Id: ServicesEndpointOrigin
-            CustomOriginConfig:
-              OriginSSLProtocols:
-                - TLSv1.1
-                - TLSv1.2
-              OriginProtocolPolicy: https-only
-              HTTPSPort: 443
-              HTTPPort: 80
-          - DomainName: !Ref StatsEndpoint
-            Id: StatsEndpointOrigin
-            OriginPath: /Prod
-            CustomOriginConfig:
-              OriginSSLProtocols:
-                - TLSv1.2
-              OriginProtocolPolicy: https-only
-              HTTPSPort: 443
-              HTTPPort: 80
-          - DomainName: !Ref BatchEndpoint
-            Id: BatchEndpointOrigin
-            CustomOriginConfig:
-              OriginSSLProtocols:
-                - TLSv1.1
-                - TLSv1.2
-              OriginProtocolPolicy: https-only
-              HTTPSPort: 443
-              HTTPPort: 80
           - !If
             - EdhiEndpointSet
             - DomainName: !Ref EdhiEndpoint
@@ -228,18 +191,6 @@ Resources:
             - TurnkeyEndpointSet
             - DomainName: !Ref TurnkeyEndpoint
               Id: TurnkeyEndpointOrigin
-              OriginPath: /Prod
-              CustomOriginConfig:
-                OriginSSLProtocols:
-                  - TLSv1.2
-                OriginProtocolPolicy: https-only
-                HTTPSPort: 443
-                HTTPPort: 80
-            - !Ref AWS::NoValue
-          - !If
-            - ReactionsEndpointSet
-            - DomainName: !Ref ReactionsEndpoint
-              Id: ReactionsEndpointOrigin
               OriginPath: /Prod
               CustomOriginConfig:
                 OriginSSLProtocols:
@@ -481,125 +432,6 @@ Resources:
                 Cookies:
                   Forward: all
             - !Ref AWS::NoValue
-          - PathPattern: "/v1/dailystats/*"
-            TargetOriginId: StatsEndpointOrigin
-            ViewerProtocolPolicy: "redirect-to-https"
-            Compress: false
-            MinTTL: 0
-            MaxTTL: 31536000
-            DefaultTTL: 0
-            AllowedMethods:
-              - GET
-              - HEAD
-              - OPTIONS
-              - PUT
-              - POST
-              - PATCH
-              - DELETE
-            CachedMethods:
-              - GET
-              - HEAD
-            ForwardedValues:
-              QueryString: true
-              Headers:
-                - Authorization
-                - Content-Length
-                - Content-Type
-                - Content-MD5
-                - Range
-                - X-Requested-With
-              Cookies:
-                Forward: all
-          - PathPattern: "/v1/stats/*"
-            TargetOriginId: StatsEndpointOrigin
-            ViewerProtocolPolicy: "redirect-to-https"
-            Compress: false
-            MinTTL: 0
-            MaxTTL: 31536000
-            DefaultTTL: 0
-            AllowedMethods:
-              - GET
-              - HEAD
-              - OPTIONS
-              - PUT
-              - POST
-              - PATCH
-              - DELETE
-            CachedMethods:
-              - GET
-              - HEAD
-            ForwardedValues:
-              QueryString: true
-              Headers:
-                - Authorization
-                - Content-Length
-                - Content-Type
-                - Content-MD5
-                - Range
-                - X-Requested-With
-              Cookies:
-                Forward: all
-          - PathPattern: "/v1/batch/*"
-            TargetOriginId: BatchEndpointOrigin
-            ViewerProtocolPolicy: "redirect-to-https"
-            Compress: false
-            MinTTL: 0
-            MaxTTL: 31536000
-            DefaultTTL: 0
-            AllowedMethods:
-              - GET
-              - HEAD
-              - OPTIONS
-              - PUT
-              - POST
-              - PATCH
-              - DELETE
-            CachedMethods:
-              - GET
-              - HEAD
-            ForwardedValues:
-              QueryString: true
-              Headers:
-                - Authorization
-                - Content-Length
-                - Content-Type
-                - Content-MD5
-                - Range
-                - X-Requested-With
-              Cookies:
-                Forward: all
-          - !If
-            - ReactionsEndpointSet
-            - PathPattern: "/v1/react*"
-              TargetOriginId: ReactionsEndpointOrigin
-              ViewerProtocolPolicy: "redirect-to-https"
-              Compress: false
-              MinTTL: 0
-              MaxTTL: 31536000
-              DefaultTTL: 0
-              AllowedMethods:
-                - GET
-                - HEAD
-                - OPTIONS
-                - PUT
-                - POST
-                - PATCH
-                - DELETE
-              CachedMethods:
-                - GET
-                - HEAD
-              ForwardedValues:
-                QueryString: true
-                Headers:
-                  - Authorization
-                  - Content-Length
-                  - Content-Type
-                  - Content-MD5
-                  - Range
-                  - X-Requested-With
-                Cookies:
-                  Forward: all
-            - !Ref AWS::NoValue
           - !If
             - UserImageUploadAuthServiceEndpointSet
             - PathPattern: "/v1/userImages"
@@ -676,33 +508,6 @@ Resources:
                 Cookies:
                   Forward: none
             - !Ref AWS::NoValue
-          - PathPattern: "/v1/*"
-            TargetOriginId: ServicesEndpointOrigin
-            ViewerProtocolPolicy: "redirect-to-https"
-            Compress: false
-            MinTTL: 0
-            MaxTTL: 31536000
-            DefaultTTL: 0
-            AllowedMethods:
-              - GET
-              - HEAD
-              - OPTIONS
-              - PUT
-              - POST
-              - PATCH
-              - DELETE
-            CachedMethods:
-              - GET
-              - HEAD
-            ForwardedValues:
-              QueryString: true
-              Headers:
-                - Authorization
-                - x-amzn-trace-id
-                - lightrailRequestId
-                - AuthorizeAs
-              Cookies:
-                Forward: all
           - !If
             - EdhiEndpointSet
             - PathPattern: "/v2/user*"
