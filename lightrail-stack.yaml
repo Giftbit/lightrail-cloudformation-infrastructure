@@ -228,15 +228,11 @@ Resources:
         ConfigureAliases: "yes"
         BaseDomainName: !FindInMap [Common, !Ref EnvironmentName, DomainName]
         ViewerCertificateArn: !FindInMap [CloudFront, !Ref EnvironmentName, ACMCertificateArn]
-        BatchEndpoint: !GetAtt LightrailLoadBalancer.Outputs.DNSName
         EdhiEndpoint: !GetAtt LightrailEdhi.Outputs.Endpoint
         GutenbergEndpoint: !GetAtt LightrailGutenberg.Outputs.Endpoint
         KvsEndpoint: !GetAtt LightrailKvs.Outputs.Endpoint
         ReactEndpoint: !GetAtt LightrailReact.Outputs.ReactDomainName
-        ReactionsEndpoint: !GetAtt LightrailReactions.Outputs.Endpoint
         RothschildEndpoint: !GetAtt LightrailRothschild.Outputs.Endpoint
-        ServicesEndpoint: !GetAtt LightrailLoadBalancer.Outputs.DNSName
-        StatsEndpoint: !GetAtt LightrailSimpleRollup.Outputs.Endpoint
         TurnkeyEndpoint: !GetAtt LightrailTurnkey.Outputs.Endpoint
         UserImageServingEndpoint: !GetAtt LightrailUserImageUpload.Outputs.BucketEndpoint
         UserImageUploadAuthServiceEndpoint: !GetAtt LightrailUserImageUpload.Outputs.ServiceEndpoint
@@ -428,7 +424,7 @@ Resources:
               - EnvIsDevAndRegionIsUSWest2
               - !GetAtt LightrailDemoStore.Outputs.EcrRepoArn
               - !Ref AWS::NoValue
-  LightrailLoadBalancer:
+  LightrailLoadBalancer:  # TODO delete
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2
     Properties:
@@ -599,7 +595,7 @@ Resources:
               - DevAccountIdProvided
               - !Ref DevAccountId
               - !Ref AWS::NoValue
-  LightrailServices:
+  LightrailServices:  # TODO delete
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2
     Properties:
@@ -639,7 +635,7 @@ Resources:
       Tags:
         - Key: Service
           Value: Services
-  LightrailBatch:
+  LightrailBatch: # TODO delete
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2
     Properties:
@@ -766,7 +762,7 @@ Resources:
       Tags:
         - Key: Service
           Value: Gutenberg
-  LightrailSimpleRollup:
+  LightrailSimpleRollup:  # TODO delete
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2
     Properties:
@@ -865,7 +861,7 @@ Resources:
       Tags:
         - Key: Service
           Value: Turnkey
-  LightrailReactions:
+  LightrailReactions: # todo delete
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2
     Properties:
