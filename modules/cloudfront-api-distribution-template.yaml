@@ -56,9 +56,6 @@ Parameters:
   KvsEndpoint:
     Type: String
     Description: The domain that should handle the KVS requests
-  KvsEndpointFallback:
-    Type: String
-    Description: The alternate domain that can handle the KVS requests
   ReactionsEndpoint:
     Type: String
     Description: The domain that should handle the KVS requests
@@ -92,7 +89,6 @@ Conditions:
   DocsEndpointSet: !Not [!Equals [!Ref DocsEndpoint, ""]]
   GutenbergEndpointSet: !Not [!Equals [!Ref GutenbergEndpoint, ""]]
   KvsEndpointSet: !Not [!Equals [!Ref KvsEndpoint, ""]]
-  KvsEndpointFallbackSet: !Not [!Equals [!Ref KvsEndpointFallback, ""]]
   ReferenceDocsEndpointSet: !Not [!Equals [!Ref ReferenceDocsEndpoint, ""]]
   RothschildEndpointSet: !Not [!Equals [!Ref RothschildEndpoint, ""]]
   TurnkeyEndpointSet: !Not [!Equals [!Ref TurnkeyEndpoint, ""]]
@@ -167,18 +163,6 @@ Resources:
             - KvsEndpointSet
             - DomainName: !Ref KvsEndpoint
               Id: KvsEndpointOrigin
-              OriginPath: /Prod
-              CustomOriginConfig:
-                OriginSSLProtocols:
-                  - TLSv1.2
-                OriginProtocolPolicy: https-only
-                HTTPSPort: 443
-                HTTPPort: 80
-            - !Ref AWS::NoValue
-          - !If
-            - KvsEndpointFallbackSet
-            - DomainName: !Ref KvsEndpointFallback
-              Id: KvsEndpointFallbackOrigin
               OriginPath: /Prod
               CustomOriginConfig:
                 OriginSSLProtocols:
@@ -279,26 +263,6 @@ Resources:
                 HTTPSPort: 443
                 HTTPPort: 80
             - !Ref AWS::NoValue
-        OriginGroups:
-          Items:
-            - !If
-              - KvsEndpointFallbackSet
-              - Id: KvsEndpointOriginGroup
-                FailoverCriteria:
-                  StatusCodes:
-                    Items:
-                      - 500
-                      - 502
-                      - 503
-                      - 504
-                    Quantity: 4
-                Members:
-                  Items:
-                    - OriginId: KvsEndpointOrigin
-                    - OriginId: KvsEndpointFallbackOrigin
-                  Quantity: 2
-              - !Ref AWS::NoValue
-          Quantity: !If [KvsEndpointFallbackSet, 1, 0]
         CacheBehaviors:
           # Limited to 25 cache behaviors per distribution.  These are evaluated in order,
           # so /v1/foo/* must be before /v1/* to be reachable.
@@ -308,7 +272,7 @@ Resources:
           # This new path is overly-permissive in that it will also match paths like /v2/userImage.
           # This can be worked around by putting the path for /v2/userImage* ahead of /v2/user*.
           - PathPattern: "/v1/storage*"
-            TargetOriginId: KvsEndpointOriginGroup
+            TargetOriginId: KvsEndpointOrigin
             ViewerProtocolPolicy: "redirect-to-https"
             Compress: false
             MinTTL: 0

@@ -231,7 +231,6 @@ Resources:
         EdhiEndpoint: !GetAtt LightrailEdhi.Outputs.Endpoint
         GutenbergEndpoint: !GetAtt LightrailGutenberg.Outputs.Endpoint
         KvsEndpoint: !GetAtt LightrailKvs.Outputs.Endpoint
-        KvsEndpointFallback: !GetAtt LightrailKvs.Outputs.EndpointFallback
         ReactEndpoint: !GetAtt LightrailReact.Outputs.ReactDomainName
         RothschildEndpoint: !GetAtt LightrailRothschild.Outputs.Endpoint
         TurnkeyEndpoint: !GetAtt LightrailTurnkey.Outputs.Endpoint
