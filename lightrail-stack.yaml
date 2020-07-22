@@ -324,14 +324,11 @@ Resources:
       RoleNames: !Join
         - ","
         - - !FindInMap [CredentialsRevocation, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
-          - !GetAtt LightrailSimpleRollup.Outputs.RoleName
           - !GetAtt LightrailEdhi.Outputs.RoleNames
           - !GetAtt LightrailGutenberg.Outputs.RoleNames
           - !GetAtt LightrailKvs.Outputs.RoleName
           - !GetAtt LightrailTurnkey.Outputs.RoleNames
-          - !GetAtt LightrailReactions.Outputs.RoleNames
           - !GetAtt LightrailRothschild.Outputs.RoleNames
-          - !FindInMap [S3EventTranscoder, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
           - !GetAtt LightrailUserImageUpload.Outputs.RoleName
   LightrailSecureConfigPolicyAdminAccessRoleIdGrants:
     Type: AWS::CloudFormation::CustomResource
@@ -359,25 +356,9 @@ Resources:
         EnvironmentName: !Ref EnvironmentName
         BucketName: !GetAtt LightrailSecureDownload.Outputs.BucketName
         EncryptionKeyArn: !GetAtt LightrailSecureDownload.Outputs.EncryptionKeyArn
-        UserIdsToGrantReadAccess: !Ref LightrailSecureDownloadReadAccessRoleIdGrants
-        UserIdsToGrantReadWriteAccess: !Ref LightrailSecureDownloadReadWriteAccessRoleIdGrants
+        UserIdsToGrantReadAccess: ""
+        UserIdsToGrantReadWriteAccess: ""
         UserIdsToGrantPolicyAdminAccess: !Ref LightrailSecureDownloadPolicyAdminAccessRoleIdGrants
-  LightrailSecureDownloadReadAccessRoleIdGrants:
-    Type: AWS::CloudFormation::CustomResource
-    Version: 1.0
-    Properties:
-      ServiceToken: !GetAtt RoleLookupLambda.Arn
-      RoleNames: !Join
-        - ","
-        - - !FindInMap [Services, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
-  LightrailSecureDownloadReadWriteAccessRoleIdGrants:
-    Type: AWS::CloudFormation::CustomResource
-    Version: 1.0
-    Properties:
-      ServiceToken: !GetAtt RoleLookupLambda.Arn
-      RoleNames: !Join
-        - ","
-        - - !FindInMap [Batch, !FindInMap [!Ref EnvironmentName, !Ref "AWS::Region", CombinedEnvRegion], RoleName]
   LightrailSecureDownloadPolicyAdminAccessRoleIdGrants:
     Type: AWS::CloudFormation::CustomResource
     Version: 1.0
