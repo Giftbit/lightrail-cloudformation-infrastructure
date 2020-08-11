@@ -1,32 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: "Lightrail CloudFront distribution configurations"
-Metadata:
-  "AWS::CloudFormation::Interface":
-    ParameterGroups:
-      - Label:
-          default: Stack Environment
-        Parameters:
-          - EnvironmentName
-      - Label:
-          default: Domains
-        Parameters:
-          - BaseDomainName
-      - Label:
-          default: Price Class
-        Parameters:
-          - PriceClass
-      - Label:
-          default: SSL Certificates
-        Parameters:
-          - ViewerCertificateArn
-      - Label:
-          default: Endpoints
-        Parameters:
-          - WebsiteEndpoint
-          - ReactEndpoint
-          - ServicesEndpoint
-          - StatsEndpoint
-          - BatchEndpoint
 
 Parameters:
   EnvironmentName:
