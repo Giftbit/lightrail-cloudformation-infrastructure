@@ -1,0 +1,100 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Lightrail DataDog"
+
+Parameters:
+  EnvironmentName:
+    Type: String
+    Description: The Name of the Environment
+    AllowedValues:
+      - Dev
+      - Staging
+      - Production
+
+Mappings:
+  Dev:
+    global:
+      # This External ID comes from Datadog's AWS Integrations Configuration
+      # https://app.datadoghq.com/account/settings#integrations/amazon_web_services
+      AccessRoleExternalId: 309354d45e754706aebe1c1ca11cdfa6
+  Staging:
+    global:
+      AccessRoleExternalId: 661edc0984c94b5dbfdecb5845cd999c
+  Production:
+    global:
+      AccessRoleExternalId: 2948b54ed84046baa527c7a1e6f872b8
+
+Conditions:
+  RegionIsUsWest2: !Equals [!Ref "AWS::Region", "us-west-2"]
+
+Resources:
+  DataDogAccessRole:
+    Type: AWS::IAM::Role
+    Condition: RegionIsUsWest2
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - sts:AssumeRole
+            Principal:
+              AWS:
+                - arn:aws:iam::464622532012:root
+            Condition:
+              StringEquals:
+                "sts:ExternalId":
+                  !FindInMap [!Ref EnvironmentName, global, AccessRoleExternalId]
+      Policies:
+        - PolicyName: DataDogReadOnlyAccess
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - autoscaling:Describe*
+                  - budgets:ViewBudget
+                  - cloudtrail:DescribeTrails
+                  - cloudtrail:GetTrailStatus
+                  - cloudwatch:Describe*
+                  - cloudwatch:Get*
+                  - cloudwatch:List*
+                  - codedeploy:List*
+                  - codedeploy:BatchGet*
+                  - dynamodb:list*
+                  - dynamodb:describe*
+                  - ec2:Describe*
+                  - ec2:Get*
+                  - ecs:Describe*
+                  - ecs:List*
+                  - elasticache:Describe*
+                  - elasticache:List*
+                  - elasticfilesystem:DescribeFileSystems
+                  - elasticfilesystem:DescribeTags
+                  - elasticloadbalancing:Describe*
+                  - elasticmapreduce:List*
+                  - elasticmapreduce:Describe*
+                  - es:ListTags
+                  - es:ListDomainNames
+                  - es:DescribeElasticsearchDomains
+                  - kinesis:List*
+                  - kinesis:Describe*
+                  - lambda:List*
+                  - logs:Get*
+                  - logs:Describe*
+                  - logs:FilterLogEvents
+                  - logs:TestMetricFilter
+                  - rds:Describe*
+                  - rds:List*
+                  - route53:List*
+                  - s3:GetBucketTagging
+                  - s3:ListAllMyBuckets
+                  - ses:Get*
+                  - sns:List*
+                  - sns:Publish
+                  - sqs:ListQueues
+                  - stepfunctions:List*
+                  - support:*
+                  - tag:getResources
+                  - tag:getTagKeys
+                  - tag:getTagValues
+                Resource: "*"

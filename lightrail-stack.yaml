@@ -371,6 +371,13 @@ Resources:
             - EnvIsDev
             - DevLightrailInfrastructureCI-CloudFormationServiceRole
             - !Ref "AWS::NoValue"
+  LightrailDatadog:
+    Type: AWS::CloudFormation::Stack
+    Condition: RegionIsUSWest2
+    Properties:
+      TemplateURL: ./modules/datadog.yaml
+      Parameters:
+        EnvironmentName: !Ref EnvironmentName
   LightrailCredentials:
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2
