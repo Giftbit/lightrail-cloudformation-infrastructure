@@ -15,7 +15,7 @@ Mappings:
     global:
       # This External ID comes from Datadog's AWS Integrations Configuration
       # https://app.datadoghq.com/account/settings#integrations/amazon_web_services
-      AccessRoleExternalId: 309354d45e754706aebe1c1ca11cdfa6
+      AccessRoleExternalId: 69bd4e25e07c4958963316cbfb1e876e
   Staging:
     global:
       AccessRoleExternalId: 661edc0984c94b5dbfdecb5845cd999c
