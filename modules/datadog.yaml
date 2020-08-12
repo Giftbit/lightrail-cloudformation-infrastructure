@@ -15,13 +15,13 @@ Mappings:
     global:
       # This External ID comes from Datadog's AWS Integrations Configuration
       # https://app.datadoghq.com/account/settings#integrations/amazon_web_services
-      AccessRoleExternalId: 69bd4e25e07c4958963316cbfb1e876e
+      AccessRoleExternalId: d039e04ebbe148e4b4509f0698777720
   Staging:
     global:
-      AccessRoleExternalId: 661edc0984c94b5dbfdecb5845cd999c
+      AccessRoleExternalId: 9dbe6cd71e8e4f40b684590593b621c0
   Production:
     global:
-      AccessRoleExternalId: 2948b54ed84046baa527c7a1e6f872b8
+      AccessRoleExternalId: f2cf727b7cf7460c983ab23d52f1eed2
 
 Conditions:
   RegionIsUsWest2: !Equals [!Ref "AWS::Region", "us-west-2"]
@@ -51,15 +51,6 @@ Resources:
             Statement:
               - Effect: Allow
                 Action:
-                  # core permissions
-                  - cloudwatch:Get*
-                  - cloudwatch:List*
-                  - ec2:Describe*
-                  - support:*
-                  - tag:GetResources
-                  - tag:GetTagKeys
-                  - tag:GetTagValues
-                  # all permissions
                   - apigateway:GET
                   - autoscaling:Describe*
                   - budgets:ViewBudget
