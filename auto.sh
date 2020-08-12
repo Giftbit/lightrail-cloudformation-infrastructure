@@ -116,7 +116,7 @@ elif [ "$COMMAND" = "deploy" ]; then
 
     >&2 echo "Waiting for changeset to be created..."
     change_set_name="auto-sh-deploy-$(date +%s)"
-    aws cloudformation create-change-set $cf_location --stack-name $ACCOUNT --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM --change-set-name "$change_set_name" --change-set-type UPDATE --parameters $PARAMETER_OPTIONS
+    aws cloudformation create-change-set $cf_location --stack-name $ACCOUNT --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND --change-set-name "$change_set_name" --change-set-type UPDATE --parameters $PARAMETER_OPTIONS
 
     if [ "$?" -ne 0 ]; then
         >&2 echo "Change set failed to create. Exiting."

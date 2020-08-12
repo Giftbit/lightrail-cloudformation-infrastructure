@@ -117,3 +117,11 @@ Resources:
                   - xray:BatchGetTraces
                   - xray:GetTraceSummaries
                 Resource: "*"
+  DatadogLambdaForwarder:
+    Type: AWS::CloudFormation::Stack
+    Condition: RegionIsUsWest2
+    Properties:
+      TemplateURL: https://datadog-cloudformation-template.s3.amazonaws.com/aws/forwarder/latest.yaml
+      Parameters:
+        DdApiKey: ff160075f80b8385975ba854adb11677
+        DdFetchLambdaTags: true
