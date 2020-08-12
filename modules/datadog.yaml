@@ -15,7 +15,7 @@ Mappings:
     global:
       # This External ID comes from Datadog's AWS Integrations Configuration
       # https://app.datadoghq.com/account/settings#integrations/amazon_web_services
-      AccessRoleExternalId: 309354d45e754706aebe1c1ca11cdfa6
+      AccessRoleExternalId: 69bd4e25e07c4958963316cbfb1e876e
   Staging:
     global:
       AccessRoleExternalId: 661edc0984c94b5dbfdecb5845cd999c
@@ -51,8 +51,20 @@ Resources:
             Statement:
               - Effect: Allow
                 Action:
+                  # core permissions
+                  - cloudwatch:Get*
+                  - cloudwatch:List*
+                  - ec2:Describe*
+                  - support:*
+                  - tag:GetResources
+                  - tag:GetTagKeys
+                  - tag:GetTagValues
+                  # all permissions
+                  - apigateway:GET
                   - autoscaling:Describe*
                   - budgets:ViewBudget
+                  - cloudfront:GetDistributionConfig
+                  - cloudfront:ListDistributions
                   - cloudtrail:DescribeTrails
                   - cloudtrail:GetTrailStatus
                   - cloudwatch:Describe*
@@ -60,41 +72,57 @@ Resources:
                   - cloudwatch:List*
                   - codedeploy:List*
                   - codedeploy:BatchGet*
-                  - dynamodb:list*
-                  - dynamodb:describe*
+                  - directconnect:Describe*
+                  - dynamodb:List*
+                  - dynamodb:Describe*
                   - ec2:Describe*
-                  - ec2:Get*
                   - ecs:Describe*
                   - ecs:List*
                   - elasticache:Describe*
                   - elasticache:List*
                   - elasticfilesystem:DescribeFileSystems
                   - elasticfilesystem:DescribeTags
+                  - elasticfilesystem:DescribeAccessPoints
                   - elasticloadbalancing:Describe*
                   - elasticmapreduce:List*
                   - elasticmapreduce:Describe*
                   - es:ListTags
                   - es:ListDomainNames
                   - es:DescribeElasticsearchDomains
+                  - health:DescribeEvents
+                  - health:DescribeEventDetails
+                  - health:DescribeAffectedEntities
                   - kinesis:List*
                   - kinesis:Describe*
+                  - lambda:AddPermission
+                  - lambda:GetPolicy
                   - lambda:List*
-                  - logs:Get*
-                  - logs:Describe*
-                  - logs:FilterLogEvents
+                  - lambda:RemovePermission
                   - logs:TestMetricFilter
+                  - logs:PutSubscriptionFilter
+                  - logs:DeleteSubscriptionFilter
+                  - logs:DescribeSubscriptionFilters
                   - rds:Describe*
                   - rds:List*
+                  - redshift:DescribeClusters
+                  - redshift:DescribeLoggingStatus
                   - route53:List*
+                  - s3:GetBucketLogging
+                  - s3:GetBucketLocation
+                  - s3:GetBucketNotification
                   - s3:GetBucketTagging
                   - s3:ListAllMyBuckets
+                  - s3:PutBucketNotification
                   - ses:Get*
                   - sns:List*
                   - sns:Publish
                   - sqs:ListQueues
-                  - stepfunctions:List*
+                  - states:ListStateMachines
+                  - states:DescribeStateMachine
                   - support:*
-                  - tag:getResources
-                  - tag:getTagKeys
-                  - tag:getTagValues
+                  - tag:GetResources
+                  - tag:GetTagKeys
+                  - tag:GetTagValues
+                  - xray:BatchGetTraces
+                  - xray:GetTraceSummaries
                 Resource: "*"
