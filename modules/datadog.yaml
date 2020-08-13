@@ -51,7 +51,7 @@ Resources:
             Statement:
               - Effect: Allow
                 Action:
-                  - apigateway:GET
+                  - apigateway:Get
                   - autoscaling:Describe*
                   - budgets:ViewBudget
                   - cloudfront:GetDistributionConfig
@@ -89,10 +89,11 @@ Resources:
                   - lambda:GetPolicy
                   - lambda:List*
                   - lambda:RemovePermission
+                  - logs:FilterLogEvents
                   - logs:TestMetricFilter
                   - logs:PutSubscriptionFilter
                   - logs:DeleteSubscriptionFilter
-                  - logs:DescribeSubscriptionFilters
+                  - logs:Describe*
                   - rds:Describe*
                   - rds:List*
                   - redshift:DescribeClusters
