@@ -77,13 +77,14 @@ Resources:
           - arn:aws:iam::aws:policy/PowerUserAccess
           - !Ref "AWS::NoValue"
         - arn:aws:iam::aws:policy/AWSCloudFormationReadOnlyAccess
-        - arn:aws:iam::aws:policy/CloudWatchLogsReadOnlyAccess
-        - arn:aws:iam::aws:policy/CloudWatchReadOnlyAccess
         - arn:aws:iam::aws:policy/AWSCodeBuildReadOnlyAccess
         - arn:aws:iam::aws:policy/AWSCodePipelineApproverAccess
-        - arn:aws:iam::aws:policy/AmazonRDSReadOnlyAccess
+        - arn:aws:iam::aws:policy/AmazonDynamoDBReadOnlyAccess
         - arn:aws:iam::aws:policy/AmazonEC2ReadOnlyAccess
+        - arn:aws:iam::aws:policy/AmazonRDSReadOnlyAccess
         - arn:aws:iam::aws:policy/CloudFrontReadOnlyAccess
+        - arn:aws:iam::aws:policy/CloudWatchLogsReadOnlyAccess
+        - arn:aws:iam::aws:policy/CloudWatchReadOnlyAccess
       Policies:
         - !If
           - EnvironmentIsDevelopment
