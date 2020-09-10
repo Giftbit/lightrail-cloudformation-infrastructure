@@ -59,7 +59,7 @@ Resources:
               CanonicalUser: !GetAtt CloudFrontOriginAccessIdentity.S3CanonicalUserId
           - Effect: Allow
             Action:
-              - s3:ListBucket # without this all not-founds become 403
+              - s3:ListBucket  # without this all not-founds become 403
             Resource:
               - !Sub "arn:aws:s3:::${Bucket}"
             Principal:
