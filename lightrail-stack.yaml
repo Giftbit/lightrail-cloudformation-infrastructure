@@ -237,9 +237,9 @@ Resources:
         SubdomainName: apidocs
         CertificateArn: !FindInMap [CloudFront, !Ref EnvironmentName, ACMCertificateArn]
         GroupsToGrantBucketReadWrite: !Join
-        - ","
-        - - !GetAtt Groups.Outputs.FrontEndDevelopersGroupName
-          - !GetAtt Groups.Outputs.BackEndDevelopersGroupName
+          - ","
+          - - !GetAtt Groups.Outputs.FrontEndDevelopersGroupName
+            - !GetAtt Groups.Outputs.BackEndDevelopersGroupName
   LightrailReact:
     Type: AWS::CloudFormation::Stack
     Condition: RegionIsUSWest2
