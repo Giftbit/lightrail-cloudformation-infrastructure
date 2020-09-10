@@ -17,6 +17,7 @@ Resources:
       SubjectAlternativeNames:
         - !Sub "www.${BaseDomain}"
         - !Sub "api.${BaseDomain}"
+        - !Sub "apidocs.${BaseDomain}"
         - !Sub "embed.${BaseDomain}"
         - !Sub "blog.${BaseDomain}"
         - !Sub "try.${BaseDomain}"
@@ -24,6 +25,8 @@ Resources:
         - DomainName: !Sub "www.${BaseDomain}"
           ValidationDomain: !Ref BaseDomain
         - DomainName: !Sub "api.${BaseDomain}"
+          ValidationDomain: !Ref BaseDomain
+        - DomainName: !Sub "apidocs.${BaseDomain}"
           ValidationDomain: !Ref BaseDomain
         - DomainName: !Sub "embed.${BaseDomain}"
           ValidationDomain: !Ref BaseDomain
