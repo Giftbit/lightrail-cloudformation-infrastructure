@@ -111,7 +111,7 @@ Resources:
             ResponsePagePath: /404.html
             ErrorCachingMinTTL: 60
         Origins:
-          - DomainName: !GetAtt Bucket.DomainName
+          - DomainName: !GetAtt Bucket.RegionalDomainName
             Id: DefaultEndpointOrigin
             S3OriginConfig:
               OriginAccessIdentity: !Sub "origin-access-identity/cloudfront/${CloudFrontOriginAccessIdentity}"
