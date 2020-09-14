@@ -83,12 +83,15 @@ Mappings:
     # Both of these must be in the AWS Global region, which is US-East-1.
     Dev:
       ACMCertificateArn: arn:aws:acm:us-east-1:757264843183:certificate/7e8e0f5d-dc44-4a3d-904d-b012cf805df0
+      StaticContentLambdaVersionedArn: ""
       WebAclArn: arn:aws:wafv2:us-east-1:757264843183:global/webacl/ApiWebAcl/e22d1e00-1289-4651-8b3b-c65c605b4914
     Staging:
       ACMCertificateArn: arn:aws:acm:us-east-1:939876203001:certificate/8808bf24-2c01-4eea-b485-84d471cd71f8
+      StaticContentLambdaVersionedArn: ""
       WebAclArn: arn:aws:wafv2:us-east-1:939876203001:global/webacl/ApiWebAcl/8262b86c-b6a6-408a-a43b-9206a1373fb4
     Production:
       ACMCertificateArn: arn:aws:acm:us-east-1:212888042843:certificate/bc99ec4e-9dea-462a-a52f-5dd4db9fe642
+      StaticContentLambdaVersionedArn: ""
       WebAclArn: arn:aws:wafv2:us-east-1:212888042843:global/webacl/ApiWebAcl/852f27dd-7de4-42f5-9d84-f2564e637848
   CredentialsRevocation:
     Dev-us-west-2:
@@ -165,6 +168,7 @@ Resources:
         EnvironmentName: !Ref EnvironmentName
         ConfigureAliases: "yes"
         BaseDomainName: !FindInMap [Common, !Ref EnvironmentName, DomainName]
+        StaticContentLambdaVersionedArn: !FindInMap [CloudFront, !Ref EnvironmentName, StaticContentLambdaVersionedArn]
         ViewerCertificateArn: !FindInMap [CloudFront, !Ref EnvironmentName, ACMCertificateArn]
         EdhiEndpoint: !GetAtt LightrailEdhi.Outputs.Endpoint
         GutenbergEndpoint: !GetAtt LightrailGutenberg.Outputs.Endpoint

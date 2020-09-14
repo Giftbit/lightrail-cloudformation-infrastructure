@@ -20,6 +20,11 @@ Parameters:
       - PriceClass_All
       - PriceClass_100
       - PriceClass_200
+  StaticContentLambdaVersionedArn:
+    Type: String
+    Description: Optional ARN *with version* of a Lambda@Edge function to run on the origin response of static content.  The Lambda must be in us-east-1.
+    Default: ""
+    AllowedPattern: ^(arn:aws:lambda:us-east-1:\d+:function:.*:.*)?$
   ViewerCertificateArn:
     Type: String
     Description: Arn of the AWS Certificate Manager cert for the CloudFront distribution (must be in us-east-1)
@@ -29,28 +34,28 @@ Parameters:
     Description: Optional ARN of the WAF Web ACL that will protect API CloudFront distributions.
     Default: ""
     AllowedPattern: ^(arn:aws:wafv2:us-east-1:\d+:global/webacl/ApiWebAcl/.*)?$
-  WebsiteEndpoint:
+  EdhiEndpoint:
     Type: String
-    Description: The domain that should handle the website requests
+    Description: The domain that should handle the Edhi requests
+  GutenbergEndpoint:
+    Type: String
+    Description: The domain that should handle the KVS requests
+  KvsEndpoint:
+    Type: String
+    Description: The domain that should handle the KVS requests
   ReactEndpoint:
     Type: String
     Description: The domain that should handle the React app requests
     Default: ""
-  EdhiEndpoint:
-    Type: String
-    Description: The domain that should handle the Edhi requests
-  KvsEndpoint:
-    Type: String
-    Description: The domain that should handle the KVS requests
-  GutenbergEndpoint:
-    Type: String
-    Description: The domain that should handle the KVS requests
-  TurnkeyEndpoint:
-    Type: String
-    Description: The domain that should handle the Turnkey requests
   RothschildEndpoint:
     Type: String
     Description: The domain that should handle Rothschild requests
+  TurnkeyEndpoint:
+    Type: String
+    Description: The domain that should handle the Turnkey requests
+  WebsiteEndpoint:
+    Type: String
+    Description: The domain that should handle the website requests
   WidgetsEndpoint:
     Type: String
     Description: The domain that should handle the Widgets requests
@@ -98,10 +103,11 @@ Resources:
         RothschildEndpoint: !Ref RothschildEndpoint
         TurnkeyEndpoint: !Ref TurnkeyEndpoint
         # Common Distribution Configurations
-        EnvironmentName: !Ref EnvironmentName
         BaseDomainName: !Ref BaseDomainName
-        ViewerCertificateArn: !Ref ViewerCertificateArn
+        EnvironmentName: !Ref EnvironmentName
         LoggingBucketDomainName: !GetAtt LoggingBucket.DomainName
+        StaticContentLambdaVersionedArn: !Ref StaticContentLambdaVersionedArn
+        ViewerCertificateArn: !Ref ViewerCertificateArn
         WebAclArn: !Ref WebAclArn
   ApiApiDistribution:
     Type: AWS::CloudFormation::Stack
@@ -120,10 +126,11 @@ Resources:
         RothschildEndpoint: !Ref RothschildEndpoint
         TurnkeyEndpoint: !Ref TurnkeyEndpoint
         # Common Distribution Configurations
-        EnvironmentName: !Ref EnvironmentName
         BaseDomainName: !Ref BaseDomainName
-        ViewerCertificateArn: !Ref ViewerCertificateArn
+        EnvironmentName: !Ref EnvironmentName
         LoggingBucketDomainName: !GetAtt LoggingBucket.DomainName
+        StaticContentLambdaVersionedArn: !Ref StaticContentLambdaVersionedArn
+        ViewerCertificateArn: !Ref ViewerCertificateArn
         WebAclArn: !Ref WebAclArn
   EmbedApiDistribution:
     Type: AWS::CloudFormation::Stack
@@ -142,10 +149,11 @@ Resources:
         RothschildEndpoint: !Ref RothschildEndpoint
         TurnkeyEndpoint: !Ref TurnkeyEndpoint
         # Common Distribution Configurations
-        EnvironmentName: !Ref EnvironmentName
         BaseDomainName: !Ref BaseDomainName
-        ViewerCertificateArn: !Ref ViewerCertificateArn
+        EnvironmentName: !Ref EnvironmentName
         LoggingBucketDomainName: !GetAtt LoggingBucket.DomainName
+        StaticContentLambdaVersionedArn: !Ref StaticContentLambdaVersionedArn
+        ViewerCertificateArn: !Ref ViewerCertificateArn
         WebAclArn: !Ref WebAclArn
   ApiRedirectBucket:
     Type: AWS::S3::Bucket

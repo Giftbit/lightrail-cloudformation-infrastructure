@@ -29,6 +29,11 @@ Parameters:
   LoggingBucketDomainName:
     Type: String
     Description: The Name of the Logging bucket domain
+  StaticContentLambdaVersionedArn:
+    Type: String
+    Description: Optional ARN *with version* of a Lambda@Edge function to run on the origin response of static content.  The Lambda must be in us-east-1.
+    Default: ""
+    AllowedPattern: ^(arn:aws:lambda:us-east-1:\d+:function:.*:.*)?$
   AliasSubDomain:
     Type: String
     Description: The Sub Domain that should be Aliased by this distribution
@@ -77,6 +82,7 @@ Parameters:
 
 Conditions:
   ShouldConfigureAliases: !Not [!Equals [!Ref AliasSubDomain, ""]]
+  StaticContentLambdaVersionedArnSet: !Not [!Equals [!Ref StaticContentLambdaVersionedArn, ""]]
   ViewerCertificateArnSet: !Not [!Equals [!Ref ViewerCertificateArn, ""]]
   ViewerCertificateArnNotSet: !Equals [!Ref ViewerCertificateArn, ""]
   WebAclArnSet: !Not [!Equals [!Ref WebAclArn, ""]]
@@ -313,6 +319,7 @@ Resources:
               CachedMethods:
                 - GET
                 - HEAD
+                - OPTIONS
               ForwardedValues:
                 QueryString: true
                 Headers:
@@ -345,6 +352,7 @@ Resources:
               CachedMethods:
                 - GET
                 - HEAD
+                - OPTIONS
               ForwardedValues:
                 QueryString: true
                 Headers:
@@ -377,6 +385,7 @@ Resources:
               CachedMethods:
                 - GET
                 - HEAD
+                - OPTIONS
               ForwardedValues:
                 QueryString: true
                 Headers:
@@ -409,6 +418,7 @@ Resources:
               CachedMethods:
                 - GET
                 - HEAD
+                - OPTIONS
               ForwardedValues:
                 QueryString: true
                 Headers:
@@ -485,6 +495,7 @@ Resources:
               CachedMethods:
                 - GET
                 - HEAD
+                - OPTIONS
               ForwardedValues:
                 QueryString: true
                 Headers:
@@ -518,6 +529,7 @@ Resources:
               CachedMethods:
                 - GET
                 - HEAD
+                - OPTIONS
               ForwardedValues:
                 QueryString: true
                 Headers:
@@ -551,6 +563,7 @@ Resources:
               CachedMethods:
                 - GET
                 - HEAD
+                - OPTIONS
               ForwardedValues:
                 QueryString: true
                 Headers:
@@ -576,13 +589,21 @@ Resources:
               AllowedMethods:
                 - GET
                 - HEAD
+                - OPTIONS
               CachedMethods:
                 - GET
                 - HEAD
+                - OPTIONS
               ForwardedValues:
                 QueryString: true
                 Cookies:
                   Forward: none
+              LambdaFunctionAssociations:
+                - !If
+                  - StaticContentLambdaVersionedArnSet
+                  - EventType: origin-response
+                    LambdaFunctionARN: !Ref StaticContentLambdaVersionedArn
+                  - !Ref AWS::NoValue
             - !Ref AWS::NoValue
           - !If
             - AppEndpointSet
@@ -596,13 +617,21 @@ Resources:
               AllowedMethods:
                 - GET
                 - HEAD
+                - OPTIONS
               CachedMethods:
                 - GET
                 - HEAD
+                - OPTIONS
               ForwardedValues:
                 QueryString: true
                 Cookies:
                   Forward: none
+              LambdaFunctionAssociations:
+                - !If
+                  - StaticContentLambdaVersionedArnSet
+                  - EventType: origin-response
+                    LambdaFunctionARN: !Ref StaticContentLambdaVersionedArn
+                  - !Ref AWS::NoValue
             - !Ref AWS::NoValue
           - !If
             - ReferenceDocsEndpointSet
@@ -616,13 +645,21 @@ Resources:
               AllowedMethods:
                 - GET
                 - HEAD
+                - OPTIONS
               CachedMethods:
                 - GET
                 - HEAD
+                - OPTIONS
               ForwardedValues:
                 QueryString: true
                 Cookies:
                   Forward: none
+              LambdaFunctionAssociations:
+                - !If
+                  - StaticContentLambdaVersionedArnSet
+                  - EventType: origin-response
+                    LambdaFunctionARN: !Ref StaticContentLambdaVersionedArn
+                  - !Ref AWS::NoValue
             - !Ref AWS::NoValue
           - !If
             - DocsEndpointSet
@@ -636,13 +673,21 @@ Resources:
               AllowedMethods:
                 - GET
                 - HEAD
+                - OPTIONS
               CachedMethods:
                 - GET
                 - HEAD
+                - OPTIONS
               ForwardedValues:
                 QueryString: true
                 Cookies:
                   Forward: none
+              LambdaFunctionAssociations:
+                - !If
+                  - StaticContentLambdaVersionedArnSet
+                  - EventType: origin-response
+                    LambdaFunctionARN: !Ref StaticContentLambdaVersionedArn
+                  - !Ref AWS::NoValue
             - !Ref AWS::NoValue
           - !If
             - ErrorPagesEndpointSet
@@ -656,13 +701,21 @@ Resources:
               AllowedMethods:
                 - GET
                 - HEAD
+                - OPTIONS
               CachedMethods:
                 - GET
                 - HEAD
+                - OPTIONS
               ForwardedValues:
                 QueryString: false
                 Cookies:
                   Forward: none
+              LambdaFunctionAssociations:
+                - !If
+                  - StaticContentLambdaVersionedArnSet
+                  - EventType: origin-response
+                    LambdaFunctionARN: !Ref StaticContentLambdaVersionedArn
+                  - !Ref AWS::NoValue
             - !Ref AWS::NoValue
         DefaultCacheBehavior:
           TargetOriginId: DefaultEndpointOrigin
@@ -670,9 +723,11 @@ Resources:
           AllowedMethods:
             - GET
             - HEAD
+            - OPTIONS
           CachedMethods:
             - GET
             - HEAD
+            - OPTIONS
           MinTTL: 0
           MaxTTL: 300
           DefaultTTL: 60
@@ -680,6 +735,12 @@ Resources:
             QueryString: true
             Cookies:
               Forward: none
+          LambdaFunctionAssociations:
+            - !If
+              - StaticContentLambdaVersionedArnSet
+              - EventType: origin-response
+                LambdaFunctionARN: !Ref StaticContentLambdaVersionedArn
+              - !Ref AWS::NoValue
 
 Outputs:
   DomainName:
