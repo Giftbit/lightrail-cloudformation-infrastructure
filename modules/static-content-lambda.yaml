@@ -1,0 +1,75 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Origin response Lambda to inject security headers into static content responses.  Must be deployed in us-east-1."
+
+Conditions:
+  RegionIsUSEast1: !Equals [!Ref "AWS::Region", us-east-1]
+
+Resources:
+  LambdaRole:
+    Type: AWS::IAM::Role
+    Condition: RegionIsUSEast1
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Action: sts:AssumeRole
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+                - edgelambda.amazonaws.com
+                - replicator.lambda.amazonaws.com
+            Effect: Allow
+      Policies:
+        - PolicyName: EdgePoliciesLambdaPolicy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - xray:PutTraceSegments
+                  - xray:PutTelemetryRecords
+                  - lambda:GetFunction
+                  - lambda:EnableReplication*
+                  - lambda:InvokeFunction
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: '*'
+  Lambda:
+    Type: AWS::Lambda::Function
+    Condition: RegionIsUSEast1
+    Properties:
+      Handler: index.handler
+      Role: !GetAtt LambdaRole.Arn
+      Code:
+        ZipFile: |
+          'use strict';
+          exports.handler = (event, context, callback) => {
+              const response = event.Records[0].cf.response;
+              var addHeader = (header, value) => {
+                response.headers[header.toLowerCase()] = [{
+                  key: header,
+                  value: value
+                }];
+              };
+              addHeader('Content-Security-Policy', "default-src 'self'; frame-ancestors 'none'");
+              addHeader('Strict-Transport-Security', 'max-age=31536000; includeSubdomains; preload');
+              addHeader('X-Content-Type-Options', 'nosniff');
+              addHeader('X-Frame-Options', 'DENY');
+              addHeader('X-XSS-Protection', '1; mode=block')
+              callback(null, response);
+          };
+      Runtime: nodejs12.x
+      Timeout: 25
+      TracingConfig:
+        Mode: Active
+  LambdaVersion:
+    Type: AWS::Lambda::Version
+    Condition: RegionIsUSEast1
+    Properties:
+      FunctionName: !Ref Lambda
+
+Outputs:
+  LambdaVersionedArn:
+    Description: The versioned Lambda ARN.  This is what goes in the LambdaFunctionAssociation.LambdaFunctionARN
+    Value: !Sub "${Lambda.Arn}:${LambdaVersion.Version}"
