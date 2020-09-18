@@ -48,6 +48,7 @@ Resources:
             "default-src": ["'self'"],
             "connect-src": [
               "'self'",
+              "https://raw.githubusercontent.com",  // We serve docs content from here.  This is really awful.
               "https://www.google-analytics.com",
               "https://*.intercom.io",
               "wss://*.intercom.io",
@@ -75,7 +76,6 @@ Resources:
               "'self'",
               "blob:",
               "data:",
-              "https://*.lightrail.com",
               "https://www.googletagmanager.com",
               "https://www.google-analytics.com",
               "https://*.intercomcdn.com",
