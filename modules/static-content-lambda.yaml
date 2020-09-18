@@ -76,6 +76,7 @@ Resources:
               "'self'",
               "blob:",
               "data:",
+              "https://raw.githubusercontent.com",  // We serve docs content from here.  Less awful than connect-src but still not great.
               "https://www.googletagmanager.com",
               "https://www.google-analytics.com",
               "https://*.intercomcdn.com",
@@ -83,7 +84,7 @@ Resources:
             ],
             "script-src": [
               "'self'",
-              "'unsafe-inline'",  // D:
+              "'unsafe-inline'",  // This removes protection against common content-injection exploits, but we're inlined script so we're stuck with thius for now.
               "https://www.googletagmanager.com",
               "https://www.google-analytics.com",
               "https://*.intercom.io",
