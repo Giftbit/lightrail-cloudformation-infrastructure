@@ -47,7 +47,7 @@ Resources:
           const cspMap = {
             "default-src": ["'self'"],
             "connect-src": [
-              "self",
+              "'self'",
               "https://www.google-analytics.com",
               "https://*.intercom.io",
               "wss://*.intercom.io",
@@ -62,6 +62,7 @@ Resources:
               "https://js.intercomcdn.com"
             ],
             "form-action": [
+              "'self'",
               "https://intercom.help",
               "https://api-iam.intercom.io"
             ],
@@ -74,6 +75,7 @@ Resources:
               "'self'",
               "blob:",
               "data:",
+              "https://*.lightrail.com",
               "https://www.googletagmanager.com",
               "https://www.google-analytics.com",
               "https://*.intercomcdn.com",
