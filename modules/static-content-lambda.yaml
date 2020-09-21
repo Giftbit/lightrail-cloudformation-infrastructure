@@ -54,6 +54,7 @@ Resources:
               "wss://*.intercom.io",
               "https://uploads.intercomcdn.com",
               "https://uploads.intercomusercontent.com",
+              "https://sentry.io",
               "https://api.stripe.com"
             ],
             "font-src": [
