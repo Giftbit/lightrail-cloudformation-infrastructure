@@ -1,0 +1,137 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Origin response Lambda to inject security headers into static content responses.  Must be deployed in us-east-1."
+
+Conditions:
+  RegionIsUSEast1: !Equals [!Ref "AWS::Region", us-east-1]
+
+Resources:
+  LambdaRole:
+    Type: AWS::IAM::Role
+    Condition: RegionIsUSEast1
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Action: sts:AssumeRole
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+                - edgelambda.amazonaws.com
+                - replicator.lambda.amazonaws.com
+            Effect: Allow
+      Policies:
+        - PolicyName: EdgePoliciesLambdaPolicy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - xray:PutTraceSegments
+                  - xray:PutTelemetryRecords
+                  - lambda:GetFunction
+                  - lambda:EnableReplication*
+                  - lambda:InvokeFunction
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: '*'
+  Lambda:
+    Type: AWS::Lambda::Function
+    Condition: RegionIsUSEast1
+    Properties:
+      Handler: index.handler
+      Role: !GetAtt LambdaRole.Arn
+      Code:
+        ZipFile: |
+          "use strict";
+          const cspMap = {
+            "default-src": ["'self'"],
+            "connect-src": [
+              "'self'",
+              "https://raw.githubusercontent.com",  // We serve docs content from here.  This is really awful.
+              "https://www.google-analytics.com",
+              "https://*.intercom.io",
+              "wss://*.intercom.io",
+              "https://uploads.intercomcdn.com",
+              "https://uploads.intercomusercontent.com",
+              "https://sentry.io",
+              "https://api.stripe.com"
+            ],
+            "font-src": [
+              "'self'",
+              "https://fonts.googleapis.com",
+              "https://fonts.gstatic.com",
+              "https://js.intercomcdn.com"
+            ],
+            "form-action": [
+              "'self'",
+              "https://intercom.help",
+              "https://api-iam.intercom.io"
+            ],
+            "frame-ancestors": ["'none'"],
+            "frame-src": [
+              "https://js.stripe.com",
+              "https://hooks.stripe.com"
+            ],
+            "img-src": [
+              "'self'",
+              "blob:",
+              "data:",
+              "https://raw.githubusercontent.com",  // We serve docs content from here.  Less awful than connect-src but still not great.
+              "https://www.googletagmanager.com",
+              "https://www.google-analytics.com",
+              "https://*.intercomcdn.com",
+              "https://static.intercomassets.com"
+            ],
+            "script-src": [
+              "'self'",
+              "'unsafe-inline'",  // This removes protection against common content-injection exploits, but we're inlined script so we're stuck with thius for now.
+              "https://www.googletagmanager.com",
+              "https://www.google-analytics.com",
+              "https://*.intercom.io",
+              "https://js.intercomcdn.com",
+              "https://js.stripe.com"
+            ],
+            "style-src": [
+              "'self'",
+              "'unsafe-inline'",
+              "https://cdnjs.cloudflare.com",
+              "https://fonts.googleapis.com"
+            ],
+            "upgrade-insecure-requests": []
+          };
+          const csp = Object.keys(cspMap).map(cspKey => cspKey + " " + cspMap[cspKey].join(" ")).join("; ");
+          const headerMap = {
+            "Content-Security-Policy": csp,
+            "Permissions-Policy": "autoplay=(); camera=(); display-capture=(); document-domain=(self); geolocation=(); microphone=()",
+            "Referrer-Policy": "strict-origin-when-cross-origin",
+            "Strict-Transport-Security": "max-age=31536000; includeSubdomains; preload",
+            "X-Content-Type-Options": "nosniff",
+            "X-Frame-Options": "DENY",
+            "X-XSS-Protection": "1; mode=block"
+          };
+
+          exports.handler = async (event, context) => {
+              const response = event.Records[0].cf.response;
+              for (const headerKey in headerMap) {
+                response.headers[headerKey.toLowerCase()] = [{
+                  key: headerKey,
+                  value: headerMap[headerKey]
+                }];
+              }
+              return response;
+          };
+      Runtime: nodejs12.x
+      Timeout: 25
+      TracingConfig:
+        Mode: Active
+  LambdaVersion:
+    Type: AWS::Lambda::Version
+    Condition: RegionIsUSEast1
+    Properties:
+      FunctionName: !Ref Lambda
+
+Outputs:
+  LambdaVersionedArn:
+    Description: The versioned Lambda ARN.  This is what goes in the LambdaFunctionAssociation.LambdaFunctionARN
+    Value: !Sub "${Lambda.Arn}:${LambdaVersion.Version}"
