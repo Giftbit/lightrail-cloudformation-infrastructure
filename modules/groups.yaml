@@ -289,15 +289,6 @@ Resources:
         - !Ref AllEmployees
         - !Ref BackEndDevelopersGroup
         - !Ref FrontEndDevelopersGroup
-  JamieT:
-    Type: AWS::IAM::User
-    Properties:
-      UserName: jamie.t
-      Groups:
-        - !Ref AllEmployees
-        - !Ref BackEndDevelopersGroup
-        - !Ref BastionHostAccessGroup
-        - !Ref FrontEndDevelopersGroup
   JeffG:
     Type: AWS::IAM::User
     Properties:
@@ -307,12 +298,6 @@ Resources:
         - !Ref BackEndDevelopersGroup
         - !Ref BastionHostAccessGroup
         - !Ref FrontEndDevelopersGroup
-  LeifB:
-    Type: AWS::IAM::User
-    Properties:
-      UserName: leif.b
-      Groups:
-        - !Ref AllEmployees
   NickM:
     Type: AWS::IAM::User
     Properties:
@@ -320,15 +305,6 @@ Resources:
       Groups:
         - !Ref AllEmployees
         - !Ref BackEndDevelopersGroup
-        - !Ref FrontEndDevelopersGroup
-  TanaJ:
-    Type: AWS::IAM::User
-    Properties:
-      UserName: tana.j
-      Groups:
-        - !Ref AllEmployees
-        - !Ref BackEndDevelopersGroup
-        - !Ref BastionHostAccessGroup
         - !Ref FrontEndDevelopersGroup
   TimJ:
     Type: AWS::IAM::User
