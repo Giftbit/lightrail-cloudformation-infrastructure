@@ -152,7 +152,7 @@ Resources:
         BaseDomainName: !Ref BaseDomainName
         EnvironmentName: !Ref EnvironmentName
         LoggingBucketDomainName: !GetAtt LoggingBucket.DomainName
-        StaticContentLambdaVersionedArn: !Ref StaticContentLambdaVersionedArn
+        # StaticContentLambdaVersionedArn: not set because the preferred CSP interferes with embedding, which is intended
         ViewerCertificateArn: !Ref ViewerCertificateArn
         WebAclArn: !Ref WebAclArn
   ApiRedirectBucket:
