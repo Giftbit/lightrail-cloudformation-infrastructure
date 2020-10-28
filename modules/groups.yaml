@@ -27,6 +27,20 @@ Resources:
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/IAMUserChangePassword
         - arn:aws:iam::aws:policy/IAMUserSSHKeys
+      Policies:
+        - PolicyName: ManageOwnMFA
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - iam:CreateVirtualMFADevice
+                  - iam:DeactivateMFADevice
+                  - iam:DeleteVirtualMFADevice
+                  - iam:EnableMFADevice
+                  - iam:ListMFADevices
+                  - iam:ResyncMFADevice
+                Resource: "arn:aws:iam::*:mfa/${aws:username}"
 
   FrontEndDevelopersGroup:
     Type: AWS::IAM::Group
@@ -281,14 +295,6 @@ Resources:
               - es:List*
             Resource: "*"
 
-  ArshdeepV:
-    Type: AWS::IAM::User
-    Properties:
-      UserName: arshdeep.v
-      Groups:
-        - !Ref AllEmployees
-        - !Ref BackEndDevelopersGroup
-        - !Ref FrontEndDevelopersGroup
   JeffG:
     Type: AWS::IAM::User
     Properties:
@@ -297,14 +303,6 @@ Resources:
         - !Ref AllEmployees
         - !Ref BackEndDevelopersGroup
         - !Ref BastionHostAccessGroup
-        - !Ref FrontEndDevelopersGroup
-  NickM:
-    Type: AWS::IAM::User
-    Properties:
-      UserName: nick.m
-      Groups:
-        - !Ref AllEmployees
-        - !Ref BackEndDevelopersGroup
         - !Ref FrontEndDevelopersGroup
   TimJ:
     Type: AWS::IAM::User
