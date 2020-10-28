@@ -28,6 +28,23 @@ Resources:
         - arn:aws:iam::aws:policy/IAMUserChangePassword
         - arn:aws:iam::aws:policy/IAMUserSSHKeys
       Policies:
+        - PolicyName: DenyAllExceptListedIfNoMFA
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - iam:CreateVirtualMFADevice
+                  - iam:EnableMFADevice
+                  - iam:GetUser
+                  - iam:ListMFADevices
+                  - iam:ListVirtualMFADevices
+                  - iam:ResyncMFADevice
+                  - sts:GetSessionToken
+                Resource: "*"
+                Condition:
+                  BoolIfExists:
+                    "aws:MultiFactorAuthPresent": false
         - PolicyName: ManageOwnMFA
           PolicyDocument:
             Version: 2012-10-17
@@ -35,12 +52,26 @@ Resources:
               - Effect: Allow
                 Action:
                   - iam:CreateVirtualMFADevice
-                  - iam:DeactivateMFADevice
                   - iam:DeleteVirtualMFADevice
+                Resource: "arn:aws:iam::*:mfa/${aws:username}"
+              - Effect: Allow
+                Action:
+                  - iam:DeactivateMFADevice
                   - iam:EnableMFADevice
                   - iam:ListMFADevices
                   - iam:ResyncMFADevice
-                Resource: "arn:aws:iam::*:mfa/${aws:username}"
+                Resource: "arn:aws:iam::*:user/${aws:username}"
+        - PolicyName: ManageOwnAccessKeys
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - iam:CreateAccessKey
+                  - iam:DeleteAccessKey
+                  - iam:ListAccessKeys
+                  - iam:UpdateAccessKey
+                Resource: "arn:aws:iam::*:user/${aws:username}"
 
   FrontEndDevelopersGroup:
     Type: AWS::IAM::Group
@@ -295,19 +326,11 @@ Resources:
               - es:List*
             Resource: "*"
 
+  # Users
   JeffG:
     Type: AWS::IAM::User
     Properties:
       UserName: jeff.g
-      Groups:
-        - !Ref AllEmployees
-        - !Ref BackEndDevelopersGroup
-        - !Ref BastionHostAccessGroup
-        - !Ref FrontEndDevelopersGroup
-  TimJ:
-    Type: AWS::IAM::User
-    Properties:
-      UserName: tim.j
       Groups:
         - !Ref AllEmployees
         - !Ref BackEndDevelopersGroup
