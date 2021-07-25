@@ -71,7 +71,7 @@ function size_dependent_cf_location() {
 
 if [ "$COMMAND" = "test" ]; then
     TEMPLATE_FILE_NAMES=$(grep -rl --include=*.yaml --exclude=./build/* AWSTemplateFormatVersion .)
-    yamllint $(echo $TEMPLATE_FILE_NAMES)
+    yamllint -d relaxed $(echo $TEMPLATE_FILE_NAMES)
 
     if [ $? -ne 0 ]; then
         >&2 echo "Project failed linting. See output above"

@@ -1,3 +1,4 @@
+# This file is packaged by package.sh and deployed manually.
 AWSTemplateFormatVersion: "2010-09-09"
 Description: "CloudFormation Continuous Delivery"
 
@@ -51,7 +52,7 @@ Parameters:
   GithubRepoBranch:
     Type: String
     Description: The Name of the Repo branch to use for this pipeline
-    Default: master
+    Default: main
   GitHubOAuthToken:
     Type: String
     Description: GitHub OAuth token. This user must have admin access to the repo.
@@ -138,6 +139,7 @@ Resources:
       AccessControl: Private
   DeploymentArtifactBucketPolicy:
     Type: AWS::S3::BucketPolicy
+    Condition: AnAccountIsEnabled
     Properties:
       Bucket: !Ref "DeploymentArtifactBucket"
       PolicyDocument:
@@ -752,8 +754,7 @@ Resources:
         # aws/codebuild/nodejs:7.0.0 is a default image provided by CodeBuild.
         # You can enable using a custom image by uncommenting the CodeBuildDockerImageRepositoryGitSSHImageArn
         # resource above, using the `Image: !ImportValue` variant below.
-        # Image: aws/codebuild/nodejs:7.0.0
-        Image: aws/codebuild/ubuntu-base:14.04
+        Image: aws/codebuild/standard:5.0
         EnvironmentVariables:
           - Name: BUILD_ARTIFACT_BUCKET
             Value: !Ref DeploymentArtifactBucket

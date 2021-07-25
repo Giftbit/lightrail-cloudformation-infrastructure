@@ -4,10 +4,10 @@ phases:
     runtime-versions:
       python: 3.8
     commands:
-      - echo Build enviromment `uname -a` aws/`aws --version 2>&1` git/`git --version`
-      - pip install --upgrade awscli yamllint
+      - echo Build enviromment `uname -a` aws/`aws --version 2>&1` python/`python --version` git/`git --version`
       - apt-get update && apt-get install -y curl rsync uuid-runtime
-      - echo aws/`aws --version 2>&1`
+      - pip install --upgrade yamllint
+      - export PATH=$PATH:/root/.local/bin
   pre_build:
     commands:
       - bash auto.sh test
