@@ -23,21 +23,21 @@ Parameters:
       (Optional) Comma separated list of AWS UserIDs to grant Read Access
       (See http://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_variables.html#policy-vars-infotouse)
     Default: ""
-    AllowedPattern: (([A-Z0-9]+(:\*)?|\d{12})(,([A-Z0-9]+(:\*)?|\d{12}))*)?
+    AllowedPattern: (([A-Z0-9]+(:\*)?|\d{12})(,([A-Z0-9]+(:\*)?|\d{12}))*|\[none\])?
   UserIdsToGrantWriteAccess:
     Type: String
     Description: >
       (Optional) Comma separated list of AWS UserIDs to grant Write Access
       (See http://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_variables.html#policy-vars-infotouse)
     Default: ""
-    AllowedPattern: (([A-Z0-9]+(:\*)?|\d{12})(,([A-Z0-9]+(:\*)?|\d{12}))*)?
+    AllowedPattern: (([A-Z0-9]+(:\*)?|\d{12})(,([A-Z0-9]+(:\*)?|\d{12}))*|\[none\])?
   UserIdsToGrantReadWriteAccess:
     Type: String
     Description: >
       (Optional) Comma separated list of AWS UserIDs to grant Read Write Access
       (See http://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_variables.html#policy-vars-infotouse)
     Default: ""
-    AllowedPattern: (([A-Z0-9]+(:\*)?|\d{12})(,([A-Z0-9]+(:\*)?|\d{12}))*)?
+    AllowedPattern: (([A-Z0-9]+(:\*)?|\d{12})(,([A-Z0-9]+(:\*)?|\d{12}))*|\[none\])?
   UserIdsToGrantPolicyAdminAccess:
     Type: String
     Description: >
@@ -45,11 +45,18 @@ Parameters:
       (See http://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_variables.html#policy-vars-infotouse)
     AllowedPattern: ([A-Z0-9]+(:\*)?|\d{12})(,([A-Z0-9]+(:\*)?|\d{12}))*
 
+# RoleLookupLambda cannot return an empty string and instead returns [none] to indicate no roles
 Conditions:
   ShouldAllowInfrastructureAdminToPutConfiguration: !Equals [!Ref EnvironmentName, "Dev"]
-  ShouldConfigureReadAccess: !Not [!Equals [!Ref UserIdsToGrantReadAccess, ""]]
-  ShouldConfigureWriteAccess: !Not [!Equals [!Ref UserIdsToGrantWriteAccess, ""]]
-  ShouldConfigureReadWriteAccess: !Not [!Equals [!Ref UserIdsToGrantReadWriteAccess, ""]]
+  ShouldConfigureReadAccess: !And
+    - !Not [!Equals [!Ref UserIdsToGrantReadAccess, ""]]
+    - !Not [!Equals [!Ref UserIdsToGrantReadAccess, "[none]"]]
+  ShouldConfigureWriteAccess: !And
+    - !Not [!Equals [!Ref UserIdsToGrantWriteAccess, ""]]
+    - !Not [!Equals [!Ref UserIdsToGrantWriteAccess, "[none]"]]
+  ShouldConfigureReadWriteAccess: !And
+    - !Not [!Equals [!Ref UserIdsToGrantReadWriteAccess, ""]]
+    - !Not [!Equals [!Ref UserIdsToGrantReadWriteAccess, "[none]"]]
 
 Resources:
   BucketPolicy:
