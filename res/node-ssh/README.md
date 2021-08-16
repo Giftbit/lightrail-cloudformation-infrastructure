@@ -12,7 +12,8 @@ Change [ACCOUNT_ID] for the id of the account you want to add the build image to
 
 ```bash
 docker tag node-ssh [ACCOUNT_ID].dkr.ecr.us-west-2.amazonaws.com/lightrail-ci-resources-20170717-node-ssh
-eval $(aws ecr get-login --no-include-email) && docker push [ACCOUNT_ID].dkr.ecr.us-west-2.amazonaws.com/lightrail-ci-resources-20170717-node-ssh
+aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin [ACCOUNT_ID].dkr.ecr.us-west-2.amazonaws.com
+docker push [ACCOUNT_ID].dkr.ecr.us-west-2.amazonaws.com/lightrail-ci-resources-20170717-node-ssh
 
 ```
 
