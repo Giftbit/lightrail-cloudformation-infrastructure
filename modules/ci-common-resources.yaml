@@ -39,6 +39,7 @@ Conditions:
   EnvIsDev: !Equals [!Ref EnvironmentName, Dev]
   ProductionAccountIsEnabled: !Not [!Equals [!Ref ProductionAccountId, ""]]
   StagingAccountIsEnabled: !Not [!Equals [!Ref StagingAccountId, ""]]
+  DevAccountIsEnabled: !Not [!Equals [!Ref DevAccountId, ""]]
 
 Resources:
   KeysBucket:
@@ -110,7 +111,10 @@ Resources:
                   - StagingAccountIsEnabled
                   - !Sub "arn:aws:iam::${StagingAccountId}:root"
                   - !Ref "AWS::NoValue"
-                - !Sub "arn:aws:iam::${DevAccountId}:root"
+                - !If
+                  - DevAccountIsEnabled
+                  - !Sub "arn:aws:iam::${DevAccountId}:root"
+                  - !Ref "AWS::NoValue"
 
   KeysAccessPolicy:
     Type: AWS::IAM::Policy
