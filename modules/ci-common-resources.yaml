@@ -36,6 +36,7 @@ Parameters:
     AllowedPattern: "([a-zA-Z0-9+=.@_-]+(,[a-zA-Z0-9+=.@_-]+)*)"
 
 Conditions:
+  # Assumes all envs use this account for the image.
   EnvIsDev: !Equals [!Ref EnvironmentName, Dev]
   ProductionAccountIsEnabled: !Not [!Equals [!Ref ProductionAccountId, ""]]
   StagingAccountIsEnabled: !Not [!Equals [!Ref StagingAccountId, ""]]
@@ -210,6 +211,7 @@ Outputs:
     Value: !Sub "${CommonString}-keys-bucket"
   KeysAccessRoleArn:
     Description: The Arn for CiKeysAccessRole
+    # Assumes all envs use this account for the image.
     Value: !Sub "arn:aws:iam::${DevAccountId}:role/${CommonString}-KeyAccessRole"
   CodebuildImageNodeSSH:
     Description: The Codebuild accessible docker image reference
