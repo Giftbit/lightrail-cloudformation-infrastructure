@@ -14,13 +14,11 @@ If a new account needs to be deployed:
     3. Run the `infrastructure/package.sh` command. Copy the resulting S3 URL.
     4. Deploy the `ci.yaml` CloudFormation Template to the production account.
     5. Deploy the `infrastructure/ci-roles.yaml` CloudFormation Template to the Staging and Dev accounts
-    6. Update the Production LightrailInfrastructureCI's references to the Dev and Staging accounts, and enable managing
-       of the accounts.
+    6. Update the Production LightrailInfrastructureCI's references to the Dev and Staging accounts, and enable managing of the accounts.
     
 - If the account is not the Production account
     1. Deploy the `infrastructure/ci-roles.yaml` CloudFormation Template to the account in question.
-    2. Update the Production LightrailInfrastructureCI's references to the Dev and Staging accounts, and enable managing
-       of the accounts.
+    2. Update the Production LightrailInfrastructureCI's references to the Dev and Staging accounts, and enable managing of the accounts.
          
 Other elements that will need to be handled manually:
 
