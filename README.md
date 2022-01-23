@@ -9,17 +9,16 @@
 If a new account needs to be deployed:
 
 - If The Production account needs to be deployed
-    1. Deploy the `account-security.yaml` CloudFormation Template
-    2. Run the `infrastructure/package.sh` command. Copy the resulting S3 URL.
-    3. Deploy the CloudFormation Template to the production account.
-    4. Deploy the `infrastructure/ci-roles.yaml` CloudFormation Template to the Staging and Dev accounts
-    5. Update the Production LightrailInfrastructureCI's references to the Dev and Staging accounts, and enable managing
-       of the accounts.
+    1. To create the cf-templates S3 bucket go to the web console and start to create a new stack by uploading a template.  Don't go through with the creation.
+    2. Deploy the `account-security.yaml` CloudFormation Template
+    3. Run the `infrastructure/package.sh` command. Copy the resulting S3 URL.
+    4. Deploy the CloudFormation Template uploaded above to the production account.
+    5. Deploy the `infrastructure/ci-roles.yaml` CloudFormation Template to the Staging and Dev accounts
+    6. Update the Production LightrailInfrastructureCI's references to the Dev and Staging accounts, and enable managing of the accounts.
     
 - If the account is not the Production account
     1. Deploy the `infrastructure/ci-roles.yaml` CloudFormation Template to the account in question.
-    2. Update the Production LightrailInfrastructureCI's references to the Dev and Staging accounts, and enable managing
-       of the accounts.
+    2. Update the Production LightrailInfrastructureCI's references to the Dev and Staging accounts, and enable managing of the accounts.
          
 Other elements that will need to be handled manually:
 
