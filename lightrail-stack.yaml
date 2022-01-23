@@ -571,7 +571,7 @@ Resources:
         Backs a CloudFormation Custom Resource for looking up Role Unique IDs (useful in locking down buckets)
       Role: !GetAtt RoleLookupRole.Arn
       Handler: index.handler
-      Runtime: nodejs10.x
+      Runtime: nodejs14.x
       Timeout: 15
       Code: ../res/role-id-lookup.zip  # https://github.com/Giftbit/role-id-lookup-custom-resource/blob/master/index.js
   GitHubOAuthToken:

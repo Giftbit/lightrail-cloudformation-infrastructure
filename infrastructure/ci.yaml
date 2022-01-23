@@ -587,7 +587,7 @@ Resources:
       Role:
         !GetAtt CloudformationDelayFunctionRole.Arn
       Handler: index.handler
-      Runtime: nodejs10.x
+      Runtime: nodejs14.x
       Timeout: 30  # Twice our expected delay.
       Code: ../res/delay.zip  # Built from https://github.com/Giftbit/delay-custom-resource/blob/master/index.js
   CloudformationDelayFunctionRole:
@@ -610,7 +610,7 @@ Resources:
       Description: Backs the CodePipeline S3 Put Custom Action
       Role: !GetAtt CodePipelineS3PutActionRole.Arn
       Handler: index.handler
-      Runtime: nodejs10.x
+      Runtime: nodejs14.x
       Timeout: 30
       Code: ../res/codepipeline-s3-put-action.zip  # Built from https://github.com/Giftbit/codepipeline-s3-put-action/
   CodePipelineS3PutActionRole:
@@ -666,7 +666,7 @@ Resources:
       Description: Backs the CodePipeline CloudFormation Create Change Set Action
       Role: !GetAtt CodePipelineCloudformationChangeSetReplaceS3Role.Arn
       Handler: index.handler
-      Runtime: nodejs10.x
+      Runtime: nodejs14.x
       Timeout: 30
       Code: ../res/codepipeline-cloudformation-change-set-replace-s3-action.zip  # https://github.com/Giftbit/codepipeline-cloudformation-change-set-replace-s3/
       Environment:
@@ -834,7 +834,7 @@ Resources:
       Role:
         !GetAtt CodePipelineApprovalDiffNotifierRole.Arn
       Handler: index.handler
-      Runtime: nodejs10.x
+      Runtime: nodejs14.x
       Timeout: 15
       Code: ../res/approval-diff-notifier.zip  # Built from https://github.com/Giftbit/codepipeline-github-approval-diff-notifier/blob/master/src/lambdas/approval-diff-notifier/index.ts
       Environment:
@@ -890,7 +890,7 @@ Resources:
       Role:
         !GetAtt CodePipelineStageRevisionUpdaterRole.Arn
       Handler: index.handler
-      Runtime: nodejs10.x
+      Runtime: nodejs14.x
       Timeout: 15
       Code: ../res/stage-revision-updater.zip  # Built from https://github.com/Giftbit/codepipeline-github-approval-diff-notifier/blob/master/src/lambdas/stage-revision-updater/index.ts
       Environment:
