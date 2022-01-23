@@ -1015,7 +1015,7 @@ Resources:
       Description: Backs a CloudFormation Custom Resource for encypting values with a specified KMS Key
       Role: !GetAtt EncryptionLambdaRole.Arn
       Handler: lambda_function.lambda_handler
-      Runtime: python2.7
+      Runtime: python23.9
       Timeout: 15
       Code: ../res/kms-encryption-custom-resource.zip  # Built from https://github.com/Giftbit/lambda-backed-cloud-formation-kms-encryption/blob/master/lambda_function.py
   EncryptedGitHubOAuthToken:
