@@ -316,6 +316,7 @@ Resources:
         EncryptionKeyArn: !GetAtt LightrailSecureConfig.Outputs.EncryptionKeyArn
         UserIdsToGrantReadAccess: !Ref LightrailSecureConfigReadAccessRoleIdGrants
         UserIdsToGrantPolicyAdminAccess: !Ref LightrailSecureConfigPolicyAdminAccessRoleIdGrants
+        UserIdsToGrantReadWriteAccess: !Ref LightrailSecureConfigReadWriteAccessRoleIdGrants
   LightrailSecureConfigReadAccessRoleIdGrants:
     Type: AWS::CloudFormation::CustomResource
     Version: 1.0
@@ -329,6 +330,13 @@ Resources:
           - !GetAtt LightrailTurnkey.Outputs.RoleNames
           - !GetAtt LightrailRothschild.Outputs.RoleNames
           - !GetAtt LightrailUserImageUpload.Outputs.RoleName
+  LightrailSecureConfigReadWriteAccessRoleIdGrants:
+    Type: AWS::CloudFormation::CustomResource
+    Version: 1.0
+    DependsOn: UserAssumableRoles
+    Properties:
+      ServiceToken: !GetAtt RoleLookupLambda.Arn
+      RoleNames: InfrastructureAdmin
   LightrailSecureConfigPolicyAdminAccessRoleIdGrants:
     Type: AWS::CloudFormation::CustomResource
     Version: 1.0
