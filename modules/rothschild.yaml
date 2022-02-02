@@ -18,7 +18,7 @@ Parameters:
   LightrailDomain:
     Type: String
     Description: The domain of the Lightrail REST API
-    AllowedPattern: (\w+\.)+\w{3}
+    AllowedPattern: (\w+\.)+\w+
   LightrailEventTopicArn:
     Type: String
     Description: Optional ARN of the SNS topic on Lightrail Events
