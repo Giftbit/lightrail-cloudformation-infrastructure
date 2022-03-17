@@ -70,23 +70,23 @@ Mappings:
     us-west-2:
       GitHubBranch: dev-ci
       GitHubBranchDest: ""
-      RoleNames: dev-Turnkey-GiftcardPurchaseFunctionRole-1KGBM93LPXQFP,dev-Turnkey-StripeFunctionRole-1G73BZDEQRT90,dev-Turnkey-EmailFunctionRole-1JTV1097Y6KW
-      Endpoint: vjn3uqm8ok.execute-api.us-west-2.amazonaws.com
-      SentryDsn: https://fb28f9ac76a84e879f7523cc07092369@o51938.ingest.sentry.io/239845
+      RoleNames: ''#dev-Turnkey-GiftcardPurchaseFunctionRole-XXX,dev-Turnkey-StripeFunctionRole-1G73BZDEQRT90,dev-Turnkey-EmailFunctionRole-1JTV1097Y6KW
+      Endpoint: ''#xxx.execute-api.us-west-2.amazonaws.com
+      SentryDsn: ''#https://xxx@xxx.ingest.sentry.io/xxx
   Staging:
     us-west-2:
       GitHubBranch: staging
       GitHubBranchDest: master
-      RoleNames: staging-Turnkey-GiftcardPurchaseFunctionRole-6OE7SS30H6TU,staging-Turnkey-StripeFunctionRole-V0W37G8KYYD3,staging-Turnkey-EmailFunctionRole-1L0FEVQWYRM6
-      Endpoint: tk1tioiyz5.execute-api.us-west-2.amazonaws.com
-      SentryDsn: https://dad81b3b1b4e494e97069f17f4b9e33f@o51938.ingest.sentry.io/245144
+      RoleNames: ''#staging-Turnkey-GiftcardPurchaseFunctionRole-XXX,staging-Turnkey-StripeFunctionRole-V0W37G8KYYD3,staging-Turnkey-EmailFunctionRole-1L0FEVQWYRM6
+      Endpoint: ''#xxx.execute-api.us-west-2.amazonaws.com
+      SentryDsn: ''#https://xxx@xxx.ingest.sentry.io/xxx
   Production:
     us-west-2:
       GitHubBranch: master
       GitHubBranchDest: ""
-      RoleNames: production-Turnkey-GiftcardPurchaseFunctionRole-1VO6BCQNGZKOZ,production-Turnkey-StripeFunctionRole-107HU60YD7SP7,production-Turnkey-EmailFunctionRole-ONUCBP8IEKOM
-      Endpoint: 13shovrsob.execute-api.us-west-2.amazonaws.com
-      SentryDsn: https://b275b17e6ed948ae85b9de4fb0ab722b@o51938.ingest.sentry.io/245145
+      RoleNames: ''#production-Turnkey-GiftcardPurchaseFunctionRole-XXX,production-Turnkey-StripeFunctionRole-107HU60YD7SP7,production-Turnkey-EmailFunctionRole-ONUCBP8IEKOM
+      Endpoint: ''#xxx.execute-api.us-west-2.amazonaws.com
+      SentryDsn: ''#https://xxx@xxx.ingest.sentry.io/xxx
 
 Resources:
   CI:

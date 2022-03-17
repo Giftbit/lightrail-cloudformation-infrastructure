@@ -62,25 +62,25 @@ Mappings:
       GitHubBranch: dev-ci
       GitHubBranchDest: ""
       Capacity: low
-      RoleNames: dev-Rothschild-RestFunctionRole-E6RW6Z3KCO8S,dev-Rothschild-AutomaticVoidFunctionRole-1HZNZTI7GWDFV,dev-Rothschild-StripeEventWebhookFunctionRole-LML2TNBEL97O,dev-Rothschild-PostDeployFunctionRole-11MVKJOMNYUHK,dev-Rothschild-BinlogWatcherFunctionRole-1E1Q066FENXQT
-      Endpoint: a2sbb0stq8.execute-api.us-west-2.amazonaws.com
-      SentryDsn: https://fb28f9ac76a84e879f7523cc07092369@o51938.ingest.sentry.io/239845
+      RoleNames: ''#dev-Rothschild-RestFunctionRole-XXX,dev-Rothschild-AutomaticVoidFunctionRole-XXX,dev-Rothschild-StripeEventWebhookFunctionRole-XXX,dev-Rothschild-PostDeployFunctionRole-XXX,dev-Rothschild-BinlogWatcherFunctionRole-XXX
+      Endpoint: ''#xxx.execute-api.us-west-2.amazonaws.com
+      SentryDsn: ''#https://xxx@xxx.ingest.sentry.io/xxx
   Staging:
     us-west-2:
       GitHubBranch: staging
       GitHubBranchDest: master
       Capacity: low
-      RoleNames: staging-Rothschild-RestFunctionRole-1WP0HJUKSCI23,staging-Rothschild-AutomaticVoidFunctionRole-MZYLCUNWSZYF,staging-Rothschild-PostDeployFunctionRole-O51X2ALZ04D2,staging-Rothschild-StripeEventWebhookFunctionRole-GDWMU4WUCDJC,staging-Rothschild-BinlogWatcherFunctionRole-DXNHFUVBR4SB
-      Endpoint: kvd0rpwjoa.execute-api.us-west-2.amazonaws.com
-      SentryDsn: https://dad81b3b1b4e494e97069f17f4b9e33f@o51938.ingest.sentry.io/245144
+      RoleNames: ''#staging-Rothschild-RestFunctionRole-XXX,staging-Rothschild-AutomaticVoidFunctionRole-XXX,staging-Rothschild-PostDeployFunctionRole-XXX,staging-Rothschild-StripeEventWebhookFunctionRole-XXX,staging-Rothschild-BinlogWatcherFunctionRole-XXX
+      Endpoint: ''#xxx.execute-api.us-west-2.amazonaws.com
+      SentryDsn: ''#https://xxx@xxx.ingest.sentry.io/xxx
   Production:
     us-west-2:
       GitHubBranch: master
       GitHubBranchDest: ""
       Capacity: high
-      RoleNames: production-Rothschild-RestFunctionRole-OCVSS4TEU6MY,production-Rothschild-AutomaticVoidFunctionRole-VYL4WGB71JZF,production-Rothschild-PostDeployFunctionRole-4K8B084OEI1Z,production-Rothschild-StripeEventWebhookFunctionRo-S64HQWGMFGZL,production-Rothschild-BinlogWatcherFunctionRole-1TOUKD2DYR7ID
-      Endpoint: qaljzxzk0l.execute-api.us-west-2.amazonaws.com
-      SentryDsn: https://b275b17e6ed948ae85b9de4fb0ab722b@o51938.ingest.sentry.io/245145
+      RoleNames: ''#production-Rothschild-RestFunctionRole-XXX,production-Rothschild-AutomaticVoidFunctionRole-XXX,production-Rothschild-PostDeployFunctionRole-XXX,production-Rothschild-StripeEventWebhookFunctionRo-XXX,production-Rothschild-BinlogWatcherFunctionRole-XXX
+      Endpoint: ''#xxx.execute-api.us-west-2.amazonaws.com
+      SentryDsn: ''#https://xxx@xxx.ingest.sentry.io/xxx
 
 Resources:
   DbEncryptionKey:

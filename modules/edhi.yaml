@@ -59,23 +59,23 @@ Mappings:
     us-west-2:
       GitHubBranch: dev-ci
       GitHubBranchDest: ""
-      RoleNames: dev-Edhi-RestFunctionRole-ZBKYVTBJZLW3,dev-Edhi-ApiKeyBlocklisterFunctionRole-1UC6X62QOX7R0
-      Endpoint: ql9cnmujzl.execute-api.us-west-2.amazonaws.com
-      SentryDsn: https://fb28f9ac76a84e879f7523cc07092369@o51938.ingest.sentry.io/239845
+      RoleNames: ''#dev-Edhi-RestFunctionRole-XXX,dev-Edhi-ApiKeyBlocklisterFunctionRole-XXX
+      Endpoint: ''#xxx.execute-api.us-west-2.amazonaws.com
+      SentryDsn: ''#https://xxx@xxx.ingest.sentry.io/xxx
   Staging:
     us-west-2:
       GitHubBranch: staging
       GitHubBranchDest: master
-      RoleNames: staging-Edhi-RestFunctionRole-MUB3HPT0IWQA,staging-Edhi-ApiKeyBlocklisterFunctionRole-15RF9HD1VY3V6
-      Endpoint: jqpvyxgat0.execute-api.us-west-2.amazonaws.com
-      SentryDsn: https://dad81b3b1b4e494e97069f17f4b9e33f@o51938.ingest.sentry.io/245144
+      RoleNames: ''#staging-Edhi-RestFunctionRole-XXX,staging-Edhi-ApiKeyBlocklisterFunctionRole-XXX
+      Endpoint: ''#xxx.execute-api.us-west-2.amazonaws.com
+      SentryDsn: ''#https://xxx@xxx.ingest.sentry.io/xxx
   Production:
     us-west-2:
       GitHubBranch: master
       GitHubBranchDest: ""
-      RoleNames: production-Edhi-RestFunctionRole-BC0X5SR4TIW,production-Edhi-ApiKeyBlocklisterFunctionRole-JZAQK1Y72UTY
-      Endpoint: 1tjy5kf2t9.execute-api.us-west-2.amazonaws.com
-      SentryDsn: https://b275b17e6ed948ae85b9de4fb0ab722b@o51938.ingest.sentry.io/245145
+      RoleNames: ''#production-Edhi-RestFunctionRole-XXX,production-Edhi-ApiKeyBlocklisterFunctionRole-XXX
+      Endpoint: ''#xxx.execute-api.us-west-2.amazonaws.com
+      SentryDsn: ''#https://xxx@xxx.ingest.sentry.io/xxx
 
 Resources:
   CI:
