@@ -92,7 +92,7 @@ Resources:
   CI:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://raw.githubusercontent.com/Giftbit/internal-turnkey/28b4b26b30d3209071a91398bf5505aac2867a0c/infrastructure/ci.yaml
+      TemplateURL: https://raw.githubusercontent.com/Giftbit/lightrail-turnkey/28b4b26b30d3209071a91398bf5505aac2867a0c/infrastructure/ci.yaml
       Parameters:
         ProjectParameterOverrides: !Sub
           - >
